@@ -1,6 +1,6 @@
 import React from 'react';
 import { Metadata } from 'next';
-import { ResidentForm } from '@/components/dashboard/resident-form';
+import { ResidentForm } from '@/components/residents/resident-form';
 
 export const metadata: Metadata = {
   title: 'Create Resident | HomeNest Admin',

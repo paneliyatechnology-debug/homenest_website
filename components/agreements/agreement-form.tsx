@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppDatePicker } from '@/components/ui/app-date-picker';
+import { Dropdown, BrandLoader } from '@/components/ui';
 import { ResidentDropdown } from '@/components/residents/resident-dropdown';
 import { AgreementRecord, AgreementStatus, CreateAgreementInput, UpdateAgreementInput } from '@/types/agreement';
 import { Resident } from '@/types/resident';
@@ -211,6 +212,13 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Professional Brand Loader Overlay when submitting */}
+      {submitting && (
+        <BrandLoader
+          overlay
+          message={isEdit ? 'Updating agreement...' : 'Saving agreement...'}
+        />
+      )}
       <div className="space-y-6">
 
         {/* Row 1: Resident & Agreement No. */}
@@ -296,31 +304,18 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
 
         {/* Row 2: Agreement Type & Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start">
-          <div>
-            <label className="text-xs sm:text-[13px] font-medium text-gray-700 block mb-1.5">
-              Agreement Type <span className="text-rose-500">*</span>
-            </label>
-            <div className="relative">
-              <select
-                value={agreementType}
-                onChange={(e) => { setAgreementType(e.target.value); clearError('agreementType'); }}
-                className={`w-full h-11 px-4 py-2.5 bg-white rounded-xl border ${
-                  errors.agreementType ? 'border-rose-400' : 'border-gray-200/90 hover:border-gray-300'
-                } text-xs sm:text-sm text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9`}
-              >
-                <option value="">Select agreement type</option>
-                {AGREEMENT_TYPE_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-              <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            {errors.agreementType && (
-              <span className="text-[11px] text-rose-500 mt-1 block">{errors.agreementType}</span>
-            )}
-          </div>
+          <Dropdown
+              label="Agreement Type"
+              required
+              placeholder="Select agreement type"
+              value={agreementType}
+              onChange={(e) => {
+                setAgreementType(e.target.value);
+                clearError('agreementType');
+              }}
+              error={errors.agreementType}
+              options={AGREEMENT_TYPE_OPTIONS}
+            />
 
           <div>
             <label className="text-xs sm:text-[13px] font-medium text-gray-700 block mb-2.5">
@@ -383,19 +378,7 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
             disabled={submitting}
             className="w-full h-12 bg-[#175C46] hover:bg-[#124B38] active:bg-[#0E3B2C] text-white text-sm font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? (
-              <span className="inline-flex items-center gap-2">
-                <svg className="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                </svg>
-                <span>Saving...</span>
-              </span>
-            ) : isEdit ? (
-              'Save Changes'
-            ) : (
-              'Save'
-            )}
+            <span>{isEdit ? 'Save Changes' : 'Save'}</span>
           </button>
         </div>
       </div>

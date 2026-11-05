@@ -2,12 +2,11 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Toast } from 'primereact/toast';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { AgreementRecord } from '@/types/agreement';
 import { agreementService } from '@/services/agreement.service';
 import { AgreementForm } from '@/components/agreements/agreement-form';
+import { PageHeader, BrandLoader } from '@/components/ui';
 
 export default function EditAgreementPage() {
   const params = useParams();
@@ -52,30 +51,16 @@ export default function EditAgreementPage() {
       <Toast ref={toastRef} position="top-right" />
 
       {/* Top Header with minimal Back arrow button matching Figma image */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard/residents/agreements"
-          className="text-gray-900 hover:text-black flex items-center justify-center transition-colors cursor-pointer p-1 -ml-1 rounded-lg hover:bg-gray-100"
-          title="Back to Agreements"
-        >
-          <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight">
-            Edit Agreement
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 font-normal mt-0.5">
-            Update agreement details.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Edit Agreement"
+        subtitle="Update agreement details."
+        backHref="/dashboard/residents/agreements"
+        backTitle="Back to Agreements"
+      />
 
       {loading ? (
-        <div className="p-12 flex flex-col items-center justify-center gap-3">
-          <ProgressSpinner style={{ width: '38px', height: '38px' }} strokeWidth="3" />
-          <span className="text-xs text-gray-500 font-medium">Loading agreement details...</span>
+        <div className="p-12 flex flex-col items-center justify-center">
+          <BrandLoader message="Loading agreement details..." />
         </div>
       ) : (
         <AgreementForm

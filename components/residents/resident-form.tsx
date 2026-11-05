@@ -1,12 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'primereact/toast';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { AppDatePicker } from '@/components/ui/app-date-picker';
+import { PageHeader, Dropdown, PhotoUpload, BrandLoader } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
 import {
   ResidentDetail,
@@ -19,7 +17,7 @@ import {
 /**
  * Properties accepted by the ResidentForm component.
  */
-interface ResidentFormProps {
+export interface ResidentFormProps {
   /** Mode of the form: 'create' for new resident onboarding, 'edit' for existing resident update */
   mode: 'create' | 'edit';
   /** Unique ID of the resident when editing */
@@ -179,7 +177,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const toastRef = useRef<Toast>(null);
 
   // File input refs
-  const profilePhotoInputRef = useRef<HTMLInputElement>(null);
   const aadharInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
   const educationCertInputRef = useRef<HTMLInputElement>(null);
@@ -202,7 +199,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   // File states
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.profile_photo_url || null);
-  const [isPhotoDragging, setIsPhotoDragging] = useState(false);
 
   const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
@@ -233,12 +229,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         : 'border-gray-200 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-900 placeholder-gray-400'
     } rounded-xl text-sm focus:outline-none transition-all ${extraClasses}`;
 
-  const getSelectClass = (fieldName: string, extraClasses = '') =>
-    `w-full h-11 appearance-none px-4 py-2.5 bg-white border ${
-      errors[fieldName]
-        ? 'border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500 text-red-900'
-        : 'border-gray-200 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-900'
-    } rounded-xl text-sm focus:outline-none transition-all pr-10 cursor-pointer disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed ${extraClasses}`;
 
   const renderFieldError = (fieldName: string) => {
     if (!errors[fieldName]) return null;
@@ -473,7 +463,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     setSignatureFile(null);
 
     // Reset file input DOM values
-    if (profilePhotoInputRef.current) profilePhotoInputRef.current.value = '';
     if (aadharInputRef.current) aadharInputRef.current.value = '';
     if (addressProofInputRef.current) addressProofInputRef.current.value = '';
     if (educationCertInputRef.current) educationCertInputRef.current.value = '';
@@ -489,35 +478,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     };
   }, [mode]);
 
-  const handlePhotoSelect = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      toastRef.current?.show({
-        severity: 'warn',
-        summary: 'Invalid File',
-        detail: 'Please upload an image file (JPG, PNG).',
-        life: 3000,
-      });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toastRef.current?.show({
-        severity: 'warn',
-        summary: 'File Too Large',
-        detail: 'Profile photo must be less than 5MB.',
-        life: 3000,
-      });
-      return;
-    }
-    setPhotoFile(file);
-    const objectUrl = URL.createObjectURL(file);
-    setPhotoPreview(objectUrl);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      handlePhotoSelect(e.target.files[0]);
-    }
-  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -791,33 +751,27 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5]">
+      {/* Professional Brand Loader Overlay when submitting */}
+      {submitting && (
+        <BrandLoader
+          overlay
+          message={mode === 'edit' ? 'Updating resident profile...' : 'Saving new resident...'}
+        />
+      )}
       <Toast ref={toastRef} position="top-right" />
 
       {/* Top Header matching Figma screenshot */}
-      <div className="flex items-start gap-3.5">
-        <Link
-          href={mode === 'edit' && residentId ? `/dashboard/residents/${residentId}` : '/dashboard/residents'}
-          onClick={() => {
-            if (mode === 'create') {
-              resetAllFields();
-            }
-          }}
-          className="text-gray-900 hover:text-gray-600 transition-colors inline-flex items-center justify-center shrink-0 mt-0.5 sm:mt-1 cursor-pointer"
-          title="Go back"
-        >
-          <svg className="w-6 h-6 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.25">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            {mode === 'edit' ? 'Edit Resident Profile' : 'Create New Resident'}
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 font-normal mt-0.5">
-            {mode === 'edit' ? 'Update resident information and room allocation.' : 'Create a new resident.'}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title={mode === 'edit' ? 'Edit Resident Profile' : 'Create New Resident'}
+        subtitle={mode === 'edit' ? 'Update resident information and room allocation.' : 'Create a new resident.'}
+        backHref={mode === 'edit' && residentId ? `/dashboard/residents/${residentId}` : '/dashboard/residents'}
+        onBackClick={() => {
+          if (mode === 'create') {
+            resetAllFields();
+          }
+        }}
+        backTitle="Go back"
+      />
 
       {/* Error Banner */}
       {errorMessage && (
@@ -864,187 +818,135 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               {/* Dependent Dropdown Row 1: Branch & Building */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Branch Dropdown */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
-                      Branch <span className="text-[#175C46] font-bold">*</span>
-                    </label>
-                    {loadingBranches && (
+                <Dropdown
+                  label="Branch"
+                  required
+                  name="branch_id"
+                  value={formData.branch_id}
+                  onChange={handleBranchChange}
+                  error={errors.branch_id}
+                  placeholder="Select branch"
+                  rightBadge={
+                    loadingBranches ? (
                       <span className="text-[10px] text-gray-400">Loading...</span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <select
-                      name="branch_id"
-                      value={formData.branch_id}
-                      onChange={handleBranchChange}
-                      className={getSelectClass('branch_id')}
-                    >
-                      <option value="" disabled>Select branch</option>
-                      {branches.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                    <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {renderFieldError('branch_id')}
-                </div>
+                    ) : undefined
+                  }
+                  options={branches.map((b) => ({
+                    label: b.name,
+                    value: b.id,
+                  }))}
+                />
 
                 {/* Building Dropdown (dependent on branch) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
-                      Building <span className="text-[#175C46] font-bold">*</span>
-                    </label>
-                    {loadingBuildings && (
+                <Dropdown
+                  label="Building"
+                  required
+                  name="building_id"
+                  value={formData.building_id}
+                  onChange={handleBuildingChange}
+                  disabled={!formData.branch_id || loadingBuildings}
+                  error={errors.building_id}
+                  placeholder={
+                    loadingBuildings
+                      ? 'Loading buildings...'
+                      : !formData.branch_id
+                      ? 'Select branch first'
+                      : 'Select building'
+                  }
+                  rightBadge={
+                    loadingBuildings ? (
                       <span className="text-[10px] text-gray-400">Loading...</span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <select
-                      name="building_id"
-                      value={formData.building_id}
-                      onChange={handleBuildingChange}
-                      disabled={!formData.branch_id || loadingBuildings}
-                      className={getSelectClass('building_id')}
-                    >
-                      <option value="" disabled>
-                        {loadingBuildings
-                          ? 'Loading buildings...'
-                          : !formData.branch_id
-                          ? 'Select branch first'
-                          : 'Select building'}
-                      </option>
-                      {buildings.map((b) => (
-                        <option key={b.id} value={b.id}>
-                          {b.name || b.building_name}
-                        </option>
-                      ))}
-                    </select>
-                    <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {renderFieldError('building_id')}
-                </div>
+                    ) : undefined
+                  }
+                  options={buildings.map((b) => ({
+                    label: b.name || b.building_name || `Building ${b.id}`,
+                    value: b.id,
+                  }))}
+                />
               </div>
 
               {/* Dependent Dropdown Row 2: Floor & Room */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Floor Dropdown (dependent on building) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
-                      Floor <span className="text-[#175C46] font-bold">*</span>
-                    </label>
-                    {loadingFloors && (
+                <Dropdown
+                  label="Floor"
+                  required
+                  name="floor_id"
+                  value={formData.floor_id}
+                  onChange={handleFloorChange}
+                  disabled={!formData.building_id || loadingFloors}
+                  error={errors.floor_id}
+                  placeholder={
+                    loadingFloors
+                      ? 'Loading floors...'
+                      : !formData.building_id
+                      ? 'Select building first'
+                      : 'Select floor'
+                  }
+                  rightBadge={
+                    loadingFloors ? (
                       <span className="text-[10px] text-gray-400">Loading...</span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <select
-                      name="floor_id"
-                      value={formData.floor_id}
-                      onChange={handleFloorChange}
-                      disabled={!formData.building_id || loadingFloors}
-                      className={getSelectClass('floor_id')}
-                    >
-                      <option value="" disabled>
-                        {loadingFloors
-                          ? 'Loading floors...'
-                          : !formData.building_id
-                          ? 'Select building first'
-                          : 'Select floor'}
-                      </option>
-                      {floors.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.floor_name || f.name || `Floor ${f.floor_number ?? f.id}`}
-                        </option>
-                      ))}
-                    </select>
-                    <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {renderFieldError('floor_id')}
-                </div>
+                    ) : undefined
+                  }
+                  options={floors.map((f) => ({
+                    label: f.floor_name || f.name || `Floor ${f.floor_number ?? f.id}`,
+                    value: f.id,
+                  }))}
+                />
 
                 {/* Room Dropdown (dependent on floor, building, branch) */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
-                      Resident Room no. <span className="text-[#175C46] font-bold">*</span>
-                    </label>
-                    {loadingRooms && (
+                <Dropdown
+                  label="Resident Room no."
+                  required
+                  name="room_id"
+                  value={formData.room_id}
+                  onChange={handleRoomChange}
+                  disabled={!formData.floor_id || loadingRooms}
+                  error={errors.room_id}
+                  placeholder={
+                    loadingRooms
+                      ? 'Loading rooms...'
+                      : !formData.floor_id
+                      ? 'Select floor first'
+                      : 'Select room no.'
+                  }
+                  rightBadge={
+                    loadingRooms ? (
                       <span className="text-[10px] text-gray-400">Loading...</span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <select
-                      name="room_id"
-                      value={formData.room_id}
-                      onChange={handleRoomChange}
-                      disabled={!formData.floor_id || loadingRooms}
-                      className={getSelectClass('room_id')}
-                    >
-                      <option value="" disabled>
-                        {loadingRooms
-                          ? 'Loading rooms...'
-                          : !formData.floor_id
-                          ? 'Select floor first'
-                          : 'Select room no.'}
-                      </option>
-                      {rooms.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.room_no || r.room_number || r.name} {r.room_type || r.type ? `(${r.room_type || r.type})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {renderFieldError('room_id')}
-                </div>
+                    ) : undefined
+                  }
+                  options={rooms.map((r) => ({
+                    label: `${r.room_no || r.room_number || r.name} ${r.room_type || r.type ? `(${r.room_type || r.type})` : ''}`,
+                    value: r.id,
+                  }))}
+                />
               </div>
 
               {/* Dependent Dropdown Row 3: Room Type (auto set) & Phone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Room Type Dropdown - Auto populated on room select */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
-                      Resident room type <span className="text-[#175C46] font-bold">*</span>
-                    </label>
-                    {formData.room_type && (
+                <Dropdown
+                  label="Resident room type"
+                  required
+                  name="room_type"
+                  value={formData.room_type}
+                  onChange={handleChange}
+                  error={errors.room_type}
+                  placeholder="Select room type"
+                  rightBadge={
+                    formData.room_type ? (
                       <span className="text-[10px] text-[#175C46] font-medium bg-[#EBF7F2] px-2 py-0.5 rounded-full">
                         Auto-set from room
                       </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <select
-                      name="room_type"
-                      value={formData.room_type}
-                      onChange={handleChange}
-                      className={getSelectClass('room_type')}
-                    >
-                      <option value="" disabled>Select room type</option>
-                      <option value="single">Single</option>
-                      <option value="double">Double</option>
-                      <option value="triple">Triple</option>
-                      <option value="four">Four</option>
-                    </select>
-                    <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </div>
-                  {renderFieldError('room_type')}
-                </div>
+                    ) : undefined
+                  }
+                  options={[
+                    { label: 'Single', value: 'single' },
+                    { label: 'Double', value: 'double' },
+                    { label: 'Triple', value: 'triple' },
+                    { label: 'Four', value: 'four' },
+                  ]}
+                />
 
                 {/* Phone */}
                 <div>
@@ -1066,124 +968,29 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             {/* Right Attach Photo Column (5 cols) */}
             <div className="lg:col-span-5">
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Attach Profile photo <span className="text-gray-400 font-normal">(Optional)</span>
-              </label>
-
-              <input
-                ref={profilePhotoInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/jpg"
-                onChange={handleFileChange}
-                className="hidden"
+              <PhotoUpload
+                label="Attach Profile photo"
+                optional
+                previewUrl={photoPreview}
+                file={photoFile}
+                shape="circle"
+                onSelectFile={(file) => {
+                  setPhotoFile(file);
+                  setPhotoPreview(URL.createObjectURL(file));
+                }}
+                onRemove={() => {
+                  setPhotoFile(null);
+                  setPhotoPreview(null);
+                }}
+                onError={(msg) => {
+                  toastRef.current?.show({
+                    severity: 'warn',
+                    summary: 'Invalid Photo',
+                    detail: msg,
+                    life: 3000,
+                  });
+                }}
               />
-
-              {photoPreview ? (
-                /* Card state when photo is attached - cleanly styled matching HomeNest UI */
-                <div className="h-[260px] border border-gray-200 bg-gradient-to-b from-[#F7FAF8] to-white rounded-2xl p-5 flex flex-col items-center justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative">
-                  {/* Top Status Tag */}
-                  <div className="w-full flex items-center justify-between">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-[#EBF7F2] text-[#175C46]">
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Photo Attached
-                    </span>
-                    {photoFile && (
-                      <span className="text-[11px] text-gray-400 font-medium truncate max-w-[140px] cursor-pointer" title={photoFile.name}>
-                        {(photoFile.size / 1024 / 1024).toFixed(1)} MB
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Centered Avatar with hover change effect */}
-                  <div
-                    onClick={() => profilePhotoInputRef.current?.click()}
-                    className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md ring-2 ring-[#175C46]/20 cursor-pointer group"
-                    title="Click to change photo"
-                  >
-                    <Image
-                      src={photoPreview}
-                      alt="Profile Preview"
-                      width={112}
-                      height={112}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                      unoptimized
-                    />
-                    <div className="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[11px] font-medium gap-0.5">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span>Change</span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2.5 w-full justify-center">
-                    <button
-                      type="button"
-                      onClick={() => profilePhotoInputRef.current?.click()}
-                      className="px-3.5 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-all flex items-center gap-1.5 shadow-2xs hover:border-gray-300 cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                      </svg>
-                      <span>Change Photo</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPhotoFile(null);
-                        setPhotoPreview(null);
-                        if (profilePhotoInputRef.current) profilePhotoInputRef.current.value = '';
-                      }}
-                      className="px-3.5 py-1.5 rounded-xl border border-red-200 bg-red-50/60 hover:bg-red-100 text-xs font-semibold text-red-600 transition-all flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      <span>Remove</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Dropzone state when no photo is attached */
-                <div
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setIsPhotoDragging(true);
-                  }}
-                  onDragLeave={(e) => {
-                    e.preventDefault();
-                    setIsPhotoDragging(false);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setIsPhotoDragging(false);
-                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      handlePhotoSelect(e.dataTransfer.files[0]);
-                    }
-                  }}
-                  onClick={() => profilePhotoInputRef.current?.click()}
-                  className={`h-[260px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer transition-all bg-gray-50/40 text-center relative overflow-hidden group ${
-                    isPhotoDragging
-                      ? 'border-[#175C46] bg-emerald-50/30'
-                      : 'border-gray-200 hover:border-[#175C46] hover:bg-emerald-50/10'
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 h-12 rounded-full bg-[#EBF7F2] text-[#175C46] flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-gray-700">Click to upload or drag and drop</p>
-                    <p className="text-[11px] text-gray-400 mt-1">JPG, PNG &bull; Max 5MB</p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
@@ -1265,55 +1072,39 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           {/* Row: Nationality, Marital status, Occupation */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {/* Nationality */}
-            <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Nationality <span className="text-[#175C46] font-bold">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="nationality"
-                  value={formData.nationality}
-                  onChange={handleChange}
-                  className={getSelectClass('nationality')}
-                >
-                  <option value="" disabled>Select nationality</option>
-                  <option value="Indian">Indian</option>
-                  <option value="American">American</option>
-                  <option value="British">British</option>
-                  <option value="Canadian">Canadian</option>
-                  <option value="Australian">Australian</option>
-                  <option value="Other">Other</option>
-                </select>
-                <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-              {renderFieldError('nationality')}
-            </div>
+            <Dropdown
+              label="Nationality"
+              required
+              name="nationality"
+              value={formData.nationality}
+              onChange={handleChange}
+              error={errors.nationality}
+              placeholder="Select nationality"
+              options={[
+                { label: 'Indian', value: 'Indian' },
+                { label: 'American', value: 'American' },
+                { label: 'British', value: 'British' },
+                { label: 'Canadian', value: 'Canadian' },
+                { label: 'Australian', value: 'Australian' },
+                { label: 'Other', value: 'Other' },
+              ]}
+            />
 
             {/* Marital status */}
-            <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Marital status <span className="text-[#175C46] font-bold">*</span>
-              </label>
-              <div className="relative">
-                <select
-                  name="marital_status"
-                  value={formData.marital_status}
-                  onChange={handleChange}
-                  className={getSelectClass('marital_status')}
-                >
-                  <option value="" disabled>Select marital status</option>
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="other">Other</option>
-                </select>
-                <svg className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-              {renderFieldError('marital_status')}
-            </div>
+            <Dropdown
+              label="Marital status"
+              required
+              name="marital_status"
+              value={formData.marital_status}
+              onChange={handleChange}
+              error={errors.marital_status}
+              placeholder="Select marital status"
+              options={[
+                { label: 'Single', value: 'single' },
+                { label: 'Married', value: 'married' },
+                { label: 'Other', value: 'other' },
+              ]}
+            />
 
             {/* Occupation */}
             <div>
@@ -1800,16 +1591,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-3.5 px-6 bg-[#175C46] hover:bg-[#124B38] text-white text-base font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3.5 px-6 bg-[#175C46] hover:bg-[#124B38] text-white text-base font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {submitting ? (
-              <>
-                <ProgressSpinner style={{ width: '20px', height: '20px' }} strokeWidth="4" />
-                <span>{mode === 'edit' ? 'Updating Resident...' : 'Saving Resident...'}</span>
-              </>
-            ) : (
-              <span>{mode === 'edit' ? 'Save Changes' : 'Save'}</span>
-            )}
+            <span>{mode === 'edit' ? 'Save Changes' : 'Save'}</span>
           </button>
         </div>
       </form>

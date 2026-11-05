@@ -98,6 +98,10 @@ class BranchService {
       body: formData,
     });
 
+    if (res && res.success === false) {
+      throw new Error(res.message || 'Branch creation failed');
+    }
+
     return {
       success: res?.success ?? true,
       message: res?.message ?? 'Branch created successfully',
@@ -124,6 +128,10 @@ class BranchService {
       method: 'PUT',
       body: formData,
     });
+
+    if (res && res.success === false) {
+      throw new Error(res.message || 'Branch update failed');
+    }
 
     return {
       success: res?.success ?? true,

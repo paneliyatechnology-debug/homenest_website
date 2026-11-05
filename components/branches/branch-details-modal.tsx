@@ -4,6 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { Branch } from '@/types/branch';
+import { StatusBadge } from '@/components/ui';
 
 interface BranchDetailsModalProps {
   visible: boolean;
@@ -104,9 +105,7 @@ export const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({
 
           <div className="py-2.5 flex items-center justify-between">
             <span className="text-gray-500 font-medium">Status</span>
-            <span className="capitalize font-semibold text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-800">
-              {branch.status || 'Active'}
-            </span>
+            <StatusBadge variant="branch" status={branch.status} />
           </div>
 
           {branch.pg_name && (

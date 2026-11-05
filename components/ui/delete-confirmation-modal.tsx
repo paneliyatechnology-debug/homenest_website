@@ -3,6 +3,11 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 
+export interface DeleteDetailItem {
+  label: string;
+  value: React.ReactNode;
+}
+
 export interface DeleteConfirmationModalProps {
   visible: boolean;
   onHide: () => void;
@@ -11,6 +16,7 @@ export interface DeleteConfirmationModalProps {
   itemName?: string;
   itemType?: string; // e.g. "branch", "resident", "agreement"
   message?: React.ReactNode;
+  details?: DeleteDetailItem[];
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
@@ -25,6 +31,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   itemName,
   itemType = 'item',
   message,
+  details,
   confirmLabel,
   cancelLabel = 'Cancel',
   loading = false,
@@ -42,7 +49,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
       ) : (
         `this ${itemType}`
       )}
-      ? All associated records will be removed.
+      ? All associated records will be affected.
     </span>
   );
 
@@ -53,7 +60,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
       modal
       draggable={false}
       resizable={false}
-      className="w-full max-w-[460px] mx-4 rounded-2xl overflow-hidden shadow-2xl border-0"
+      className="w-full max-w-[480px] mx-4 rounded-2xl overflow-hidden shadow-2xl border-0"
       header={
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 shadow-2xs">
@@ -81,17 +88,35 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
         </div>
       }
     >
-      <div className="space-y-5 pt-3">
+      <div className="space-y-4 pt-2">
+        {/* Optional Context Details Card matching Figma */}
+        {details && details.length > 0 && (
+          <div className="bg-[#F9FAFB] rounded-xl p-3.5 sm:p-4 border border-gray-100 grid grid-cols-2 gap-4">
+            {details.map((d, i) => (
+              <div key={i} className="space-y-0.5">
+                <span className="text-[11px] sm:text-xs text-gray-400 font-medium block">
+                  {d.label}
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-gray-900 block truncate">
+                  {d.value}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Confirmation Message */}
         <div className="text-xs sm:text-sm text-gray-600 leading-relaxed">
           {message || defaultMessage}
         </div>
 
-        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
           <button
             type="button"
             onClick={onHide}
             disabled={loading}
-            className="px-4 py-2 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+            className="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
           >
             {cancelLabel}
           </button>
@@ -99,7 +124,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="px-5 py-2 text-xs sm:text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 active:bg-rose-800 rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#E11D48] hover:bg-[#BE123C] active:bg-[#9F1239] rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
           >
             {loading ? (
               <>
@@ -133,4 +158,3 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
     </Dialog>
   );
 };
-

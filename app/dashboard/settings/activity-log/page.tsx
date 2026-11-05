@@ -5,9 +5,10 @@ import { Toast } from 'primereact/toast';
 import { AuditLog, AuditMeta, AuditStats } from '@/types/audit';
 import { auditService, INITIAL_AUDIT_STATS } from '@/services/audit.service';
 import { AuditStatsCards } from '@/components/audit/audit-stats-cards';
-import { AuditTable } from '@/components/audit/audit-table';
+
 import { AuditDetailsModal } from '@/components/audit/audit-details-modal';
 import { AppDatePicker, formatDateForApi } from '@/components/ui/app-date-picker';
+import { Dropdown, DataTable, IconButton, TableActions } from '@/components/ui';
 
 const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
@@ -387,97 +388,46 @@ export default function AdministrativeActivityLogPage() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-3 sm:gap-4 w-full">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 flex-1">
           {/* Modules Filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-normal text-gray-500 block">Modules</label>
-            <div className="relative">
-              <select
-                value={selectedModule}
-                onChange={(e) => {
-                  setSelectedModule(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-11 px-4 pr-10 py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] shadow-2xs appearance-none cursor-pointer transition-all font-sans"
-              >
-                <option value="">All</option>
-                {moduleOptions.map((mod) => (
-                  <option key={mod} value={mod}>
-                    {mod}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          <Dropdown
+            label="Modules"
+            value={selectedModule}
+            onChange={(e) => {
+              setSelectedModule(e.target.value);
+              setCurrentPage(1);
+            }}
+            options={[
+              { label: 'All', value: '' },
+              ...moduleOptions.map((mod) => ({ label: mod, value: mod })),
+            ]}
+          />
 
           {/* Actions Filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-normal text-gray-500 block">Actions</label>
-            <div className="relative">
-              <select
-                value={selectedAction}
-                onChange={(e) => {
-                  setSelectedAction(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-11 px-4 pr-10 py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] shadow-2xs appearance-none cursor-pointer transition-all font-sans"
-              >
-                <option value="">All</option>
-                {actionOptions.map((act) => (
-                  <option key={act} value={act}>
-                    {act}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          <Dropdown
+            label="Actions"
+            value={selectedAction}
+            onChange={(e) => {
+              setSelectedAction(e.target.value);
+              setCurrentPage(1);
+            }}
+            options={[
+              { label: 'All', value: '' },
+              ...actionOptions.map((act) => ({ label: act, value: act })),
+            ]}
+          />
 
           {/* Users Filter */}
-          <div className="space-y-1">
-            <label className="text-xs font-normal text-gray-500 block">Users</label>
-            <div className="relative">
-              <select
-                value={selectedUser}
-                onChange={(e) => {
-                  setSelectedUser(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-11 px-4 pr-10 py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] shadow-2xs appearance-none cursor-pointer transition-all font-sans"
-              >
-                <option value="">All</option>
-                {userOptions.map((usr) => (
-                  <option key={usr} value={usr}>
-                    {usr}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
+          <Dropdown
+            label="Users"
+            value={selectedUser}
+            onChange={(e) => {
+              setSelectedUser(e.target.value);
+              setCurrentPage(1);
+            }}
+            options={[
+              { label: 'All', value: '' },
+              ...userOptions.map((usr) => ({ label: usr, value: usr })),
+            ]}
+          />
 
           {/* Date Range Picker Dropdown */}
           <div className="space-y-1 relative" ref={datePickerDropdownRef}>
@@ -626,13 +576,86 @@ export default function AdministrativeActivityLogPage() {
         </div>
       </div>
 
-      {/* Audit Log Table matching Figma */}
-      <AuditTable
-        records={records}
-        meta={meta}
+      {/* Audit Log Table using unified DataTable */}
+      <DataTable<AuditLog>
+        data={records}
         loading={loading}
-        onPageChange={(p) => setCurrentPage(p)}
-        onViewRecord={handleViewRecord}
+        loadingLabel="Loading activity logs..."
+        emptyTitle="No Activity Logs Found"
+        emptyDescription="No audit records match the current filter or date range criteria."
+        pagination={{
+          currentPage: meta.page || currentPage,
+          totalCount: meta.total_records ?? meta.total ?? 0,
+          pageSize: meta.limit || 10,
+          itemCount: records.length,
+          itemLabel: 'Logs',
+          onPageChange: (p) => setCurrentPage(p),
+        }}
+        columns={[
+          {
+            header: 'Sr no.',
+            width: '64px',
+            cell: (item, idx) => {
+              const srNo =
+                item.sr_no ??
+                ((meta.page || currentPage) - 1) * (meta.limit || 10) + idx + 1;
+              return <span className="font-medium text-gray-900">{srNo}</span>;
+            },
+          },
+          {
+            header: 'User',
+            cell: (item) => <span className="font-semibold text-gray-900 whitespace-nowrap">{item.user_name || item.user}</span>,
+          },
+          {
+            header: 'Action',
+            cell: (item) => <span className="text-gray-700 font-medium whitespace-nowrap">{item.action}</span>,
+          },
+          {
+            header: 'Module',
+            cell: (item) => <span className="text-gray-700 font-medium whitespace-nowrap">{item.module}</span>,
+          },
+          {
+            header: 'Details',
+            cell: (item) => (
+              <span
+                className="text-gray-600 max-w-xs truncate block cursor-pointer"
+                title={item.details || item.description}
+              >
+                {item.details || item.description || '—'}
+              </span>
+            ),
+          },
+          {
+            header: 'Timestamp',
+            cell: (item) => (
+              <span className="text-gray-600 whitespace-nowrap">
+                {item.timestamp || item.created_at_formatted || item.created_at || '—'}
+              </span>
+            ),
+          },
+          {
+            header: 'IP address',
+            cell: (item) => (
+              <span className="font-mono text-gray-600 text-xs whitespace-nowrap">
+                {item.ip_address || '—'}
+              </span>
+            ),
+          },
+          {
+            header: 'Action',
+            align: 'center',
+            width: '80px',
+            cell: (item) => (
+              <TableActions align="center">
+                <IconButton
+                  variant="view"
+                  onClick={() => handleViewRecord(item)}
+                  title="View Details"
+                />
+              </TableActions>
+            ),
+          },
+        ]}
       />
 
       {/* Details View Modal */}

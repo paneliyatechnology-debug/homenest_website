@@ -1,3 +1,4 @@
+import { branchService } from './branch.service';
 import { apiClient } from '@/lib/api-client';
 import { ApiResponse } from '@/types/auth';
 import {
@@ -7,8 +8,7 @@ import {
   ResidentQueryParams,
   Branch,
   BranchMeta,
-  BranchesApiResponse,
-  ResidentStats,
+    ResidentStats,
   ResidentStatsApiResponse,
   ResidentDetail,
   ResidentDetailApiResponse,
@@ -177,98 +177,7 @@ export const DEFAULT_RESIDENTS: Resident[] = [
   },
 ];
 
-export const DEFAULT_BRANCHES: Branch[] = [
-  {
-    id: 10,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'Sindhu Bhavan Premier Branch',
-    location: 'Ahmedabad, Gujarat',
-    branch_photo: 'branch-1793441561169-885491964.jpg',
-    branch_photo_url: 'http://localhost:5000/uploads/branches/branch-1793441561169-885491964.jpg',
-    total_rooms: 8,
-    occupied_rooms: 0,
-    available_rooms: 8,
-    status: 'active',
-    created_at: '31-10-2026 15:37',
-    updated_at: '03-11-2026 10:51',
-  },
-  {
-    id: 5,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'SG Highway Branch',
-    location: 'Ahmedabad',
-    branch_photo: null,
-    branch_photo_url: null,
-    total_rooms: 120,
-    occupied_rooms: 0,
-    available_rooms: 120,
-    status: 'upcoming',
-    created_at: '31-10-2026 13:57',
-    updated_at: '31-10-2026 15:17',
-  },
-  {
-    id: 4,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'Vastrapur Branch',
-    location: 'Ahmedabad',
-    branch_photo: null,
-    branch_photo_url: null,
-    total_rooms: 120,
-    occupied_rooms: 0,
-    available_rooms: 120,
-    status: 'active',
-    created_at: '31-10-2026 13:57',
-    updated_at: '31-10-2026 15:17',
-  },
-  {
-    id: 3,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'Satellite Branch',
-    location: 'Ahmedabad',
-    branch_photo: null,
-    branch_photo_url: null,
-    total_rooms: 120,
-    occupied_rooms: 0,
-    available_rooms: 120,
-    status: 'maintenance',
-    created_at: '31-10-2026 13:57',
-    updated_at: '31-10-2026 15:17',
-  },
-  {
-    id: 2,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'Navrangpura Branch',
-    location: 'Ahmedabad',
-    branch_photo: null,
-    branch_photo_url: null,
-    total_rooms: 120,
-    occupied_rooms: 0,
-    available_rooms: 120,
-    status: 'active',
-    created_at: '31-10-2026 13:57',
-    updated_at: '31-10-2026 15:17',
-  },
-  {
-    id: 1,
-    pg_id: 1,
-    pg_name: 'HouseNest PG',
-    name: 'Main Branch',
-    location: 'Ahmedabad',
-    branch_photo: null,
-    branch_photo_url: null,
-    total_rooms: 120,
-    occupied_rooms: 6,
-    available_rooms: 114,
-    status: 'active',
-    created_at: '31-10-2026 13:57',
-    updated_at: '03-11-2026 10:43',
-  },
-];
+
 
 export const residentService = {
   /**
@@ -405,35 +314,11 @@ export const residentService = {
     data: Branch[];
     meta: BranchMeta;
   }> {
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const query = new URLSearchParams();
-    query.set('page', String(page));
-    query.set('limit', String(limit));
-
-    if (params.search) {
-      query.set('search', params.search);
-    }
-
-    try {
-      const response = await apiClient<BranchesApiResponse>(`/branches?${query.toString()}`);
-      if (response && response.success && Array.isArray(response.data)) {
-        return {
-          data: response.data,
-          meta: response.meta || {
-            page,
-            limit,
-            total_records: response.data.length,
-            total_pages: Math.ceil(response.data.length / limit) || 1,
-            has_next: page * limit < response.data.length,
-            has_prev: page > 1,
-          },
-        };
-      }
-      return this.filterDefaultBranches(params);
-    } catch {
-      return this.filterDefaultBranches(params);
-    }
+    return branchService.getBranches({
+      search: params.search,
+      page: params.page,
+      limit: params.limit,
+    });
   },
 
   /**
@@ -546,36 +431,6 @@ export const residentService = {
         limit,
         total_pages: Math.ceil(filtered.length / limit) || 1,
         total: filtered.length,
-      },
-    };
-  },
-
-  filterDefaultBranches(params: { search?: string; page?: number; limit?: number }): {
-    data: Branch[];
-    meta: BranchMeta;
-  } {
-    let filtered = [...DEFAULT_BRANCHES];
-    if (params.search) {
-      const q = params.search.toLowerCase();
-      filtered = filtered.filter(
-        (b) => b.name.toLowerCase().includes(q) || (b.location && b.location.toLowerCase().includes(q))
-      );
-    }
-
-    const page = params.page || 1;
-    const limit = params.limit || 10;
-    const start = (page - 1) * limit;
-    const paginated = filtered.slice(start, start + limit);
-
-    return {
-      data: paginated,
-      meta: {
-        page,
-        limit,
-        total_records: filtered.length,
-        total_pages: Math.ceil(filtered.length / limit) || 1,
-        has_next: page * limit < filtered.length,
-        has_prev: page > 1,
       },
     };
   },

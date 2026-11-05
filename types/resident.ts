@@ -1,4 +1,7 @@
 import { ApiResponse } from './auth';
+import { Branch, BranchMeta } from './branch';
+
+export type { Branch, BranchMeta };
 
 export interface Resident {
   id: number;
@@ -44,30 +47,7 @@ export interface ResidentQueryParams {
   branch_id?: number | string | null;
 }
 
-export interface Branch {
-  id: number;
-  pg_id?: number;
-  pg_name?: string;
-  name: string;
-  location?: string;
-  branch_photo?: string | null;
-  branch_photo_url?: string | null;
-  total_rooms?: number;
-  occupied_rooms?: number;
-  available_rooms?: number;
-  status?: 'active' | 'upcoming' | 'maintenance' | string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface BranchMeta {
-  page: number;
-  limit: number;
-  total_records: number;
-  total_pages: number;
-  has_next: boolean;
-  has_prev: boolean;
-}
+// Branch and BranchMeta re-exported from @/types/branch
 
 export type BranchesApiResponse = ApiResponse<Branch[]> & {
   meta?: BranchMeta;

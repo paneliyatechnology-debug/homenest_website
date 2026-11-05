@@ -3,6 +3,7 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { AgreementRecord } from '@/types/agreement';
+import { StatusBadge } from '@/components/ui';
 
 interface AgreementDetailsModalProps {
   visible: boolean;
@@ -16,24 +17,6 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
   record,
 }) => {
   if (!record) return null;
-
-  const getStatusBadge = (status: string) => {
-    const s = status.toLowerCase();
-    switch (s) {
-      case 'signed':
-        return <span className="bg-[#E8F8F0] text-[#175C46] px-3 py-1 rounded-full text-xs font-semibold capitalize">Signed</span>;
-      case 'pending_sign':
-        return <span className="bg-[#FEF7E6] text-[#B06000] px-3 py-1 rounded-full text-xs font-semibold">Pending Sign</span>;
-      case 'pending':
-        return <span className="bg-[#FEF7E6] text-[#B06000] px-3 py-1 rounded-full text-xs font-semibold capitalize">Pending</span>;
-      case 'draft':
-        return <span className="bg-[#EFF6FF] text-[#2563EB] px-3 py-1 rounded-full text-xs font-semibold capitalize">Draft</span>;
-      case 'expired':
-        return <span className="bg-[#FDF2F2] text-[#DC2626] px-3 py-1 rounded-full text-xs font-semibold capitalize">Expired</span>;
-      default:
-        return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-semibold capitalize">{status}</span>;
-    }
-  };
 
   return (
     <Dialog
@@ -58,7 +41,7 @@ export const AgreementDetailsModal: React.FC<AgreementDetailsModalProps> = ({
       <div className="space-y-4 text-xs sm:text-sm">
         <div className="flex items-center justify-between pb-3 border-b border-gray-100">
           <span className="text-gray-500 font-medium">Status</span>
-          <div>{getStatusBadge(record.status)}</div>
+          <StatusBadge status={record.status} />
         </div>
 
         <div className="grid grid-cols-2 gap-4 py-1">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Resident } from '@/types/resident';
 import { residentService } from '@/services/resident.service';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { SearchInput } from '@/components/ui';
 
 interface ResidentDropdownProps {
   selectedResidentId: number | null;
@@ -143,36 +144,16 @@ export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
         <div className="absolute left-0 top-full mt-1.5 w-full min-w-[280px] bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
           {/* Search */}
           <div className="p-2 border-b border-gray-100">
-            <div className="relative">
-              <svg
-                className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                ref={searchInputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setLoading(true); }}
-                placeholder="Search by name or email..."
-                className="w-full h-8 pl-8 pr-7 text-xs bg-gray-50 rounded-lg border border-gray-200/80 outline-none text-gray-800 placeholder:text-gray-400 focus:bg-white focus:border-[#175C46] transition-all"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5"
-                >
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-            </div>
+            <SearchInput
+              ref={searchInputRef}
+              value={searchQuery}
+              onChange={(val) => {
+                setSearchQuery(val);
+                setLoading(true);
+              }}
+              size="sm"
+              placeholder="Search by name or email..."
+            />
           </div>
 
           {/* List */}

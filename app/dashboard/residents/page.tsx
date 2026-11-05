@@ -3,12 +3,28 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
-import { DeleteConfirmationModal } from '@/components/ui/delete-confirmation-modal';
+import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput } from '@/components/ui';
+
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
 import { BranchDropdown } from '@/components/residents/branch-dropdown';
+
+const getInitials = (name?: string): string => {
+  if (!name || !name.trim()) return 'R';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+  return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+};
+
+const formatPhone = (phone?: string): string => {
+  if (!phone) return '-';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.length === 10) {
+    return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
+  }
+  return phone;
+};
 
 export default function ResidentsListPage() {
   const toastRef = useRef<Toast>(null);
@@ -151,40 +167,6 @@ export default function ResidentsListPage() {
     };
   }, [currentPage, selectedStatus, selectedBranchId, selectedRoomType, debouncedSearch]);
 
-  // Compute initials for avatar fallback (e.g. "John Doe" -> "JD")
-  const getInitials = (name?: string): string => {
-    if (!name || !name.trim()) return 'R';
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-  };
-
-  // Format phone number e.g. "9876543259" -> "+91 98765 43259"
-  const formatPhone = (phone?: string): string => {
-    if (!phone) return '-';
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 10) {
-      return `+91 ${cleaned.slice(0, 5)} ${cleaned.slice(5)}`;
-    }
-    return phone;
-  };
-
-  // Calculate dynamic total pages based on actual records
-  const totalPages = Math.max(1, meta.total_pages || Math.ceil((meta.total || 0) / (meta.limit || 10)));
-
-  // Generate dynamic page numbers without showing unnecessary pages
-  const getPageNumbers = () => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-    if (currentPage <= 3) {
-      return [1, 2, 3, 4, '...', totalPages];
-    }
-    if (currentPage >= totalPages - 2) {
-      return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    }
-    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
-  };
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5]">
@@ -224,94 +206,44 @@ export default function ResidentsListPage() {
         </div>
 
         {/* Status Filter */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-normal text-gray-500 block">Status</label>
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            <svg
-              className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <Dropdown
+          label="Status"
+          value={selectedStatus}
+          onChange={(e) => {
+            setSelectedStatus(e.target.value);
+            setCurrentPage(1);
+          }}
+          options={[
+            { label: 'All Status', value: '' },
+            { label: 'Active', value: 'active' },
+            { label: 'Pending', value: 'pending' },
+            { label: 'Inactive', value: 'inactive' },
+          ]}
+        />
 
         {/* Room Type Filter */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-normal text-gray-500 block">Room Type</label>
-          <div className="relative">
-            <select
-              value={selectedRoomType}
-              onChange={(e) => {
-                setSelectedRoomType(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-            >
-              <option value="">All types</option>
-              <option value="Single">Single</option>
-              <option value="Double">Double</option>
-              <option value="Triple">Triple</option>
-            </select>
-            <svg
-              className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <Dropdown
+          label="Room Type"
+          value={selectedRoomType}
+          onChange={(e) => {
+            setSelectedRoomType(e.target.value);
+            setCurrentPage(1);
+          }}
+          options={[
+            { label: 'All types', value: '' },
+            { label: 'Single', value: 'Single' },
+            { label: 'Double', value: 'Double' },
+            { label: 'Triple', value: 'Triple' },
+          ]}
+        />
 
-        {/* Search Resident Input with Debounce */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-normal text-gray-500 block">Search Resident</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search name, phone, room..."
-              className="w-full h-11 pl-10 pr-8 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 placeholder-gray-400 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all shadow-2xs"
-            />
-            <svg
-              className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                aria-label="Clear search"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm w-4 h-4 flex items-center justify-center cursor-pointer"
-              >
-                &times;
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Search Resident Input using unified SearchInput */}
+        <SearchInput
+          label="Search Resident"
+          value={searchTerm}
+          onChange={(val) => setSearchTerm(val)}
+          placeholder="Search name, phone, room..."
+        />
       </div>
 
       {/* 4 Summary Stat Cards matching Figma pixel-for-pixel */}
@@ -380,210 +312,110 @@ export default function ResidentsListPage() {
         </div>
       </div>
 
-      {/* Residents Table Container matching Figma pixel-for-pixel */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
-        {loading ? (
-          <div className="p-16 flex flex-col items-center justify-center gap-3">
-            <ProgressSpinner style={{ width: '36px', height: '36px' }} strokeWidth="3" />
-            <span className="text-xs text-gray-500 font-medium">Loading residents...</span>
-          </div>
-        ) : residents.length === 0 ? (
-          <div className="p-16 text-center text-gray-400 text-xs">
-            No residents found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs font-semibold text-gray-500">
-                  <th className="py-4 px-5">Sr no.</th>
-                  <th className="py-4 px-3">Photo</th>
-                  <th className="py-4 px-4">Name</th>
-                  <th className="py-4 px-4">Room no.</th>
-                  <th className="py-4 px-4">Room type</th>
-                  <th className="py-4 px-4">Phone no.</th>
-                  <th className="py-4 px-4">Status</th>
-                  <th className="py-4 px-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 text-xs sm:text-[13px]">
-                {residents.map((resident, idx) => {
-                  const serialNumber = (meta.page - 1) * meta.limit + idx + 1;
-                  const isPhotoValid = Boolean(
-                    resident.profile_photo_url && resident.profile_photo_url.trim() !== ''
-                  );
-                  const isStatusActive = resident.status?.toLowerCase() === 'active';
-                  const isStatusPending = resident.status?.toLowerCase() === 'pending';
-
-                  return (
-                    <tr
-                      key={resident.id}
-                      className="hover:bg-gray-50/60 transition-colors"
-                    >
-                      {/* Sr no. */}
-                      <td className="py-4 px-5 font-normal text-gray-600">
-                        {serialNumber}
-                      </td>
-
-                      {/* Photo */}
-                      <td className="py-4 px-3">
-                        <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-gray-100 bg-emerald-50 flex items-center justify-center text-[#175C46] font-bold text-xs relative">
-                          {isPhotoValid ? (
-                            <Image
-                              src={resident.profile_photo_url!}
-                              alt={resident.name}
-                              width={36}
-                              height={36}
-                              className="w-full h-full object-cover"
-                              unoptimized
-                            />
-                          ) : (
-                            <span>{getInitials(resident.name)}</span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Name (matching Figma: ONLY name, no extra email underneath) */}
-                      <td className="py-4 px-4 font-semibold text-gray-900 whitespace-nowrap">
-                        {resident.name}
-                      </td>
-
-                      {/* Room no. (matching Figma: ONLY room number, no floor text underneath) */}
-                      <td className="py-4 px-4 font-medium text-gray-800 whitespace-nowrap">
-                        {resident.room_no || 'A-204'}
-                      </td>
-
-                      {/* Room type (matching Figma: ONLY room type, no building name) */}
-                      <td className="py-4 px-4 font-normal text-gray-700 whitespace-nowrap">
-                        Single
-                      </td>
-
-                      {/* Phone no. */}
-                      <td className="py-4 px-4 font-normal text-gray-700 whitespace-nowrap">
-                        {formatPhone(resident.phone)}
-                      </td>
-
-                      {/* Status Badge matching Figma */}
-                      <td className="py-4 px-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize ${
-                            isStatusActive
-                              ? 'bg-[#E6F4EA] text-[#137333]'
-                              : isStatusPending
-                              ? 'bg-[#FEF7E0] text-[#B06000]'
-                              : 'bg-[#FCE8E6] text-[#C5221F]'
-                          }`}
-                        >
-                          {resident.status}
-                        </span>
-                      </td>
-
-                      {/* Actions matching Figma: 3 distinct bordered square button boxes */}
-                      <td className="py-4 px-5 text-right whitespace-nowrap">
-                        <div className="inline-flex items-center gap-2">
-                          {/* Eye / View Details Button navigating to detail page */}
-                          <Link
-                            href={`/dashboard/residents/${resident.id}`}
-                            title="View Details"
-                            className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-colors cursor-pointer"
-                          >
-                            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.8">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                            </svg>
-                          </Link>
-
-                          {/* Pencil / Edit Button */}
-                          <Link
-                            href={`/dashboard/residents/${resident.id}/edit`}
-                            title="Edit"
-                            className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:text-[#175C46] hover:border-gray-300 transition-colors cursor-pointer"
-                          >
-                            <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                          </Link>
-
-                          {/* Delete Resident Button */}
-                          <button
-                            type="button"
-                            onClick={() => setDeletingResident(resident)}
-                            title="Delete Resident"
-                            className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer"
-                          >
-                            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.8">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Pagination Footer matching Figma */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm text-gray-400 py-1">
-        <span>
-          Showing {residents.length > 0 ? (currentPage - 1) * meta.limit + 1 : 0}-
-          {Math.min(currentPage * meta.limit, meta.total)} of {meta.total}
-        </span>
-
-        {/* Page Buttons matching Figma - dynamic based on actual total records */}
-        <div className="inline-flex items-center gap-1.5">
-          <button
-            type="button"
-            disabled={currentPage <= 1}
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            ‹
-          </button>
-
-          {getPageNumbers().map((pg, idx) => {
-            if (typeof pg === 'string') {
-              return (
-                <span
-                  key={`ellipsis-${idx}`}
-                  className="w-7 h-7 flex items-center justify-center text-gray-400 text-xs"
-                >
-                  ...
-                </span>
+      {/* Standardized Residents Table using unified DataTable */}
+      <DataTable<Resident>
+        data={residents}
+        loading={loading}
+        loadingLabel="Loading residents..."
+        emptyTitle="No Residents Found"
+        emptyDescription="No resident records match your filter criteria."
+        pagination={{
+          currentPage: meta.page || currentPage,
+          totalCount: meta.total ?? residents.length,
+          pageSize: meta.limit || 10,
+          itemCount: residents.length,
+          itemLabel: 'Residents',
+          onPageChange: (page) => setCurrentPage(page),
+        }}
+        columns={[
+          {
+            header: 'Sr no.',
+            width: '64px',
+            cell: (_item, idx) => {
+              const srNo = ((meta.page || currentPage) - 1) * (meta.limit || 10) + idx + 1;
+              return <span className="font-medium text-gray-900">{srNo}</span>;
+            },
+          },
+          {
+            header: 'Photo',
+            width: '60px',
+            cell: (resident) => {
+              const isPhotoValid = Boolean(
+                resident.profile_photo_url && resident.profile_photo_url.trim() !== ''
               );
-            }
-            const isActive = pg === currentPage;
-            return (
-              <button
-                key={pg}
-                type="button"
-                onClick={() => setCurrentPage(pg)}
-                className={`w-7 h-7 flex items-center justify-center rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-                  isActive
-                    ? 'bg-[#175C46] text-white shadow-2xs'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                {pg}
-              </button>
-            );
-          })}
+              return (
+                <div className="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-gray-100 bg-emerald-50 flex items-center justify-center text-[#175C46] font-bold text-xs relative">
+                  {isPhotoValid ? (
+                    <Image
+                      src={resident.profile_photo_url!}
+                      alt={resident.name}
+                      width={36}
+                      height={36}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span>{getInitials(resident.name)}</span>
+                  )}
+                </div>
+              );
+            },
+          },
+          {
+            header: 'Name',
+            cell: (resident) => (
+              <span className="font-semibold text-gray-900 whitespace-nowrap">{resident.name}</span>
+            ),
+          },
+          {
+            header: 'Room no.',
+            cell: (resident) => (
+              <span className="font-medium text-gray-800 whitespace-nowrap">
+                {resident.room_no || '—'}
+              </span>
+            ),
+          },
+          {
+            header: 'Room type',
+            cell: (resident) => (
+              <span className="text-gray-700 capitalize whitespace-nowrap">
+                {resident.room_type || 'Single'}
+              </span>
+            ),
+          },
+          {
+            header: 'Phone no.',
+            cell: (resident) => (
+              <span className="text-gray-700 whitespace-nowrap">{formatPhone(resident.phone)}</span>
+            ),
+          },
+          {
+            header: 'Status',
+            cell: (resident) => <StatusBadge status={resident.status} />,
+          },
+          {
+            header: 'Actions',
+            align: 'right',
+            className: 'whitespace-nowrap',
+            cell: (resident) => (
+              <TableActions align="right">
+                <Link href={`/dashboard/residents/${resident.id}`}>
+                  <IconButton variant="view" title="View Details" />
+                </Link>
+                <Link href={`/dashboard/residents/${resident.id}/edit`}>
+                  <IconButton variant="edit" title="Edit Profile" />
+                </Link>
+                <IconButton
+                  variant="delete"
+                  onClick={() => setDeletingResident(resident)}
+                  title="Delete Resident"
+                />
+              </TableActions>
+            ),
+          },
+        ]}
+      />
 
-          <button
-            type="button"
-            disabled={currentPage >= totalPages}
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
-          >
-            ›
-          </button>
-        </div>
-      </div>
-
-    
       {/* Reusable Delete Confirmation Modal */}
       <DeleteConfirmationModal
         visible={Boolean(deletingResident)}
@@ -591,6 +423,10 @@ export default function ResidentsListPage() {
         title="Delete Resident"
         itemType="resident"
         itemName={deletingResident?.name}
+        details={[
+          { label: 'Resident', value: deletingResident?.name || '—' },
+          { label: 'Room', value: deletingResident?.room_no || '—' },
+        ]}
         loading={isDeleting}
         onConfirm={async () => {
           if (!deletingResident) return;

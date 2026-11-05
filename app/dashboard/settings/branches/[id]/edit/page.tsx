@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ProgressSpinner } from 'primereact/progressspinner';
 import { Branch } from '@/types/branch';
 import { branchService } from '@/services/branch.service';
 import { BranchForm } from '@/components/branches/branch-form';
+import { BrandLoader } from '@/components/ui';
 
 export default function EditBranchPage() {
   const params = useParams();
@@ -48,10 +48,7 @@ export default function EditBranchPage() {
   if (loading) {
     return (
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1200px] w-full mx-auto flex items-center justify-center min-h-[450px]">
-        <div className="flex flex-col items-center justify-center gap-3">
-          <ProgressSpinner style={{ width: '40px', height: '40px' }} strokeWidth="4" />
-          <span className="text-xs text-gray-500 font-medium">Loading branch details...</span>
-        </div>
+        <BrandLoader message="Loading branch details..." />
       </main>
     );
   }
@@ -76,4 +73,3 @@ export default function EditBranchPage() {
     </main>
   );
 }
-

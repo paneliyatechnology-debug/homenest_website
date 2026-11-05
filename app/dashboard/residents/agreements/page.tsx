@@ -10,11 +10,20 @@ import {
   INITIAL_AGREEMENT_STATS,
 } from '@/services/agreement.service';
 import { AgreementStatsCards } from '@/components/agreements/agreement-stats-cards';
-import { AgreementTable } from '@/components/agreements/agreement-table';
+
 import { AgreementDetailsModal } from '@/components/agreements/agreement-details-modal';
 
-import { AgreementDeleteModal } from '@/components/agreements/agreement-delete-modal';
+import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput } from '@/components/ui';
 import { BranchDropdown } from '@/components/residents/branch-dropdown';
+
+const AGREEMENT_TYPE_LABELS: Record<string, string> = {
+  rental: 'Rental Agreement',
+  '11_months': '11 Months Standard',
+  lease: 'Lease Agreement',
+  resident: 'Resident Agreement',
+};
+
+const formatAgreementType = (val: string) => AGREEMENT_TYPE_LABELS[val] ?? val;
 
 export default function AgreementRecordsPage() {
   const router = useRouter();
@@ -47,6 +56,33 @@ export default function AgreementRecordsPage() {
   
   const [deletingRecord, setDeletingRecord] = useState<AgreementRecord | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteAgreement = async () => {
+    if (!deletingRecord) return;
+    setIsDeleting(true);
+    try {
+      const res = await agreementService.deleteAgreement(deletingRecord.id);
+      toastRef.current?.show({
+        severity: 'success',
+        summary: 'Agreement Deleted',
+        detail: res.message || 'Agreement deleted successfully',
+        life: 3000,
+      });
+      setIsDeleteModalOpen(false);
+      setDeletingRecord(null);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err) {
+      toastRef.current?.show({
+        severity: 'error',
+        summary: 'Delete Failed',
+        detail: err instanceof Error ? err.message : 'Failed to delete agreement',
+        life: 4000,
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Trigger data refresh after edit or delete
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -162,117 +198,136 @@ export default function AgreementRecordsPage() {
         </div>
 
         {/* Agreement Types Filter */}
-        <div className="space-y-1">
-          <label className="text-xs font-normal text-gray-500 block">Agreement Types</label>
-          <div className="relative">
-            <select
-              value={selectedAgreementType}
-              onChange={(e) => {
-                setSelectedAgreementType(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-11 px-4 py-2 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-            >
-              <option value="">All Types</option>
-              <option value="resident">Resident Agreement</option>
-              <option value="lease">Lease Agreement</option>
-              <option value="rental">Rental Agreement</option>
-              <option value="11_months">11 Months Standard</option>
-            </select>
-            <svg
-              className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <Dropdown
+          label="Agreement Types"
+          value={selectedAgreementType}
+          onChange={(e) => {
+            setSelectedAgreementType(e.target.value);
+            setCurrentPage(1);
+          }}
+          options={[
+            { label: 'All Types', value: '' },
+            { label: 'Resident Agreement', value: 'resident' },
+            { label: 'Lease Agreement', value: 'lease' },
+            { label: 'Rental Agreement', value: 'rental' },
+            { label: '11 Months Standard', value: '11_months' },
+          ]}
+        />
 
         {/* Status Filter */}
-        <div className="space-y-1">
-          <label className="text-xs font-normal text-gray-500 block">Status</label>
-          <div className="relative">
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full h-11 px-4 py-2 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-            >
-              <option value="">All status</option>
-              <option value="signed">Signed</option>
-              <option value="pending">Pending</option>
-              <option value="draft">Draft</option>
-              <option value="expired">Expired</option>
-            </select>
-            <svg
-              className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <Dropdown
+          label="Status"
+          value={selectedStatus}
+          onChange={(e) => {
+            setSelectedStatus(e.target.value);
+            setCurrentPage(1);
+          }}
+          options={[
+            { label: 'All status', value: '' },
+            { label: 'Signed', value: 'signed' },
+            { label: 'Pending', value: 'pending' },
+            { label: 'Draft', value: 'draft' },
+            { label: 'Expired', value: 'expired' },
+          ]}
+        />
 
-        {/* Search Input matching placeholder "Search by resident or agreement no." */}
-        <div className="space-y-1">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by resident or agreement no."
-              className="w-full h-11 pl-10 pr-8 py-2 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm text-gray-800 placeholder-gray-400 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all shadow-2xs"
-            />
-            <svg
-              className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm w-4 h-4 flex items-center justify-center cursor-pointer"
-              >
-                &times;
-              </button>
-            )}
-          </div>
-        </div>
+        {/* Search Input using unified SearchInput component */}
+        <SearchInput
+          value={searchTerm}
+          onChange={(val) => setSearchTerm(val)}
+          placeholder="Search by resident or agreement no."
+        />
       </div>
 
-      {/* Main Agreement Records Table */}
-      <AgreementTable
-        records={records}
-        meta={meta}
+      {/* Main Agreement Records Table using unified DataTable */}
+      <DataTable<AgreementRecord>
+        data={records}
         loading={loading}
-        onPageChange={(page) => setCurrentPage(page)}
-        onViewRecord={(record) => {
-          setSelectedRecord(record);
-          setIsModalOpen(true);
+        loadingLabel="Loading agreement records..."
+        emptyTitle="No Agreements Found"
+        emptyDescription="No agreement records match your filter criteria."
+        pagination={{
+          currentPage: meta.page || currentPage,
+          totalCount: meta.total ?? records.length,
+          pageSize: meta.limit || 6,
+          itemCount: records.length,
+          itemLabel: 'Agreements',
+          onPageChange: (page) => setCurrentPage(page),
         }}
-        onEditRecord={(record) => {
-          router.push(`/dashboard/residents/agreements/${record.id}/edit`);
-        }}
-        onDeleteRecord={(record) => {
-          setDeletingRecord(record);
-          setIsDeleteModalOpen(true);
-        }}
+        columns={[
+          {
+            header: 'Sr no.',
+            width: '64px',
+            cell: (item, idx) => {
+              const srNo =
+                item.sr_no ??
+                ((meta.page || currentPage) - 1) * (meta.limit || 6) + idx + 1;
+              return <span className="font-medium text-gray-900">{srNo}</span>;
+            },
+          },
+          {
+            header: 'Agreement no.',
+            cell: (item) => <span className="font-semibold text-gray-900">{item.agreement_no}</span>,
+          },
+          {
+            header: 'Resident Name',
+            cell: (item) => <span className="font-medium text-gray-900">{item.resident_name}</span>,
+          },
+          {
+            header: 'Room No.',
+            cell: (item) => <span className="text-gray-700 font-medium">{item.room_number ?? '—'}</span>,
+          },
+          {
+            header: 'Agreement type',
+            cell: (item) => <span className="text-gray-700 font-medium">{formatAgreementType(item.agreement_type)}</span>,
+          },
+          {
+            header: 'Start Date',
+            cell: (item) => <span className="text-gray-600">{item.start_date}</span>,
+          },
+          {
+            header: 'End date',
+            cell: (item) => <span className="text-gray-600">{item.end_date}</span>,
+          },
+          {
+            header: 'Status',
+            align: 'center',
+            cell: (item) => <StatusBadge status={item.status} />,
+          },
+          {
+            header: 'Actions',
+            align: 'right',
+            className: 'whitespace-nowrap',
+            cell: (item) => (
+              <TableActions align="right">
+                <IconButton
+                  variant="view"
+                  size="md"
+                  onClick={() => {
+                    setSelectedRecord(item);
+                    setIsModalOpen(true);
+                  }}
+                  title="View Agreement"
+                />
+                <IconButton
+                  variant="edit"
+                  size="md"
+                  onClick={() => router.push(`/dashboard/residents/agreements/${item.id}/edit`)}
+                  title="Edit Agreement"
+                />
+                <IconButton
+                  variant="delete"
+                  size="md"
+                  onClick={() => {
+                    setDeletingRecord(item);
+                    setIsDeleteModalOpen(true);
+                  }}
+                  title="Delete Agreement"
+                />
+              </TableActions>
+            ),
+          },
+        ]}
       />
 
       {/* View Agreement Details Modal */}
@@ -287,17 +342,21 @@ export default function AgreementRecordsPage() {
 
       
       {/* Delete Confirmation Modal */}
-      <AgreementDeleteModal
+      <DeleteConfirmationModal
         visible={isDeleteModalOpen}
         onHide={() => {
           setIsDeleteModalOpen(false);
           setDeletingRecord(null);
         }}
-        record={deletingRecord}
-        onSuccess={() => setRefreshTrigger((prev) => prev + 1)}
-        showToast={(severity, summary, detail) => {
-          toastRef.current?.show({ severity, summary, detail, life: 3000 });
-        }}
+        onConfirm={handleDeleteAgreement}
+        loading={isDeleting}
+        title="Delete Agreement"
+        itemName={deletingRecord?.agreement_no || 'this agreement'}
+        message={`Are you sure you want to remove ${deletingRecord?.agreement_no || 'this agreement'}? All associated records will be affected.`}
+        details={[
+          { label: 'Agreement No', value: deletingRecord?.agreement_no || '—' },
+          { label: 'Resident', value: deletingRecord?.resident_name || '—' },
+        ]}
       />
     </main>
   );

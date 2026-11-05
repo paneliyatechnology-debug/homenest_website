@@ -1,15 +1,16 @@
 'use client';
 
 import React, { useEffect, useState, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Toast } from 'primereact/toast';
 import { Branch, BranchStats, BranchMeta } from '@/types/branch';
 import { branchService, INITIAL_BRANCH_STATS } from '@/services/branch.service';
 import { BranchStatsCards } from '@/components/branches/branch-stats-cards';
-import { BranchTable } from '@/components/branches/branch-table';
+
 import { BranchDetailsModal } from '@/components/branches/branch-details-modal';
-import { DeleteConfirmationModal } from '@/components/ui/delete-confirmation-modal';
+import { DeleteConfirmationModal, DataTable, StatusBadge, IconButton, TableActions } from '@/components/ui';
 
 export default function BranchManagementPage() {
   const router = useRouter();
@@ -162,23 +163,118 @@ export default function BranchManagementPage() {
       {/* 4 Summary Stat Cards matching Figma pixel-for-pixel */}
       <BranchStatsCards stats={stats} />
 
-      {/* Branch Table with Eye (View), Pencil (Edit), and Trash (Delete) */}
-      <BranchTable
-        branches={branches}
-        meta={meta}
+      {/* Standardized Branch Management Table using unified DataTable */}
+      <DataTable<Branch>
+        data={branches}
         loading={loading}
-        onPageChange={(page) => setCurrentPage(page)}
-        onView={(branch) => {
-          setSelectedBranch(branch);
-          setIsDetailsModalOpen(true);
+        loadingLabel="Loading branches..."
+        emptyTitle="No Branches Found"
+        emptyDescription="No branch records match your search criteria."
+        pagination={{
+          currentPage: meta.page || currentPage,
+          totalCount: meta.total_records ?? branches.length,
+          pageSize: meta.limit || 10,
+          itemCount: branches.length,
+          itemLabel: 'Branches',
+          onPageChange: (page) => setCurrentPage(page),
         }}
-        onEdit={(branch) => {
-          router.push(`/dashboard/settings/branches/${branch.id}/edit`);
-        }}
-        onDelete={(branch) => {
-          setDeletingBranch(branch);
-          setIsDeleteModalOpen(true);
-        }}
+        columns={[
+          {
+            header: 'Sr no.',
+            width: '64px',
+            cell: (_item, idx) => {
+              const srNo = ((meta.page || currentPage) - 1) * (meta.limit || 10) + idx + 1;
+              return <span className="font-medium text-gray-900">{srNo}</span>;
+            },
+          },
+          {
+            header: 'Branch name',
+            cell: (branch) => {
+              const photoSrc = branch.branch_photo_url || branch.branch_photo;
+              return (
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 bg-gray-100 border border-gray-100">
+                    {photoSrc ? (
+                      <Image
+                        src={photoSrc}
+                        alt={branch.name}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#EBF7F2] text-[#175C46] flex items-center justify-center font-bold text-xs">
+                        {branch.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <span className="font-semibold text-gray-900 whitespace-nowrap">
+                    {branch.name}
+                  </span>
+                </div>
+              );
+            },
+          },
+          {
+            header: 'Location',
+            cell: (branch) => <span className="text-gray-700 font-medium whitespace-nowrap">{branch.location}</span>,
+          },
+          {
+            header: 'Total rooms',
+            cell: (branch) => <span className="text-gray-700 font-medium whitespace-nowrap">{branch.total_rooms}</span>,
+          },
+          {
+            header: 'Occupied',
+            cell: (branch) => (
+              <span className="text-gray-700 font-medium whitespace-nowrap">
+                {branch.occupied_rooms ?? 0}
+              </span>
+            ),
+          },
+          {
+            header: 'Available',
+            cell: (branch) => (
+              <span className="text-gray-700 font-medium whitespace-nowrap">
+                {branch.available_rooms ?? branch.total_rooms ?? 0}
+              </span>
+            ),
+          },
+          {
+            header: 'Status',
+            cell: (branch) => <StatusBadge variant="branch" status={branch.status} />,
+          },
+          {
+            header: 'Actions',
+            align: 'right',
+            className: 'whitespace-nowrap',
+            cell: (branch) => (
+              <TableActions align="right">
+                <IconButton
+                  variant="view"
+                  onClick={() => {
+                    setSelectedBranch(branch);
+                    setIsDetailsModalOpen(true);
+                  }}
+                  title="View Details"
+                />
+                <IconButton
+                  variant="edit"
+                  onClick={() => router.push(`/dashboard/settings/branches/${branch.id}/edit`)}
+                  title="Edit Branch"
+                />
+                <IconButton
+                  variant="delete"
+                  onClick={() => {
+                    setDeletingBranch(branch);
+                    setIsDeleteModalOpen(true);
+                  }}
+                  title="Delete Branch"
+                />
+              </TableActions>
+            ),
+          },
+        ]}
       />
 
       {/* View Branch Details Modal */}
