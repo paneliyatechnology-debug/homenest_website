@@ -821,7 +821,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       )}
 
       {/* Form Card Container matching Figma layout */}
-      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-8">
+      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-8">
         {/* Section 1: Personal & Profile Info */}
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

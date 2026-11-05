@@ -9,6 +9,7 @@ export interface Resident {
   status: 'active' | 'pending' | 'inactive' | string;
   profile_photo_url?: string | null;
   room_no?: string | null;
+  room_type?: string | null;
   building_name?: string | null;
   floor_name?: string | null;
   room_id?: number | null;

@@ -99,9 +99,9 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         className="w-full"
         inputClassName={`w-full h-11 px-4 pr-10 py-2.5 bg-white border ${
           hasError
-            ? 'border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500 text-red-900'
-            : 'border-gray-200 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-900'
-        } rounded-xl text-sm placeholder-gray-400 focus:outline-none transition-all font-sans`}
+            ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
+            : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
+        } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans`}
         panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans"
       />
       <svg

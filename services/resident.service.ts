@@ -303,6 +303,20 @@ export const residentService = {
    * Update an existing resident user with multipart/form-data
    * Endpoint: PUT /users/:id (or PATCH /users/:id)
    */
+  /**
+   * Delete a resident user
+   * Endpoint: DELETE /users/:id
+   */
+  async deleteResident(id: number | string): Promise<{ success?: boolean; message?: string }> {
+    const response = await apiClient<{ success?: boolean; message?: string }>(`/users/${id}`, {
+      method: 'DELETE',
+    });
+    if (response && response.success === false) {
+      throw new Error(response.message || 'Failed to delete resident');
+    }
+    return response;
+  },
+
   async updateResident(id: number | string, formData: FormData): Promise<ApiResponse<ResidentDetail>> {
     try {
       const response = await apiClient<ApiResponse<ResidentDetail>>(`/users/${id}`, {

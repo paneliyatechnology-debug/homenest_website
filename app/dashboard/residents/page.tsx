@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
 import { BranchDropdown } from '@/components/residents/branch-dropdown';
@@ -30,6 +31,11 @@ export default function ResidentsListPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Delete resident state
+  const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Display flash toast upon redirection after create or update
   useEffect(() => {
@@ -104,7 +110,7 @@ export default function ResidentsListPage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedBranchId]);
+  }, [selectedBranchId, refreshTrigger]);
 
   // Fetch Residents from GET /users with filters
   useEffect(() => {
@@ -203,138 +209,108 @@ export default function ResidentsListPage() {
         </Link>
       </div>
 
-      {/* Filter Controls Row: Branch, Status, Room Type, Search Resident, and Filter button */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
-        {/* Dropdowns + Search */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 flex-1 max-w-5xl">
-          {/* Branch Filter */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-normal text-gray-500 block">Branch</label>
-            <BranchDropdown
-              selectedBranchId={selectedBranchId}
-              onSelectBranch={(id) => {
-                setSelectedBranchId(id);
+      {/* Filter Controls Row: Branch, Status, Room Type, and Search Resident (Full Width Responsive Grid) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end w-full">
+        {/* Branch Filter */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-normal text-gray-500 block">Branch</label>
+          <BranchDropdown
+            selectedBranchId={selectedBranchId}
+            onSelectBranch={(id) => {
+              setSelectedBranchId(id);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+
+        {/* Status Filter */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-normal text-gray-500 block">Status</label>
+          <div className="relative">
+            <select
+              value={selectedStatus}
+              onChange={(e) => {
+                setSelectedStatus(e.target.value);
                 setCurrentPage(1);
               }}
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-normal text-gray-500 block">Status</label>
-            <div className="relative">
-              <select
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-                <option value="inactive">Inactive</option>
-              </select>
-              <svg
-                className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Room Type Filter */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-normal text-gray-500 block">Room Type</label>
-            <div className="relative">
-              <select
-                value={selectedRoomType}
-                onChange={(e) => {
-                  setSelectedRoomType(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
-              >
-                <option value="">All types</option>
-                <option value="Single">Single</option>
-                <option value="Double">Double</option>
-                <option value="Triple">Triple</option>
-              </select>
-              <svg
-                className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-          </div>
-
-          {/* Search Resident Input with Debounce */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-normal text-gray-500 block">Search Resident</label>
-            <div className="relative">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search name, phone, room..."
-                className="w-full h-11 pl-10 pr-8 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 placeholder-gray-400 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all shadow-2xs"
-              />
-              <svg
-                className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-current"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  aria-label="Clear search"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm w-4 h-4 flex items-center justify-center cursor-pointer"
-                >
-                  &times;
-                </button>
-              )}
-            </div>
+              className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <svg
+              className="w-4 h-4 text-gray-500 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </div>
 
-        {/* Filter Action Button - short & set on the right side matching Figma */}
-        <div className="flex justify-end shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectedBranchId(null);
-              setSelectedStatus('');
-              setSelectedRoomType('');
-              setSearchTerm('');
-              setDebouncedSearch('');
-              setCurrentPage(1);
-            }}
-            title="Reset Filters"
-            className="h-11 px-5 bg-white hover:bg-gray-50 border border-gray-200/90 rounded-xl text-gray-800 font-medium text-xs sm:text-sm inline-flex items-center justify-center gap-2.5 transition-colors cursor-pointer shadow-2xs shrink-0"
-          >
+        {/* Room Type Filter */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-normal text-gray-500 block">Room Type</label>
+          <div className="relative">
+            <select
+              value={selectedRoomType}
+              onChange={(e) => {
+                setSelectedRoomType(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full h-11 px-4 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all appearance-none cursor-pointer pr-9 shadow-2xs"
+            >
+              <option value="">All types</option>
+              <option value="Single">Single</option>
+              <option value="Double">Double</option>
+              <option value="Triple">Triple</option>
+            </select>
             <svg
-              className="w-4 h-4 text-gray-700 stroke-current shrink-0"
+              className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </div>
+
+        {/* Search Resident Input with Debounce */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-normal text-gray-500 block">Search Resident</label>
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search name, phone, room..."
+              className="w-full h-11 pl-10 pr-8 py-2.5 bg-white rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm font-normal text-gray-800 placeholder-gray-400 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all shadow-2xs"
+            />
+            <svg
+              className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-current"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="2"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M3 12h12M3 18h6" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span>Filter</span>
-          </button>
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 font-bold text-sm w-4 h-4 flex items-center justify-center cursor-pointer"
+              >
+                &times;
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -528,17 +504,15 @@ export default function ResidentsListPage() {
                             </svg>
                           </Link>
 
-                          {/* Three Dots Button */}
+                          {/* Delete Resident Button */}
                           <button
                             type="button"
-                            onClick={() => alert(`More options for ${resident.name}`)}
-                            title="More options"
-                            className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:text-gray-900 hover:border-gray-300 transition-colors cursor-pointer"
+                            onClick={() => setDeletingResident(resident)}
+                            title="Delete Resident"
+                            className="w-8 h-8 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 transition-colors cursor-pointer"
                           >
-                            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                              <circle cx="12" cy="12" r="1.5" />
-                              <circle cx="19" cy="12" r="1.5" />
-                              <circle cx="5" cy="12" r="1.5" />
+                            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.8">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                             </svg>
                           </button>
                         </div>
@@ -609,6 +583,46 @@ export default function ResidentsListPage() {
         </div>
       </div>
 
+    
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        visible={Boolean(deletingResident)}
+        onHide={() => setDeletingResident(null)}
+        title="Delete Resident"
+        subtitle="This action cannot be undone"
+        confirmLabel="Delete"
+        loading={isDeleting}
+        onConfirm={async () => {
+          if (!deletingResident) return;
+          setIsDeleting(true);
+          try {
+            const res = await residentService.deleteResident(deletingResident.id);
+            toastRef.current?.show({
+              severity: 'success',
+              summary: 'Resident Deleted',
+              detail: res.message || 'Resident deleted successfully',
+              life: 3000,
+            });
+            setDeletingResident(null);
+            setRefreshTrigger((prev) => prev + 1);
+          } catch (err) {
+            toastRef.current?.show({
+              severity: 'error',
+              summary: 'Delete Failed',
+              detail: err instanceof Error ? err.message : 'Failed to delete resident',
+              life: 3000,
+            });
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+        message={
+          <span>
+            Are you sure you want to delete resident{' '}
+            <strong className="text-gray-900 font-semibold">{deletingResident?.name}</strong>? All associated records will be removed.
+          </span>
+        }
+      />
     </main>
   );
 }
