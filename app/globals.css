@@ -724,3 +724,20 @@ span.p-password,
   color: #d1d5db !important;
   font-weight: 400 !important;
 }
+
+/* Hide scrollbar while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+/* Cursor pointer on any element that shows a title tooltip on hover */
+[title]:not(:disabled):not([disabled]) {
+  cursor: pointer;
+}

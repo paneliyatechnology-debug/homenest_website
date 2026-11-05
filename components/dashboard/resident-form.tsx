@@ -1072,7 +1072,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                       Photo Attached
                     </span>
                     {photoFile && (
-                      <span className="text-[11px] text-gray-400 font-medium truncate max-w-[140px]" title={photoFile.name}>
+                      <span className="text-[11px] text-gray-400 font-medium truncate max-w-[140px] cursor-pointer" title={photoFile.name}>
                         {(photoFile.size / 1024 / 1024).toFixed(1)} MB
                       </span>
                     )}

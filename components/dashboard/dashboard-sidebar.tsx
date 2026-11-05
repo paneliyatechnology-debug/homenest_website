@@ -236,7 +236,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-[265px] xl:w-[275px] bg-[#176B52] text-white flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0 select-none ${
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-[265px] xl:w-[275px] bg-[#176B52] text-white flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0 select-none overflow-hidden no-scrollbar ${
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
@@ -257,7 +257,10 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation List with Collapsible Submenus */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden space-y-0.5 py-1">
+        <nav
+          className="flex-1 overflow-y-auto overflow-x-hidden space-y-0.5 py-1 no-scrollbar [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {navItems.map((item) => {
             const hasChildren = !!item.children && item.children.length > 0;
             const isMenuOpen = activeExpandedMenu === item.label;

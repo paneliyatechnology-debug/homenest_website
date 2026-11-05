@@ -668,7 +668,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                       {/* File Name Attachment Info Box */}
                       <div className="bg-gray-50/70 rounded-xl p-3 border border-gray-100/80">
                         <span className="text-[11px] text-gray-400 block font-medium">Attachment</span>
-                        <p className="text-xs text-gray-700 font-mono font-medium truncate mt-0.5" title={doc.fileName || undefined}>
+                        <p className="text-xs text-gray-700 font-mono font-medium truncate mt-0.5 cursor-pointer" title={doc.fileName || undefined}>
                           {doc.fileName || 'No file attached'}
                         </p>
                       </div>
