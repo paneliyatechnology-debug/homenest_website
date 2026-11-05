@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AgreementRecord } from '@/types/agreement';
 import { agreementService } from '@/services/agreement.service';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DeleteConfirmationModal } from '@/components/ui/delete-confirmation-modal';
 
 interface AgreementDeleteModalProps {
   visible: boolean;
@@ -39,21 +39,16 @@ export const AgreementDeleteModal: React.FC<AgreementDeleteModalProps> = ({
   };
 
   return (
-    <ConfirmDialog
+    <DeleteConfirmationModal
       visible={visible}
       onHide={onHide}
       title="Delete Agreement"
       subtitle="This action cannot be undone"
-      confirmLabel="Delete"
+      confirmLabel="Delete Agreement"
+      itemType="agreement"
+      itemName={record.agreement_no ? `${record.agreement_no} (${record.resident_name})` : record.resident_name}
       loading={deleting}
       onConfirm={handleDelete}
-      message={
-        <span>
-          Are you sure you want to delete agreement{' '}
-          <strong className="text-gray-900 font-semibold">{record.agreement_no}</strong> for resident{' '}
-          <strong className="text-gray-900 font-semibold">{record.resident_name}</strong>?
-        </span>
-      }
     />
   );
 };

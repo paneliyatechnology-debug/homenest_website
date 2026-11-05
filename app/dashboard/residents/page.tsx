@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Toast } from 'primereact/toast';
-import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { DeleteConfirmationModal } from '@/components/ui/delete-confirmation-modal';
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
 import { BranchDropdown } from '@/components/residents/branch-dropdown';
@@ -584,13 +584,13 @@ export default function ResidentsListPage() {
       </div>
 
     
-      {/* Delete Confirmation Dialog */}
-      <ConfirmDialog
+      {/* Reusable Delete Confirmation Modal */}
+      <DeleteConfirmationModal
         visible={Boolean(deletingResident)}
         onHide={() => setDeletingResident(null)}
         title="Delete Resident"
-        subtitle="This action cannot be undone"
-        confirmLabel="Delete"
+        itemType="resident"
+        itemName={deletingResident?.name}
         loading={isDeleting}
         onConfirm={async () => {
           if (!deletingResident) return;
@@ -616,12 +616,6 @@ export default function ResidentsListPage() {
             setIsDeleting(false);
           }
         }}
-        message={
-          <span>
-            Are you sure you want to delete resident{' '}
-            <strong className="text-gray-900 font-semibold">{deletingResident?.name}</strong>? All associated records will be removed.
-          </span>
-        }
       />
     </main>
   );

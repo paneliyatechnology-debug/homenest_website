@@ -208,6 +208,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
   const [educationCertFile, setEducationCertFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
+  const [existingAadhar, setExistingAadhar] = useState<string | null>(initialData?.documents?.aadhar_card || null);
+  const [existingAddressProof, setExistingAddressProof] = useState<string | null>(initialData?.documents?.address_proof || null);
+  const [existingEducationCert, setExistingEducationCert] = useState<string | null>(initialData?.documents?.education_certificate || null);
+  const [existingSignature, setExistingSignature] = useState<string | null>(initialData?.documents?.signature || null);
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -711,21 +715,35 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         }
       }
 
-      // Attached Files
+      // Attached Files & Explicit Removal Handlers ('null' sent in edit mode if removed)
       if (photoFile) {
         fd.append('profile_photo', photoFile);
+      } else if (mode === 'edit' && !photoPreview) {
+        fd.append('profile_photo', 'null');
       }
+
       if (aadharFile) {
         fd.append('aadhar_card', aadharFile);
+      } else if (mode === 'edit' && !existingAadhar) {
+        fd.append('aadhar_card', 'null');
       }
+
       if (addressProofFile) {
         fd.append('address_proof', addressProofFile);
+      } else if (mode === 'edit' && !existingAddressProof) {
+        fd.append('address_proof', 'null');
       }
+
       if (educationCertFile) {
         fd.append('education_certificate', educationCertFile);
+      } else if (mode === 'edit' && !existingEducationCert) {
+        fd.append('education_certificate', 'null');
       }
+
       if (signatureFile) {
         fd.append('signature', signatureFile);
+      } else if (mode === 'edit' && !existingSignature) {
+        fd.append('signature', 'null');
       }
 
       if (mode === 'create') {
@@ -1576,10 +1594,20 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     &times;
                   </button>
                 </div>
-              ) : initialData?.documents?.aadhar_card ? (
+              ) : existingAadhar ? (
                 <div className="p-2.5 rounded-lg bg-white border border-gray-200 flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-600 truncate">{initialData.documents.aadhar_card}</span>
-                  <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Uploaded</span>
+                  <span className="text-xs text-gray-600 truncate">{existingAadhar}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-emerald-600 font-semibold">Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setExistingAadhar(null)}
+                      title="Remove document"
+                      className="text-gray-400 hover:text-rose-600 text-sm font-bold ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">No file uploaded</p>
@@ -1622,10 +1650,20 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     &times;
                   </button>
                 </div>
-              ) : initialData?.documents?.address_proof ? (
+              ) : existingAddressProof ? (
                 <div className="p-2.5 rounded-lg bg-white border border-gray-200 flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-600 truncate">{initialData.documents.address_proof}</span>
-                  <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Uploaded</span>
+                  <span className="text-xs text-gray-600 truncate">{existingAddressProof}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-emerald-600 font-semibold">Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setExistingAddressProof(null)}
+                      title="Remove document"
+                      className="text-gray-400 hover:text-rose-600 text-sm font-bold ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">No file uploaded</p>
@@ -1668,10 +1706,20 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     &times;
                   </button>
                 </div>
-              ) : initialData?.documents?.education_certificate ? (
+              ) : existingEducationCert ? (
                 <div className="p-2.5 rounded-lg bg-white border border-gray-200 flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-600 truncate">{initialData.documents.education_certificate}</span>
-                  <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Uploaded</span>
+                  <span className="text-xs text-gray-600 truncate">{existingEducationCert}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-emerald-600 font-semibold">Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setExistingEducationCert(null)}
+                      title="Remove document"
+                      className="text-gray-400 hover:text-rose-600 text-sm font-bold ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">No file uploaded</p>
@@ -1714,10 +1762,20 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     &times;
                   </button>
                 </div>
-              ) : initialData?.documents?.signature ? (
+              ) : existingSignature ? (
                 <div className="p-2.5 rounded-lg bg-white border border-gray-200 flex items-center justify-between gap-2">
-                  <span className="text-xs text-gray-600 truncate">{initialData.documents.signature}</span>
-                  <span className="text-[10px] text-emerald-600 font-semibold shrink-0">Uploaded</span>
+                  <span className="text-xs text-gray-600 truncate">{existingSignature}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-emerald-600 font-semibold">Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setExistingSignature(null)}
+                      title="Remove signature"
+                      className="text-gray-400 hover:text-rose-600 text-sm font-bold ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">No signature uploaded</p>
