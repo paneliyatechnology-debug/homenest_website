@@ -74,7 +74,7 @@ export const OccupancyChart: React.FC<OccupancyChartProps> = ({
     : '';
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100/90 p-4 sm:p-5 xl:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between w-full h-full">
+    <div className="bg-white rounded-2xl border border-gray-100/90 p-4 sm:p-5 xl:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between w-full h-full min-w-0 overflow-hidden">
       {/* Header matching Figma */}
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-base font-bold text-gray-900 tracking-tight">

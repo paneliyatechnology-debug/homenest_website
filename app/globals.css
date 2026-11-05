@@ -525,3 +525,24 @@ span.p-password,
     gap: 1rem;
   }
 }
+
+
+/* ==========================================================================
+   Room Type Distribution Responsive Container Query
+   ========================================================================== */
+.room-dist-container {
+  container-type: inline-size;
+}
+
+@container (min-width: 360px) {
+  .room-dist-container .room-dist-layout {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+@container (min-width: 440px) {
+  .room-dist-container .room-dist-layout {
+    gap: 1.5rem;
+  }
+}

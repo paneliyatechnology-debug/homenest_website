@@ -176,7 +176,7 @@ export default function DashboardPage() {
       {/* Middle Section: Occupancy Spline Wave Chart & Room Type Distribution Donut Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
         {/* Left 7 Columns: Occupancy Rate Area Wave Chart */}
-        <div className="lg:col-span-7 flex">
+        <div className="lg:col-span-7 flex min-w-0">
           <OccupancyChart
             timeframe={occupancy_trend.timeframe}
             data={occupancy_trend.data}
@@ -184,7 +184,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right 5 Columns: Room Type Distribution Donut */}
-        <div className="lg:col-span-5 flex">
+        <div className="lg:col-span-5 flex min-w-0">
           <RoomDistributionChart
             totalResidents={room_distribution.total_residents}
             distribution={room_distribution.distribution}
