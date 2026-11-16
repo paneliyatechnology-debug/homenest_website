@@ -13,6 +13,8 @@ export type StatusVariant =
   | 'signed'
   | 'draft'
   | 'expired'
+  | 'on_leave'
+  | 'on leave'
   | string;
 
 export interface StatusBadgeProps {
@@ -70,6 +72,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     } else if (normalized === 'expired' || normalized === 'inactive') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || (normalized === 'expired' ? 'Expired' : 'Inactive');
+    } else if (normalized === 'on_leave' || normalized === 'on leave') {
+      badgeStyle = 'bg-[#FEF7E6] text-[#B06000]';
+      displayLabel = label || 'On Leave';
     } else if (normalized === 'draft') {
       badgeStyle = 'bg-[#EFF6FF] text-[#2563EB]';
       displayLabel = label || 'Draft';

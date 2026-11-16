@@ -39,7 +39,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
 }) => {
   const displayTitle =
     title || `Delete ${itemType.charAt(0).toUpperCase() + itemType.slice(1)}`;
-  const displayConfirmLabel = confirmLabel || displayTitle;
+  const displayConfirmLabel = confirmLabel || 'Delete';
 
   const defaultMessage = (
     <span>

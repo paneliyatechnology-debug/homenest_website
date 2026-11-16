@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-export type IconButtonVariant = 'view' | 'edit' | 'delete' | 'default';
+export type IconButtonVariant = 'view' | 'edit' | 'delete' | 'status' | 'default';
 export type IconButtonSize = 'sm' | 'md';
 
 export interface IconButtonProps
@@ -43,6 +43,9 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
     } else if (variant === 'edit') {
       variantClasses =
         'border border-gray-200 bg-white text-gray-600 hover:text-[#175C46] hover:border-gray-300';
+    } else if (variant === 'status') {
+      variantClasses =
+        'border border-gray-200 bg-white text-gray-600 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/40';
     } else if (variant === 'delete') {
       variantClasses =
         'border border-gray-200 bg-white text-gray-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50';
@@ -87,6 +90,23 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+            />
+          </svg>
+        );
+      }
+
+      if (variant === 'status') {
+        return (
+          <svg
+            className="w-3.5 h-3.5 stroke-current"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
             />
           </svg>
         );

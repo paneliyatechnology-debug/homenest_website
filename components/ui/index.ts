@@ -35,6 +35,9 @@ export type { SearchInputProps } from './search-input';
 export { Dropdown, SelectDropdown } from './select-dropdown';
 export type { DropdownProps, DropdownOption } from './select-dropdown';
 
+export { MultiSelectDropdown } from './multi-select-dropdown';
+export type { MultiSelectDropdownProps, MultiSelectOption } from './multi-select-dropdown';
+
 export { PhotoUpload } from './photo-upload';
 export type { PhotoUploadProps } from './photo-upload';
 
