@@ -57,7 +57,7 @@ export interface CreateAgreementInput {
   agreement_type: string;
   start_date: string;      // YYYY-MM-DD
   end_date: string;        // YYYY-MM-DD
-  branch_id: number | string;
+  branch_id?: number | string;
   room_id: number | string;
   room_type: string;
   status: AgreementStatus;

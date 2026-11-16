@@ -197,7 +197,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
   // File states
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.profile_photo_url || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.profile_photo_url || initialData?.profile_photo || null);
 
   const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
@@ -1443,7 +1443,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 <svg className="w-3.5 h-3.5 text-gray-500 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <span>{aadharFile || initialData?.documents?.aadhar_card ? 'Replace File' : 'Upload File'}</span>
+                <span>{aadharFile || existingAadhar ? 'Replace File' : 'Upload File'}</span>
               </button>
             </div>
 
@@ -1499,7 +1499,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 <svg className="w-3.5 h-3.5 text-gray-500 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <span>{addressProofFile || initialData?.documents?.address_proof ? 'Replace File' : 'Upload File'}</span>
+                <span>{addressProofFile || existingAddressProof ? 'Replace File' : 'Upload File'}</span>
               </button>
             </div>
 
@@ -1555,7 +1555,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 <svg className="w-3.5 h-3.5 text-gray-500 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                 </svg>
-                <span>{educationCertFile || initialData?.documents?.education_certificate ? 'Replace File' : 'Upload File'}</span>
+                <span>{educationCertFile || existingEducationCert ? 'Replace File' : 'Upload File'}</span>
               </button>
             </div>
 
@@ -1611,7 +1611,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 <svg className="w-3.5 h-3.5 text-gray-500 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                 </svg>
-                <span>{signatureFile || initialData?.documents?.signature ? 'Replace Signature' : 'Upload Signature'}</span>
+                <span>{signatureFile || existingSignature ? 'Replace Signature' : 'Upload Signature'}</span>
               </button>
             </div>
           </div>

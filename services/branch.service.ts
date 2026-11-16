@@ -40,9 +40,11 @@ class BranchService {
     query.set('limit', String(limit));
 
     if (params.pg_id) query.set('pg_id', String(params.pg_id));
-    if (params.status && params.status !== 'all') query.set('status', params.status);
+    if (params.status) query.set('status', params.status);
     if (params.search) query.set('search', params.search);
     if (params.location) query.set('location', params.location);
+    if (params.sort_by) query.set('sort_by', params.sort_by);
+    if (params.order) query.set('order', params.order);
 
     const qs = query.toString();
     const res = await apiClient<{

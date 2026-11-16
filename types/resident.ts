@@ -24,6 +24,7 @@ export interface Resident {
   deleted_at?: string | null;
   role: string;
   building_id?: number | null;
+  branch_id?: number | null;
   subscription_plan?: unknown | null;
 }
 

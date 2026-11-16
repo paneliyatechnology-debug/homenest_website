@@ -37,6 +37,8 @@ export interface BranchFilterParams {
   location?: string;
   page?: number;
   limit?: number;
+  sort_by?: string;
+  order?: 'asc' | 'desc' | string;
 }
 
 export interface BranchFormData {

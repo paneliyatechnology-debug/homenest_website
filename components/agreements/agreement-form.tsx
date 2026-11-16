@@ -216,7 +216,7 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
           ? String(formData.selectedResident.room_id)
           : '';
         const roomType = formData.selectedResident.room_type || 'single';
-        const branchId = String(formData.selectedResident.building_id || 1);
+        const branchId = formData.selectedResident.branch_id ? String(formData.selectedResident.branch_id) : undefined;
 
         const input: CreateAgreementInput = {
           resident_id: formData.selectedResident.id,
