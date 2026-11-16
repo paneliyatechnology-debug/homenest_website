@@ -334,9 +334,58 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+    if (name === 'phone' || name === 'emergency_contact_phone') {
+      const hasPlus = value.startsWith('+');
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 13);
+      value = hasPlus ? `+${digitsOnly}` : digitsOnly;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
     clearError(name);
+  };
+
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.ctrlKey ||
+      e.metaKey ||
+      [
+        'Backspace',
+        'Tab',
+        'Enter',
+        'Escape',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Delete',
+        'Home',
+        'End',
+      ].includes(e.key)
+    ) {
+      return;
+    }
+
+    if (
+      e.key === '+' &&
+      e.currentTarget.selectionStart === 0 &&
+      !e.currentTarget.value.includes('+')
+    ) {
+      return;
+    }
+
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+
+    const input = e.currentTarget;
+    const hasSelection =
+      (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+    const maxLen = input.value.startsWith('+') ? 14 : 13;
+    if (!hasSelection && input.value.length >= maxLen) {
+      e.preventDefault();
+    }
   };
 
   // Branch Selection: cascades and resets downstream selections
@@ -528,7 +577,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     } else {
       const cleanPhone = formData.phone.replace(/\D/g, '');
       if (cleanPhone.length < 10) {
-        newErrors.phone = 'Please enter a valid 10-digit phone number.';
+        newErrors.phone = 'Phone number must be at least 10 digits.';
+      } else if (cleanPhone.length > 13) {
+        newErrors.phone = 'Phone number cannot exceed 13 digits.';
       }
     }
 
@@ -581,7 +632,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     if (formData.emergency_contact_phone && formData.emergency_contact_phone.trim()) {
       const cleanEmPhone = formData.emergency_contact_phone.replace(/\D/g, '');
       if (cleanEmPhone.length < 10) {
-        newErrors.emergency_contact_phone = 'Please enter a valid 10-digit phone number.';
+        newErrors.emergency_contact_phone = 'Phone number must be at least 10 digits.';
+      } else if (cleanEmPhone.length > 13) {
+        newErrors.emergency_contact_phone = 'Phone number cannot exceed 13 digits.';
       }
     }
 
@@ -932,10 +985,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   </label>
                   <input
                     type="tel"
+                    inputMode="tel"
                     name="phone"
+                    maxLength={formData.phone.startsWith('+') ? 14 : 13}
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Enter 10-digit phone number"
+                    onKeyDown={handlePhoneKeyDown}
+                    placeholder="Enter phone no. (10 to 13 digits)"
                     className={getInputClass('phone')}
                   />
                   {renderFieldError('phone')}
@@ -1259,10 +1315,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">Emergency Phone</label>
               <input
                 type="tel"
+                inputMode="tel"
                 name="emergency_contact_phone"
+                maxLength={formData.emergency_contact_phone.startsWith('+') ? 14 : 13}
                 value={formData.emergency_contact_phone}
                 onChange={handleChange}
-                placeholder="Enter 10-digit emergency contact phone"
+                onKeyDown={handlePhoneKeyDown}
+                placeholder="Enter emergency phone (10 to 13 digits)"
                 className={getInputClass('emergency_contact_phone')}
               />
               {renderFieldError('emergency_contact_phone')}

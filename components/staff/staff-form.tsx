@@ -100,13 +100,68 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
-    const { name, value } = e.target;
+    const { name } = e.target;
+    let { value } = e.target;
+
+    if (name === 'phone') {
+      const hasPlus = value.startsWith('+');
+      const digitsOnly = value.replace(/\D/g, '').slice(0, 13);
+      value = hasPlus ? `+${digitsOnly}` : digitsOnly;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
+  // Prevent entering alphabetic and non-numeric characters in phone field
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.ctrlKey ||
+      e.metaKey ||
+      [
+        'Backspace',
+        'Tab',
+        'Enter',
+        'Escape',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Delete',
+        'Home',
+        'End',
+      ].includes(e.key)
+    ) {
+      return;
+    }
+
+    // Allow leading '+' only at index 0
+    if (
+      e.key === '+' &&
+      e.currentTarget.selectionStart === 0 &&
+      !e.currentTarget.value.includes('+')
+    ) {
+      return;
+    }
+
+    // Block alphabets and any non-digit character
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      return;
+    }
+
+    // Disallow more than 13 digits (or 14 if leading '+')
+    const input = e.currentTarget;
+    const hasSelection =
+      (input.selectionEnd ?? 0) - (input.selectionStart ?? 0) > 0;
+    const maxLen = input.value.startsWith('+') ? 14 : 13;
+    if (!hasSelection && input.value.length >= maxLen) {
+      e.preventDefault();
     }
   };
 
@@ -216,15 +271,12 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
       case 'phone': {
         const val = typeof value === 'string' ? value.trim() : '';
         if (!val) return 'Phone number is required';
-        const cleaned = val.replace(/[\s\-()]/g, '');
-        const isValid =
-          /^[5-9]\d{9}$/.test(cleaned) ||
-          /^\+91[5-9]\d{9}$/.test(cleaned) ||
-          /^91[5-9]\d{9}$/.test(cleaned) ||
-          /^0[5-9]\d{9}$/.test(cleaned) ||
-          /^\+?[1-9]\d{9,14}$/.test(cleaned);
-        if (!isValid) {
-          return 'Please enter a valid 10-digit mobile number (e.g. 98765 25456 or +91 98765 25456)';
+        const digits = val.replace(/\D/g, '');
+        if (digits.length < 10) {
+          return 'Phone number must be at least 10 digits';
+        }
+        if (digits.length > 13) {
+          return 'Phone number cannot exceed 13 digits';
         }
         return '';
       }
@@ -395,10 +447,14 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
               label="Phone no."
               name="phone"
               required
+              type="tel"
+              inputMode="tel"
+              maxLength={formData.phone.startsWith('+') ? 14 : 13}
               value={formData.phone}
               onChange={handleChange}
+              onKeyDown={handlePhoneKeyDown}
               onBlur={() => handleBlur('phone', formData.phone)}
-              placeholder="Enter phone no."
+              placeholder="Enter phone no. (10 to 13 digits)"
               error={errors.phone}
             />
 
