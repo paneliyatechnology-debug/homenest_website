@@ -1,43 +1,18 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { Branch, BranchStats, BranchMeta } from '@/types/branch';
 import { branchService, INITIAL_BRANCH_STATS } from '@/services/branch.service';
 import { BranchStatsCards } from '@/components/branches/branch-stats-cards';
-
+import { useResetOnNavigation } from '@/hooks';
 import { BranchDetailsModal } from '@/components/branches/branch-details-modal';
 import { DeleteConfirmationModal, DataTable, StatusBadge, IconButton, TableActions } from '@/components/ui';
 
 export default function BranchManagementPage() {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
-  const hasShownToast = useRef(false);
-
-  // Consume flash toast from sessionStorage if present (e.g. redirected from create/edit)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !hasShownToast.current) {
-      const stored = sessionStorage.getItem('homenest_flash_toast');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          toastRef.current?.show({
-            severity: parsed.severity || 'success',
-            summary: parsed.summary || 'Success',
-            detail: parsed.detail || '',
-            life: 3000,
-          });
-        } catch {
-          // ignore
-        }
-        sessionStorage.removeItem('homenest_flash_toast');
-        hasShownToast.current = true;
-      }
-    }
-  }, []);
 
   // States
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -61,36 +36,28 @@ export default function BranchManagementPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Toast helper
-  const showToast = (
-    severity: 'success' | 'error' | 'info' | 'warn',
-    summary: string,
-    detail: string
-  ) => {
-    toastRef.current?.show({
-      severity,
-      summary,
-      detail,
-      life: 3500,
-    });
-  };
+  // Table & Modal Reset callback for page transitions / bfcache
+  const resetTableState = useCallback(() => {
+    setCurrentPage(1);
+    setSelectedBranch(null);
+    setIsDetailsModalOpen(false);
+    setDeletingBranch(null);
+    setIsDeleteModalOpen(false);
+  }, []);
+
+  useResetOnNavigation(resetTableState, { cleanQueryToast: true });
 
   // Delete Branch action
   const handleDeleteBranch = async () => {
     if (!deletingBranch) return;
     setIsDeleting(true);
     try {
-      const res = await branchService.deleteBranch(deletingBranch.id);
-      showToast('success', 'Branch Deleted', res.message || 'Branch deleted successfully');
+      await branchService.deleteBranch(deletingBranch.id);
       setDeletingBranch(null);
       setIsDeleteModalOpen(false);
       setRefreshTrigger((prev) => prev + 1);
-    } catch (err) {
-      showToast(
-        'error',
-        'Delete Failed',
-        err instanceof Error ? err.message : 'Failed to delete branch'
-      );
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setIsDeleting(false);
     }
@@ -139,8 +106,6 @@ export default function BranchManagementPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-5 sm:space-y-6 bg-[#F7F7F5]">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Header matching Figma: Title & Subtitle + "Add Branch" Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

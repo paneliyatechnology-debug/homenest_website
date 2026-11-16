@@ -3,20 +3,41 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { FormInput } from '@/components/ui/form-input';
 import { Button } from '@/components/ui/button';
 import { authService } from '@/services/auth.service';
-import { ApiError } from '@/lib/api-client';
+
+export interface ForgotPasswordFormData {
+  email: string;
+}
+
+export const initialForgotPasswordFormData: ForgotPasswordFormData = {
+  email: '',
+};
 
 export const ForgotPasswordForm: React.FC = () => {
   const router = useRouter();
-  const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [email, setEmail] = useState('');
+  const [formData, setFormData] = useState<ForgotPasswordFormData>(initialForgotPasswordFormData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
+
+  const resetForm = () => {
+    setFormData(initialForgotPasswordFormData);
+    setError(undefined);
+    formRef.current?.reset();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const fieldKey = name === 'no_autofill_email' ? 'email' : name;
+    setFormData((prev) => ({
+      ...prev,
+      [fieldKey]: value,
+    }));
+    if (error) setError(undefined);
+  };
 
   // Strictly wipe fields on mount and browser back/forward cache navigation
   useEffect(() => {
@@ -39,9 +60,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
-        setEmail('');
-        setError(undefined);
-        formRef.current?.reset();
+        resetForm();
         wipeDomInputs();
       }
     };
@@ -55,19 +74,19 @@ export const ForgotPasswordForm: React.FC = () => {
   }, []);
 
   const handleClearAndNavigate = (path: string) => {
-    setEmail('');
-    setError(undefined);
-    formRef.current?.reset();
+    resetForm();
     router.push(path);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!email.trim()) {
+    const trimmedEmail = formData.email.trim();
+
+    if (!trimmedEmail) {
       setError('Email address is required');
       return;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setError('Please enter a valid email address');
       return;
     }
@@ -76,57 +95,21 @@ export const ForgotPasswordForm: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await authService.forgotPassword(email.trim());
+      const response = await authService.forgotPassword(trimmedEmail);
       setLoading(false);
 
       if (response.success) {
-        // Save flash toast for display on login page
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              type: 'reset_link_sent',
-              detail:
-                response.message ||
-                'Password reset link has been sent to your email address.',
-            })
-          );
-        }
-
-        // Clear input and redirect immediately to Login Page
-        setEmail('');
-        formRef.current?.reset();
-        router.push('/?toast=reset_link_sent');
-      } else {
-        // On error, stay on Forgot Password page and show error toast
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Error',
-          detail: response.message || 'Failed to send reset link',
-          life: 4000,
-        });
+        resetForm();
+        router.push('/');
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
-      const errorMsg =
-        err instanceof ApiError
-          ? err.message || 'User with this email not found.'
-          : 'Unable to connect to server. Please verify backend is running on port 5000.';
-
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Reset Failed',
-        detail: errorMsg,
-        life: 4000,
-      });
+      // Backend error toast is handled automatically by apiClient
     }
   };
 
   return (
     <div className="w-full h-full lg:h-screen flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-10 bg-white overflow-y-auto">
-      {/* PrimeReact Toast Component */}
-      <Toast ref={toast} position="top-right" />
-
       {/* Centered Form Wrapper matching Figma's exact 420px scale */}
       <div className="w-full max-w-[420px] mx-auto my-auto flex flex-col justify-center">
         {/* Title Header */}
@@ -185,11 +168,8 @@ export const ForgotPasswordForm: React.FC = () => {
             inputMode="email"
             label="Email Address"
             placeholder="admin@homenest.com"
-            value={email}
-            onChange={(e) => {
-              setEmail(e.target.value);
-              if (error) setError(undefined);
-            }}
+            value={formData.email}
+            onChange={handleChange}
             error={error}
             autoComplete="new-password"
             data-lpignore="true"

@@ -63,5 +63,5 @@ function EditResidentContent({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
-  return <ResidentForm mode="edit" residentId={residentId} initialData={resident} />;
+  return <ResidentForm mode="edit" residentId={residentId} initialData={resident} key={residentId} />;
 }

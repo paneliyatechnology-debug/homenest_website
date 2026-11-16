@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { StaffMember, StaffStatus } from '@/types/staff';
 import { Branch } from '@/types/branch';
 import { staffService } from '@/services/staff.service';
@@ -16,6 +15,48 @@ import {
   Dropdown,
   MultiSelectDropdown,
 } from '@/components/ui';
+import { toast } from '@/lib/toast';
+
+export interface StaffFormData {
+  name: string;
+  staff_role: string;
+  branch_ids: number[];
+  email: string;
+  phone: string;
+  status: StaffStatus;
+  photoFile: File | null;
+  photoPreview: string | null;
+}
+
+export const initialStaffFormData: StaffFormData = {
+  name: '',
+  staff_role: '',
+  branch_ids: [],
+  email: '',
+  phone: '',
+  status: 'active',
+  photoFile: null,
+  photoPreview: null,
+};
+
+export const buildStaffFormData = (data?: StaffMember | null): StaffFormData => ({
+  name: data?.name || '',
+  staff_role: data?.staff_role || data?.role || '',
+  branch_ids:
+    data?.branches && data.branches.length > 0
+      ? data.branches.map((b) => b.id)
+      : [],
+  email: data?.email || '',
+  phone: data?.phone || '',
+  status: (data?.status as StaffStatus) || 'active',
+  photoFile: null,
+  photoPreview:
+    data?.profile_photo_url ||
+    data?.photo_url ||
+    data?.profile_photo ||
+    data?.photo ||
+    null,
+});
 
 interface StaffFormProps {
   initialData?: StaffMember | null;
@@ -40,43 +81,88 @@ export const STAFF_ROLE_OPTIONS = [
 
 export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
   const isEdit = mode === 'edit';
 
   // Branches list for dropdown
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loadingBranches, setLoadingBranches] = useState(true);
 
-  // Form Fields
-  const [name, setName] = useState<string>(initialData?.name || '');
-  const [staffRole, setStaffRole] = useState<string>(
-    initialData?.staff_role || initialData?.role || ''
-  );
-  const [selectedBranchIds, setSelectedBranchIds] = useState<number[]>(() => {
-    if (initialData?.branches && initialData.branches.length > 0) {
-      return initialData.branches.map((b) => b.id);
-    }
-    return [];
-  });
-  const [email, setEmail] = useState<string>(initialData?.email || '');
-  const [phone, setPhone] = useState<string>(initialData?.phone || '');
-  const [status, setStatus] = useState<StaffStatus>(
-    (initialData?.status as StaffStatus) || 'active'
-  );
-
-  // Photo state
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(
-    initialData?.profile_photo_url ||
-      initialData?.photo_url ||
-      initialData?.profile_photo ||
-      initialData?.photo ||
-      null
+  // Centralized Form State
+  const [formData, setFormData] = useState<StaffFormData>(() =>
+    buildStaffFormData(initialData)
   );
 
   // Validation & Loading
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Reusable Single Change Handler for standard input elements
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: validateField(name, value) }));
+    }
+  };
+
+  // Reusable Field Change Handler for custom controls (multi-select, radios, photos)
+  const handleFieldChange = <K extends keyof StaffFormData>(
+    field: K,
+    value: StaffFormData[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (errors[field as string]) {
+      setErrors((prev) => ({
+        ...prev,
+        [field as string]: validateField(field as string, value),
+      }));
+    }
+  };
+
+  // Reset form to clean defaults (or record values if in edit mode)
+  const resetForm = useCallback(() => {
+    setFormData(buildStaffFormData(isEdit ? initialData : null));
+    setErrors({});
+  }, [isEdit, initialData]);
+
+  const [prevStaffMemberId, setPrevStaffMemberId] = useState<number | null>(
+    initialData?.id ?? null
+  );
+
+  // Synchronize on initialData changes in edit mode during render phase
+  if (isEdit && initialData && initialData.id !== prevStaffMemberId) {
+    setPrevStaffMemberId(initialData.id);
+    setFormData(buildStaffFormData(initialData));
+    setErrors({});
+  }
+
+  // Reset form when navigating away (unmounting) in create mode
+  useEffect(() => {
+    return () => {
+      if (!isEdit) {
+        resetForm();
+      }
+    };
+  }, [isEdit, resetForm]);
+
+  // Reset on bfcache restore
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !isEdit) {
+        resetForm();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [isEdit, resetForm]);
 
   // Fetch branches for selection
   useEffect(() => {
@@ -97,7 +183,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
     };
   }, []);
 
-  // Form Validation
+  // Form Validation using Centralized State
   const validateField = (field: string, value: unknown): string => {
     switch (field) {
       case 'name': {
@@ -110,11 +196,11 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
         }
         return '';
       }
-      case 'staffRole': {
+      case 'staff_role': {
         if (!value) return 'Please select a staff role';
         return '';
       }
-      case 'branch': {
+      case 'branch_ids': {
         const ids = Array.isArray(value) ? value : [];
         if (ids.length === 0) return 'Please select at least one branch';
         return '';
@@ -158,96 +244,66 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
   const validate = (): boolean => {
     const errs: { [key: string]: string } = {};
 
-    const nameErr = validateField('name', name);
+    const nameErr = validateField('name', formData.name);
     if (nameErr) errs.name = nameErr;
 
-    const roleErr = validateField('staffRole', staffRole);
-    if (roleErr) errs.staffRole = roleErr;
+    const roleErr = validateField('staff_role', formData.staff_role);
+    if (roleErr) errs.staff_role = roleErr;
 
-    const branchErr = validateField('branch', selectedBranchIds);
-    if (branchErr) errs.branch = branchErr;
+    const branchErr = validateField('branch_ids', formData.branch_ids);
+    if (branchErr) errs.branch_ids = branchErr;
 
-    const emailErr = validateField('email', email);
+    const emailErr = validateField('email', formData.email);
     if (emailErr) errs.email = emailErr;
 
-    const phoneErr = validateField('phone', phone);
+    const phoneErr = validateField('phone', formData.phone);
     if (phoneErr) errs.phone = phoneErr;
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  // Handle Submit
+  // Handle Submit using Centralized State
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) {
-      toastRef.current?.show({
-        severity: 'warn',
-        summary: 'Validation Error',
-        detail: 'Please check and correct the highlighted fields.',
-        life: 3000,
-      });
+      toast.warn('Please check and correct the highlighted fields.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      formData.append('staff_role', staffRole);
-      formData.append('branch_ids', JSON.stringify(selectedBranchIds));
-      formData.append('phone', phone.trim());
-      formData.append('status', status);
+      const payload = new FormData();
+      payload.append('name', formData.name.trim());
+      payload.append('staff_role', formData.staff_role);
+      payload.append('branch_ids', JSON.stringify(formData.branch_ids));
+      payload.append('phone', formData.phone.trim());
+      payload.append('status', formData.status);
 
       if (!isEdit) {
-        formData.append('email', email.trim().toLowerCase());
+        payload.append('email', formData.email.trim().toLowerCase());
       }
 
-      if (photoFile) {
-        formData.append('profile_photo', photoFile);
-      } else if (isEdit && !photoPreview) {
+      if (formData.photoFile) {
+        payload.append('profile_photo', formData.photoFile);
+      } else if (isEdit && !formData.photoPreview) {
         // Explicit removal
-        formData.append('profile_photo', 'null');
+        payload.append('profile_photo', 'null');
       }
 
       if (isEdit && initialData?.id) {
-        const res = await staffService.updateStaff(initialData.id, formData);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Staff Updated',
-              detail: res.message || 'Staff updated successfully',
-            })
-          );
-        }
+        await staffService.updateStaff(initialData.id, payload);
       } else {
-        const res = await staffService.createStaff(formData);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Staff Created',
-              detail: res.message || 'Staff created successfully',
-            })
-          );
-        }
+        await staffService.createStaff(payload);
+        resetForm();
       }
 
       router.push('/dashboard/settings/staff');
       router.refresh();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Operation failed';
-      toastRef.current?.show({
-        severity: 'error',
-        summary: isEdit ? 'Update Failed' : 'Creation Failed',
-        detail: msg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient; input data is preserved
     } finally {
       setIsSubmitting(false);
     }
@@ -262,7 +318,6 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
           message={isEdit ? 'Updating staff profile...' : 'Saving new staff member...'}
         />
       )}
-      <Toast ref={toastRef} position="top-right" />
 
       {/* Top Header matching Figma: Back Arrow + Title & Subtitle */}
       <PageHeader
@@ -270,6 +325,9 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
         subtitle={isEdit ? 'Update staff details.' : 'Add a new staff.'}
         backHref="/dashboard/settings/staff"
         backTitle="Back to Staff Management"
+        onBackClick={() => {
+          if (!isEdit) resetForm();
+        }}
       />
 
       {/* Form Content Container matching Figma */}
@@ -280,16 +338,11 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
             {/* Staff name * */}
             <TextInput
               label="Staff name"
+              name="name"
               required
-              value={name}
-              onChange={(e) => {
-                const val = e.target.value;
-                setName(val);
-                if (errors.name) {
-                  setErrors((prev) => ({ ...prev, name: validateField('name', val) }));
-                }
-              }}
-              onBlur={() => handleBlur('name', name)}
+              value={formData.name}
+              onChange={handleChange}
+              onBlur={() => handleBlur('name', formData.name)}
               placeholder="Enter staff name"
               error={errors.name}
             />
@@ -298,55 +351,40 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Dropdown
                 label="Staff role"
+                name="staff_role"
                 required
-                value={staffRole}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setStaffRole(val);
-                  if (errors.staffRole) {
-                    setErrors((prev) => ({ ...prev, staffRole: validateField('staffRole', val) }));
-                  }
-                }}
-                onBlur={() => handleBlur('staffRole', staffRole)}
+                value={formData.staff_role}
+                onChange={handleChange}
+                onBlur={() => handleBlur('staff_role', formData.staff_role)}
                 placeholder="Select role"
                 options={STAFF_ROLE_OPTIONS}
-                error={errors.staffRole}
+                error={errors.staff_role}
               />
 
               <MultiSelectDropdown
                 label="Branch"
                 required
-                values={selectedBranchIds}
-                onChange={(newIds) => {
-                  setSelectedBranchIds(newIds);
-                  if (errors.branch) {
-                    setErrors((prev) => ({ ...prev, branch: validateField('branch', newIds) }));
-                  }
-                }}
+                values={formData.branch_ids}
+                onChange={(newIds) => handleFieldChange('branch_ids', newIds)}
                 placeholder={loadingBranches ? 'Loading branches...' : 'Select branch'}
                 options={branches.map((b) => ({
                   label: b.name,
                   value: b.id,
                 }))}
-                error={errors.branch}
+                error={errors.branch_ids}
               />
             </div>
 
             {/* E-mail * */}
             <TextInput
               label="E-mail"
+              name="email"
               required={!isEdit}
               type="email"
-              value={email}
+              value={formData.email}
               disabled={isEdit}
-              onChange={(e) => {
-                const val = e.target.value;
-                setEmail(val);
-                if (errors.email) {
-                  setErrors((prev) => ({ ...prev, email: validateField('email', val) }));
-                }
-              }}
-              onBlur={() => handleBlur('email', email)}
+              onChange={handleChange}
+              onBlur={() => handleBlur('email', formData.email)}
               placeholder="Enter email address"
               error={errors.email}
               helperText={isEdit ? 'Email address cannot be changed after creation' : undefined}
@@ -355,16 +393,11 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
             {/* Phone no. * */}
             <TextInput
               label="Phone no."
+              name="phone"
               required
-              value={phone}
-              onChange={(e) => {
-                const val = e.target.value;
-                setPhone(val);
-                if (errors.phone) {
-                  setErrors((prev) => ({ ...prev, phone: validateField('phone', val) }));
-                }
-              }}
-              onBlur={() => handleBlur('phone', phone)}
+              value={formData.phone}
+              onChange={handleChange}
+              onBlur={() => handleBlur('phone', formData.phone)}
               placeholder="Enter phone no."
               error={errors.phone}
             />
@@ -372,10 +405,10 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
             {/* Status * (Radio Group) */}
             <RadioGroup
               label="Status"
-              required
               name="status"
-              value={status}
-              onChange={(val) => setStatus(val as StaffStatus)}
+              required
+              value={formData.status}
+              onChange={(val) => handleFieldChange('status', val as StaffStatus)}
               options={STATUS_OPTIONS}
             />
           </div>
@@ -385,24 +418,25 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
             <PhotoUpload
               label="Attach Staff photo"
               optional
-              previewUrl={photoPreview}
-              file={photoFile}
+              previewUrl={formData.photoPreview}
+              file={formData.photoFile}
               shape="circle"
               onSelectFile={(file) => {
-                setPhotoFile(file);
-                setPhotoPreview(URL.createObjectURL(file));
+                setFormData((prev) => ({
+                  ...prev,
+                  photoFile: file,
+                  photoPreview: URL.createObjectURL(file),
+                }));
               }}
               onRemove={() => {
-                setPhotoFile(null);
-                setPhotoPreview(null);
+                setFormData((prev) => ({
+                  ...prev,
+                  photoFile: null,
+                  photoPreview: null,
+                }));
               }}
               onError={(msg) => {
-                toastRef.current?.show({
-                  severity: 'error',
-                  summary: 'Invalid Photo',
-                  detail: msg,
-                  life: 3000,
-                });
+                toast.error(msg);
               }}
             />
           </div>
@@ -422,4 +456,3 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
     </div>
   );
 };
-

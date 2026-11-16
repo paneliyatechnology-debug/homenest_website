@@ -3,19 +3,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { FormInput } from '@/components/ui/form-input';
 import { FormPasswordInput } from '@/components/ui/password-input';
 import { CheckboxField } from '@/components/ui/checkbox-field';
 import { Button } from '@/components/ui/button';
 import { authService } from '@/services/auth.service';
-import { ApiError } from '@/lib/api-client';
 import { clearAuthCookies } from '@/lib/cookies';
+import { toast } from '@/lib/toast';
 
 interface AdminLoginFormProps {
   onSuccess?: () => void;
   className?: string;
 }
+
+export interface LoginFormData {
+  username: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+export const initialLoginFormData: LoginFormData = {
+  username: '',
+  password: '',
+  rememberMe: false,
+};
 
 export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   onSuccess,
@@ -23,15 +34,38 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const hasShownToastRef = useRef<string | null>(null);
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  // Centralized Form State
+  const [formData, setFormData] = useState<LoginFormData>(initialLoginFormData);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
+
+  // Reusable Single Change Handler
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    const fieldName =
+      name === 'no_autofill_username'
+        ? 'username'
+        : name === 'no_autofill_password'
+        ? 'password'
+        : name;
+
+    setFormData((prev) => ({
+      ...prev,
+      [fieldName]: type === 'checkbox' ? checked : value,
+    }));
+    if (errors[fieldName as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [fieldName]: undefined }));
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(initialLoginFormData);
+    setErrors({});
+    formRef.current?.reset();
+  };
 
   // Strictly wipe fields on mount and browser back/forward cache navigation
   useEffect(() => {
@@ -54,11 +88,7 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
-        setUsername('');
-        setPassword('');
-        setRememberMe(false);
-        setErrors({});
-        formRef.current?.reset();
+        resetForm();
         wipeDomInputs();
       }
     };
@@ -71,26 +101,10 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     };
   }, []);
 
-  // Display success toasts from forgot-password/reset-password redirects and security alerts
+  // Display security alerts from URL query parameters (e.g. session expired, auth required)
   useEffect(() => {
-    let flashType = searchParams.get('toast');
-    let flashDetail = '';
-
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = sessionStorage.getItem('homenest_flash_toast');
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (parsed && parsed.type) {
-            flashType = flashType || parsed.type;
-            flashDetail = parsed.detail || '';
-          }
-          sessionStorage.removeItem('homenest_flash_toast');
-        }
-      } catch {
-        // ignore storage parse error
-      }
-    }
+    const flashType = searchParams.get('toast');
+    const flashDetail = searchParams.get('message') || '';
 
     if (!flashType || hasShownToastRef.current === flashType) {
       return;
@@ -99,61 +113,31 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     hasShownToastRef.current = flashType;
 
     if (flashType === 'reset_link_sent') {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Reset Link Sent',
-        detail:
-          flashDetail ||
-          'Password reset link has been sent to your email address.',
-        life: 5000,
-      });
+      toast.success(
+        flashDetail || 'Password reset link has been sent to your email address.',
+        'Reset Link Sent'
+      );
     } else if (flashType === 'password_reset_success') {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Password Reset Successful',
-        detail:
-          flashDetail ||
-          'Password has been reset successfully. You can now login with your new password.',
-        life: 5000,
-      });
+      toast.success(
+        flashDetail || 'Password has been reset successfully. You can now login with your new password.',
+        'Password Reset Successful'
+      );
     } else if (flashType === 'auth_required') {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Authentication Required',
-        detail: 'Please sign in to your account to continue.',
-        life: 4500,
-      });
+      toast.error('Please sign in to your account to continue.', 'Authentication Required');
     } else if (flashType === 'session_expired') {
-      toast.current?.show({
-        severity: 'warn',
-        summary: 'Session Expired',
-        detail: 'Your session has expired. Please sign in again.',
-        life: 4500,
-      });
+      toast.warn('Your session has expired. Please sign in again.', 'Session Expired');
     } else if (flashType === 'unauthorized') {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Unauthorized',
-        detail:
-          'Access denied. This portal is only accessible to administrator accounts.',
-        life: 4500,
-      });
+      toast.error(
+        'Access denied. This portal is only accessible to administrator accounts.',
+        'Unauthorized'
+      );
     } else if (flashType === 'logged_out') {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Signed Out',
-        detail: flashDetail || 'You have been successfully signed out.',
-        life: 4000,
-      });
+      toast.success(flashDetail || 'You have been successfully signed out.', 'Signed Out');
     } else if (flashType === 'registered_success') {
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Registration Successful',
-        detail:
-          flashDetail ||
-          'Your PG account has been registered successfully! Please sign in with your credentials.',
-        life: 6000,
-      });
+      toast.success(
+        flashDetail || 'Your PG account has been registered successfully! Please sign in with your credentials.',
+        'Registration Successful'
+      );
     }
 
     // Clean query parameter from URL after toast is shown without cancelling the alert
@@ -165,11 +149,7 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   }, [searchParams]);
 
   const handleClearAndNavigate = (path: string) => {
-    setUsername('');
-    setPassword('');
-    setRememberMe(false);
-    setErrors({});
-    formRef.current?.reset();
+    resetForm();
     router.push(path);
   };
 
@@ -178,13 +158,13 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 
     const newErrors: { username?: string; password?: string } = {};
 
-    if (!username.trim()) {
+    if (!formData.username.trim()) {
       newErrors.username = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username.trim())) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.username.trim())) {
       newErrors.username = 'Please enter a valid email address';
     }
 
-    if (!password) {
+    if (!formData.password) {
       newErrors.password = 'Password is required';
     }
 
@@ -195,13 +175,8 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     }
 
     // Only if email and password are provided, verify Remember Me checkbox
-    if (!rememberMe) {
-      toast.current?.show({
-        severity: 'warn',
-        summary: 'Remember Me Required',
-        detail: 'Please check the "Remember me" checkbox to proceed with sign in.',
-        life: 4000,
-      });
+    if (!formData.rememberMe) {
+      toast.warn('Please check the "Remember me" checkbox to proceed with sign in.');
       return;
     }
 
@@ -211,10 +186,10 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     try {
       const response = await authService.login(
         {
-          email: username.trim(),
-          password,
+          email: formData.username.trim(),
+          password: formData.password,
         },
-        rememberMe
+        formData.rememberMe
       );
 
       if (response.success && response.data) {
@@ -227,22 +202,9 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
         // Enforce admin-only access for the Admin Portal
         if (userRole !== 'admin') {
           clearAuthCookies();
-          toast.current?.show({
-            severity: 'error',
-            summary: 'Unauthorized',
-            detail: 'Access denied. This portal is only accessible to administrator accounts.',
-            life: 4500,
-          });
+          toast.error('Access denied. This portal is only accessible to administrator accounts.');
           return;
         }
-
-        // Role is admin: proceed to dashboard
-        toast.current?.show({
-          severity: 'success',
-          summary: 'Login Successful',
-          detail: response.message || 'Welcome back to HomeNest!',
-          life: 2500,
-        });
 
         setTimeout(() => {
           if (onSuccess) {
@@ -250,27 +212,10 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
           } else {
             handleClearAndNavigate('/dashboard');
           }
-        }, 700);
-      } else {
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Login Failed',
-          detail: response.message || 'Login failed. Please check your credentials.',
-          life: 4000,
-        });
+        }, 500);
       }
-    } catch (err) {
-      const errorMsg =
-        err instanceof ApiError
-          ? err.message || 'Invalid email or password.'
-          : 'Unable to reach backend server. Please verify backend is running on port 5000.';
-
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Authentication Error',
-        detail: errorMsg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setLoading(false);
     }
@@ -280,9 +225,6 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     <div
       className={`w-full h-full lg:h-screen flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-10 bg-white overflow-y-auto ${className}`}
     >
-      {/* PrimeReact Toast Component */}
-      <Toast ref={toast} position="top-right" />
-
       {/* Centered Form Wrapper matching Figma's exact 420px scale */}
       <div className="w-full max-w-[420px] mx-auto my-auto flex flex-col justify-center">
         {/* Title Header */}
@@ -342,11 +284,8 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             inputMode="email"
             label="Email/Username"
             placeholder="admin@homenest.com"
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-              if (errors.username) setErrors((prev) => ({ ...prev, username: undefined }));
-            }}
+            value={formData.username}
+            onChange={handleChange}
             error={errors.username}
             autoComplete="new-password"
             data-lpignore="true"
@@ -359,11 +298,8 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             name="no_autofill_password"
             label="Password"
             placeholder="Enter your password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-            }}
+            value={formData.password}
+            onChange={handleChange}
             error={errors.password}
             autoComplete="new-password"
             data-lpignore="true"
@@ -375,8 +311,10 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             <CheckboxField
               id="rememberMe"
               label="Remember me"
-              checked={rememberMe}
-              onChange={(checked) => setRememberMe(checked)}
+              checked={formData.rememberMe}
+              onChange={(checked) =>
+                setFormData((prev) => ({ ...prev, rememberMe: checked }))
+              }
             />
 
             <Link

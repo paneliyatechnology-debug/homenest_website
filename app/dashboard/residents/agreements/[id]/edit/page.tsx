@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { AgreementRecord } from '@/types/agreement';
 import { agreementService } from '@/services/agreement.service';
 import { AgreementForm } from '@/components/agreements/agreement-form';
@@ -11,7 +10,6 @@ import { PageHeader, BrandLoader } from '@/components/ui';
 export default function EditAgreementPage() {
   const params = useParams();
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
 
   const [record, setRecord] = useState<AgreementRecord | null>(null);
   const [loading, setLoading] = useState(true);
@@ -48,8 +46,6 @@ export default function EditAgreementPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Top Header with minimal Back arrow button matching Figma image */}
       <PageHeader
         title="Edit Agreement"
@@ -64,7 +60,7 @@ export default function EditAgreementPage() {
         </div>
       ) : (
         <AgreementForm
-          toastRef={toastRef}
+          key={record?.id || agreementId}
           initialData={record}
           isEdit={true}
         />

@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import { Toast } from 'primereact/toast';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { AuditLog, AuditMeta, AuditStats } from '@/types/audit';
 import { auditService, INITIAL_AUDIT_STATS } from '@/services/audit.service';
 import { AuditStatsCards } from '@/components/audit/audit-stats-cards';
+import { useResetOnNavigation } from '@/hooks';
 
 import { AuditDetailsModal } from '@/components/audit/audit-details-modal';
 import { AppDatePicker, formatDateForApi } from '@/components/ui/app-date-picker';
@@ -20,7 +20,6 @@ function formatDateToCurlFormat(d: Date): string {
 }
 
 export default function AdministrativeActivityLogPage() {
-  const toastRef = useRef<Toast>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const datePickerDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -56,6 +55,23 @@ export default function AdministrativeActivityLogPage() {
   // Export State
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [exporting, setExporting] = useState<string | null>(null);
+
+  // Table & Modal Reset callback for page transitions / bfcache
+  const resetTableState = useCallback(() => {
+    setSelectedModule('');
+    setSelectedAction('');
+    setSelectedUser('');
+    setDateRangeText('');
+    setStartDate('');
+    setEndDate('');
+    setCurrentPage(1);
+    setSelectedRecord(null);
+    setIsDetailsModalOpen(false);
+    setIsDatePickerOpen(false);
+    setIsExportMenuOpen(false);
+  }, []);
+
+  useResetOnNavigation(resetTableState);
 
   // Close menus on outside click
   useEffect(() => {
@@ -141,13 +157,6 @@ export default function AdministrativeActivityLogPage() {
       setExporting(format);
       setIsExportMenuOpen(false);
 
-      toastRef.current?.show({
-        severity: 'info',
-        summary: 'Export Started',
-        detail: `Preparing ${format.toUpperCase()} log export...`,
-        life: 2500,
-      });
-
       const res = await auditService.exportAudits({
         format,
         branch_id: selectedBranchId,
@@ -161,21 +170,8 @@ export default function AdministrativeActivityLogPage() {
       if (downloadUrl) {
         window.open(downloadUrl, '_blank');
       }
-
-      toastRef.current?.show({
-        severity: 'success',
-        summary: 'Export Complete',
-        detail: `Administrative activity log ${format.toUpperCase()} report generated successfully`,
-        life: 4000,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Export failed';
-      toastRef.current?.show({
-        severity: 'error',
-        summary: 'Export Failed',
-        detail: msg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setExporting(null);
     }
@@ -299,8 +295,6 @@ export default function AdministrativeActivityLogPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-5 sm:space-y-6 bg-[#F7F7F5]">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Header matching Figma: Title, Subtitle, and Export Log Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

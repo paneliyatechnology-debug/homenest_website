@@ -39,6 +39,16 @@ export const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   const [search, setSearch] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+
+  // Reset local search query whenever dropdown is closed during render phase
+  if (!isOpen && prevIsOpen) {
+    setPrevIsOpen(false);
+    setSearch('');
+  } else if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
+  }
+
   // Close on outside click
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {

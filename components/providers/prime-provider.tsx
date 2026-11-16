@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { PrimeReactProvider } from 'primereact/api';
+import { GlobalToastContainer } from '@/components/providers/toast-provider';
 
 interface PrimeProviderProps {
   children: React.ReactNode;
@@ -10,8 +11,8 @@ interface PrimeProviderProps {
 export function PrimeProvider({ children }: PrimeProviderProps) {
   return (
     <PrimeReactProvider value={{ ripple: true }}>
+      <GlobalToastContainer />
       {children}
     </PrimeReactProvider>
   );
 }
-

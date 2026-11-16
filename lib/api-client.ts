@@ -6,6 +6,7 @@ import {
   clearAuthCookies,
 } from '@/lib/cookies';
 import { config } from '@/lib/config';
+import { toast } from '@/lib/toast';
 
 const API_BASE_URL = config.api.baseUrl;
 
@@ -44,16 +45,118 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
   _retry?: boolean;
+  showSuccessToast?: boolean;
+  showErrorToast?: boolean;
+}
+
+/**
+ * Standardized backend error message extractor across all HTTP status codes
+ */
+export function extractErrorMessage(data: unknown, status: number): string {
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+
+    // 1. Direct message field from API
+    if (typeof obj.message === 'string' && obj.message.trim()) {
+      return obj.message.trim();
+    }
+
+    // 2. Direct error field (string or object with message)
+    if (typeof obj.error === 'string' && obj.error.trim()) {
+      return obj.error.trim();
+    }
+    if (obj.error && typeof obj.error === 'object') {
+      const errObj = obj.error as Record<string, unknown>;
+      if (typeof errObj.message === 'string' && errObj.message.trim()) {
+        return errObj.message.trim();
+      }
+    }
+
+    // 3. Validation errors array: [{ field, message }] or ['error message']
+    if (Array.isArray(obj.errors) && obj.errors.length > 0) {
+      const msgs = obj.errors
+        .map((e) => {
+          if (typeof e === 'string') return e;
+          if (e && typeof e === 'object') {
+            const eo = e as Record<string, unknown>;
+            return typeof eo.message === 'string'
+              ? eo.message
+              : typeof eo.msg === 'string'
+                ? eo.msg
+                : null;
+          }
+          return null;
+        })
+        .filter((v): v is string => Boolean(v));
+      if (msgs.length > 0) {
+        return msgs.join(', ');
+      }
+    } else if (obj.errors && typeof obj.errors === 'object') {
+      const msgs = Object.values(obj.errors)
+        .flat()
+        .filter((v): v is string => typeof v === 'string');
+      if (msgs.length > 0) {
+        return msgs.join(', ');
+      }
+    }
+
+    // 4. Detail field
+    if (typeof obj.detail === 'string' && obj.detail.trim()) {
+      return obj.detail.trim();
+    }
+  }
+
+  // 5. Centralized HTTP status code fallback messages
+  switch (status) {
+    case 400:
+      return 'Bad request. Please verify your input.';
+    case 401:
+      return 'Unauthorized. Please log in to continue.';
+    case 403:
+      return 'Access denied. You do not have permission to perform this action.';
+    case 404:
+      return 'The requested resource was not found.';
+    case 409:
+      return 'A conflict occurred with existing records.';
+    case 422:
+      return 'Validation failed. Please correct the highlighted fields.';
+    case 500:
+      return 'Internal server error. Please try again later.';
+    default:
+      if (status > 0) {
+        return `Request failed with status ${status}.`;
+      }
+      return 'Unable to reach backend server. Please verify your network connection.';
+  }
+}
+
+/**
+ * Standardized backend success message extractor
+ */
+export function extractSuccessMessage(data: unknown): string | null {
+  if (data && typeof data === 'object') {
+    const obj = data as Record<string, unknown>;
+    if (typeof obj.message === 'string' && obj.message.trim()) {
+      return obj.message.trim();
+    }
+  }
+  return null;
 }
 
 export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { skipAuth = false, _retry = false, ...fetchOptions } = options;
+  const {
+    skipAuth = false,
+    _retry = false,
+    showSuccessToast,
+    showErrorToast = true,
+    ...fetchOptions
+  } = options;
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   const headers = new Headers(fetchOptions.headers || {});
@@ -86,7 +189,11 @@ export async function apiClient<T>(
       if (!refreshToken) {
         clearAuthCookies();
         redirectToLogin();
-        throw new ApiError('Session expired. Please log in again.', 401);
+        const msg = 'Session expired. Please log in again.';
+        if (showErrorToast) {
+          toast.error(msg);
+        }
+        throw new ApiError(msg, 401);
       }
 
       // If already refreshing, wait for new token
@@ -142,20 +249,64 @@ export async function apiClient<T>(
         processQueue(refreshErr, null);
         clearAuthCookies();
         redirectToLogin();
-        throw new ApiError('Session expired. Please log in again.', 401, refreshErr);
+        const msg = 'Session expired. Please log in again.';
+        if (showErrorToast) {
+          toast.error(msg);
+        }
+        throw new ApiError(msg, 401, refreshErr);
       } finally {
         isRefreshing = false;
       }
     }
 
-    const data = await response.json();
+    // Parse response body (JSON or text)
+    let data: unknown = null;
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      try {
+        data = await response.json();
+      } catch {
+        data = null;
+      }
+    } else {
+      try {
+        data = await response.text();
+      } catch {
+        data = null;
+      }
+    }
 
     if (!response.ok) {
-      throw new ApiError(
-        data?.message || `Request failed with status ${response.status}`,
-        response.status,
-        data
-      );
+      const errorMessage = extractErrorMessage(data, response.status);
+      if (showErrorToast) {
+        toast.error(errorMessage);
+      }
+      throw new ApiError(errorMessage, response.status, data);
+    }
+
+    // Check for explicit success: false payload even on 200 OK
+    if (data && typeof data === 'object' && (data as Record<string, unknown>).success === false) {
+      const errorMessage = extractErrorMessage(data, response.status);
+      if (showErrorToast) {
+        toast.error(errorMessage);
+      }
+      throw new ApiError(errorMessage, response.status, data);
+    }
+
+    // Success Toast Notification handling:
+    // Display backend response message for mutations (POST, PUT, PATCH, DELETE) or when explicitly requested
+    const method = (fetchOptions.method || 'GET').toUpperCase();
+    const isMutation = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+    const isSilentEndpoint = endpoint.includes('/auth/refresh') || endpoint.includes('/auth/me');
+
+    const shouldShowSuccess =
+      showSuccessToast !== undefined ? showSuccessToast : isMutation && !isSilentEndpoint;
+
+    if (shouldShowSuccess) {
+      const backendSuccessMessage = extractSuccessMessage(data);
+      if (backendSuccessMessage) {
+        toast.success(backendSuccessMessage);
+      }
     }
 
     return data as T;
@@ -163,9 +314,11 @@ export async function apiClient<T>(
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError(
-      error instanceof Error ? error.message : 'Network error occurred',
-      0
-    );
+
+    const networkMsg = extractErrorMessage(null, 0);
+    if (showErrorToast) {
+      toast.error(networkMsg);
+    }
+    throw new ApiError(networkMsg, 0, error);
   }
 }

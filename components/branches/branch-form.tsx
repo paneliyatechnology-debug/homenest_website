@@ -1,11 +1,38 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { Branch } from '@/types/branch';
 import { branchService } from '@/services/branch.service';
 import { PageHeader, TextInput, RadioGroup, PhotoUpload, BrandLoader } from '@/components/ui';
+import { toast } from '@/lib/toast';
+
+export interface BranchFormData {
+  name: string;
+  location: string;
+  total_rooms: string;
+  status: 'active' | 'maintenance' | 'upcoming';
+  photoFile: File | null;
+  photoPreview: string | null;
+}
+
+export const initialBranchFormData: BranchFormData = {
+  name: '',
+  location: '',
+  total_rooms: '',
+  status: 'active',
+  photoFile: null,
+  photoPreview: null,
+};
+
+export const buildBranchFormData = (data?: Branch | null): BranchFormData => ({
+  name: data?.name || '',
+  location: data?.location || '',
+  total_rooms: data?.total_rooms !== undefined ? String(data.total_rooms) : '',
+  status: (data?.status as 'active' | 'maintenance' | 'upcoming') || 'active',
+  photoFile: null,
+  photoPreview: data?.branch_photo_url || data?.branch_photo || null,
+});
 
 interface BranchFormProps {
   initialData?: Branch | null;
@@ -20,117 +47,137 @@ const STATUS_OPTIONS = [
 
 export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
 
   const isEdit = mode === 'edit';
 
-  // Form Fields
-  const [name, setName] = useState<string>(initialData?.name || '');
-  const [location, setLocation] = useState<string>(initialData?.location || '');
-  const [totalRooms, setTotalRooms] = useState<string>(
-    initialData?.total_rooms !== undefined ? String(initialData.total_rooms) : ''
-  );
-  const [status, setStatus] = useState<'active' | 'maintenance' | 'upcoming'>(
-    (initialData?.status as 'active' | 'maintenance' | 'upcoming') || 'active'
-  );
-
-  // Photo state
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(
-    initialData?.branch_photo_url || initialData?.branch_photo || null
+  // Centralized Form State
+  const [formData, setFormData] = useState<BranchFormData>(() =>
+    buildBranchFormData(initialData)
   );
 
   // Validation & Loading
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Reusable Single Change Handler for standard input elements
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
 
-  // Form Validation
+  // Reusable Field Change Handler for custom controls (radios, files, dates)
+  const handleFieldChange = <K extends keyof BranchFormData>(
+    field: K,
+    value: BranchFormData[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (errors[field as string]) {
+      setErrors((prev) => ({ ...prev, [field as string]: '' }));
+    }
+  };
+
+  // Reset form to clean defaults (or record values if in edit mode)
+  const resetForm = useCallback(() => {
+    setFormData(buildBranchFormData(isEdit ? initialData : null));
+    setErrors({});
+  }, [isEdit, initialData]);
+
+  const [prevBranchId, setPrevBranchId] = useState<number | null>(initialData?.id ?? null);
+
+  // Synchronize on initialData changes in edit mode during render phase
+  if (isEdit && initialData && initialData.id !== prevBranchId) {
+    setPrevBranchId(initialData.id);
+    setFormData(buildBranchFormData(initialData));
+    setErrors({});
+  }
+
+  // Reset form when navigating away (unmounting) in create mode
+  useEffect(() => {
+    return () => {
+      if (!isEdit) {
+        resetForm();
+      }
+    };
+  }, [isEdit, resetForm]);
+
+  // Reset on bfcache restore
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !isEdit) {
+        resetForm();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [isEdit, resetForm]);
+
+  // Form Validation using Centralized State
   const validate = (): boolean => {
     const errs: { [key: string]: string } = {};
 
-    if (!name.trim()) errs.name = 'Branch name is required';
-    if (!location.trim()) errs.location = 'Location is required';
-    if (!totalRooms.trim()) {
-      errs.totalRooms = 'Total rooms is required';
-    } else if (isNaN(Number(totalRooms)) || Number(totalRooms) <= 0) {
-      errs.totalRooms = 'Please enter a valid positive number';
+    if (!formData.name.trim()) errs.name = 'Branch name is required';
+    if (!formData.location.trim()) errs.location = 'Location is required';
+    if (!formData.total_rooms.trim()) {
+      errs.total_rooms = 'Total rooms is required';
+    } else if (isNaN(Number(formData.total_rooms)) || Number(formData.total_rooms) <= 0) {
+      errs.total_rooms = 'Please enter a valid positive number';
     }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  // Handle Submit
+  // Handle Submit using Centralized State
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validate()) {
-      toastRef.current?.show({
-        severity: 'warn',
-        summary: 'Missing Fields',
-        detail: 'Please fill in all required fields.',
-        life: 3000,
-      });
+      toast.warn('Please fill in all required fields.');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const formData = new FormData();
-      formData.append('name', name.trim());
-      formData.append('location', location.trim());
-      formData.append('total_rooms', String(Number(totalRooms)));
-      formData.append('status', status);
+      const payload = new FormData();
+      payload.append('name', formData.name.trim());
+      payload.append('location', formData.location.trim());
+      payload.append('total_rooms', String(Number(formData.total_rooms)));
+      payload.append('status', formData.status);
 
       if (!isEdit) {
-        formData.append('pg_id', '1');
+        payload.append('pg_id', '1');
       }
 
-      if (photoFile) {
-        formData.append('branch_photo', photoFile);
-      } else if (isEdit && !photoPreview) {
+      if (formData.photoFile) {
+        payload.append('branch_photo', formData.photoFile);
+      } else if (isEdit && !formData.photoPreview) {
         // Explicitly send 'null' so backend knows the existing image was removed
-        formData.append('branch_photo', 'null');
+        payload.append('branch_photo', 'null');
       }
 
       if (isEdit && initialData?.id) {
-        const res = await branchService.updateBranch(initialData.id, formData);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Branch Updated',
-              detail: res.message || 'Branch updated successfully',
-            })
-          );
-        }
+        await branchService.updateBranch(initialData.id, payload);
       } else {
-        const res = await branchService.createBranch(formData);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Branch Created',
-              detail: res.message || 'Branch created successfully',
-            })
-          );
-        }
+        await branchService.createBranch(payload);
+        resetForm();
       }
 
       router.push('/dashboard/settings/branches');
       router.refresh();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Operation failed';
-      toastRef.current?.show({
-        severity: 'error',
-        summary: isEdit ? 'Update Failed' : 'Creation Failed',
-        detail: msg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient; input data is preserved
     } finally {
       setIsSubmitting(false);
     }
@@ -145,7 +192,6 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
           message={isEdit ? 'Updating branch details...' : 'Saving new branch...'}
         />
       )}
-      <Toast ref={toastRef} position="top-right" />
 
       {/* Top Header matching Figma: Back Arrow (no border/bg) + Title & Subtitle */}
       <PageHeader
@@ -153,6 +199,9 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
         subtitle={isEdit ? 'Update branch details.' : 'Add a new Branch.'}
         backHref="/dashboard/settings/branches"
         backTitle="Back to Branch Management"
+        onBackClick={() => {
+          if (!isEdit) resetForm();
+        }}
       />
 
       {/* Form Content Container matching Figma */}
@@ -163,12 +212,10 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
             {/* Branch name * */}
             <TextInput
               label="Branch name"
+              name="name"
               required
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
-              }}
+              value={formData.name}
+              onChange={handleChange}
               placeholder="Enter branch name"
               error={errors.name}
             />
@@ -177,38 +224,36 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextInput
                 label="Location"
+                name="location"
                 required
-                value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  if (errors.location) setErrors((prev) => ({ ...prev, location: '' }));
-                }}
-                placeholder="Enter location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Enter location (e.g. Navrangpura)"
                 error={errors.location}
               />
 
               <TextInput
                 label="Total rooms"
+                name="total_rooms"
                 required
                 type="number"
                 min="1"
-                value={totalRooms}
-                onChange={(e) => {
-                  setTotalRooms(e.target.value);
-                  if (errors.totalRooms) setErrors((prev) => ({ ...prev, totalRooms: '' }));
-                }}
+                value={formData.total_rooms}
+                onChange={handleChange}
                 placeholder="Enter total rooms"
-                error={errors.totalRooms}
+                error={errors.total_rooms}
               />
             </div>
 
             {/* Status * (Radio Group) */}
             <RadioGroup
               label="Status"
-              required
               name="status"
-              value={status}
-              onChange={(val) => setStatus(val as 'active' | 'maintenance' | 'upcoming')}
+              required
+              value={formData.status}
+              onChange={(val) =>
+                handleFieldChange('status', val as 'active' | 'maintenance' | 'upcoming')
+              }
               options={STATUS_OPTIONS}
             />
           </div>
@@ -218,24 +263,25 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
             <PhotoUpload
               label="Attach Branch photo"
               optional
-              previewUrl={photoPreview}
-              file={photoFile}
+              previewUrl={formData.photoPreview}
+              file={formData.photoFile}
               shape="rounded"
               onSelectFile={(file) => {
-                setPhotoFile(file);
-                setPhotoPreview(URL.createObjectURL(file));
+                setFormData((prev) => ({
+                  ...prev,
+                  photoFile: file,
+                  photoPreview: URL.createObjectURL(file),
+                }));
               }}
               onRemove={() => {
-                setPhotoFile(null);
-                setPhotoPreview(null);
+                setFormData((prev) => ({
+                  ...prev,
+                  photoFile: null,
+                  photoPreview: null,
+                }));
               }}
               onError={(msg) => {
-                toastRef.current?.show({
-                  severity: 'error',
-                  summary: 'Invalid Photo',
-                  detail: msg,
-                  life: 3000,
-                });
+                toast.error(msg);
               }}
             />
           </div>
@@ -248,7 +294,7 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
             disabled={isSubmitting}
             className="w-full py-3.5 bg-[#175C46] hover:bg-[#124B38] text-white font-semibold rounded-xl text-xs sm:text-sm transition-colors shadow-xs cursor-pointer flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <span>Save</span>
+            <span>{isEdit ? 'Save Changes' : 'Save'}</span>
           </button>
         </div>
       </form>

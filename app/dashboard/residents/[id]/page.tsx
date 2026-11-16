@@ -35,6 +35,11 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
   const [resident, setResident] = useState<ResidentDetail>(DEFAULT_RESIDENT_DETAIL);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity'>('Overview');
+  const [prevResidentId, setPrevResidentId] = useState(residentId);
+  if (residentId !== prevResidentId) {
+    setPrevResidentId(residentId);
+    setActiveTab('Overview');
+  }
 
   useEffect(() => {
     let isMounted = true;

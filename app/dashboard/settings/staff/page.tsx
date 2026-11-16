@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useTransition } from 'react';
+import React, { useEffect, useState, useTransition, useCallback } from 'react';
 import Link from 'next/link';
-import { Toast } from 'primereact/toast';
 import { StaffMember, StaffStats, StaffMeta } from '@/types/staff';
 import { Branch } from '@/types/branch';
 import { staffService, INITIAL_STAFF_STATS } from '@/services/staff.service';
@@ -10,6 +9,7 @@ import { branchService } from '@/services/branch.service';
 import { StaffStatsCards } from '@/components/staff/staff-stats-cards';
 import { StaffDetailsModal } from '@/components/staff/staff-details-modal';
 import { StaffStatusModal } from '@/components/staff/staff-status-modal';
+import { useResetOnNavigation } from '@/hooks';
 import {
   DataTable,
   StatusBadge,
@@ -38,7 +38,7 @@ const STATUS_FILTER_OPTIONS = [
   { label: 'Inactive', value: 'inactive' },
 ];
 
-export const formatStaffRole = (role?: string): string => {
+const formatStaffRole = (role?: string): string => {
   if (!role) return '—';
   const upper = role.toUpperCase();
   const map: Record<string, string> = {
@@ -53,7 +53,7 @@ export const formatStaffRole = (role?: string): string => {
   return map[upper] || role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 };
 
-export const getStaffBranches = (staff: StaffMember): string[] => {
+const getStaffBranches = (staff: StaffMember): string[] => {
   if (staff.branches && staff.branches.length > 0) {
     return staff.branches.map((b) => b.name).filter(Boolean);
   }
@@ -70,31 +70,7 @@ export const getStaffBranches = (staff: StaffMember): string[] => {
 };
 
 export default function StaffManagementPage() {
-  const toastRef = useRef<Toast>(null);
-  const hasShownToast = useRef(false);
   const [, startTransition] = useTransition();
-
-  // Consume flash toast from sessionStorage if redirected after create/update
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !hasShownToast.current) {
-      const stored = sessionStorage.getItem('homenest_flash_toast');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          toastRef.current?.show({
-            severity: parsed.severity || 'success',
-            summary: parsed.summary || 'Success',
-            detail: parsed.detail || '',
-            life: 3000,
-          });
-        } catch {
-          // ignore
-        }
-        sessionStorage.removeItem('homenest_flash_toast');
-        hasShownToast.current = true;
-      }
-    }
-  }, []);
 
   // Filter States
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -122,6 +98,21 @@ export default function StaffManagementPage() {
   const [statusStaff, setStatusStaff] = useState<StaffMember | null>(null);
   const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Table & Modal Reset callback for page transitions / bfcache
+  const resetTableState = useCallback(() => {
+    setSelectedBranchId('all');
+    setSelectedRole('all');
+    setSelectedStatus('all');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setCurrentPage(1);
+    setViewingStaff(null);
+    setStatusStaff(null);
+    setDeletingStaff(null);
+  }, []);
+
+  useResetOnNavigation(resetTableState, { cleanQueryToast: true });
 
   // Fetch Branches for Filter Dropdown
   useEffect(() => {
@@ -202,23 +193,11 @@ export default function StaffManagementPage() {
     if (!deletingStaff) return;
     setIsDeleting(true);
     try {
-      const res = await staffService.deleteStaff(deletingStaff.id);
-      toastRef.current?.show({
-        severity: 'success',
-        summary: 'Staff Deleted',
-        detail: res.message || 'Staff member deleted successfully',
-        life: 3000,
-      });
+      await staffService.deleteStaff(deletingStaff.id);
       setDeletingStaff(null);
       setRefreshTrigger((prev) => prev + 1);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to delete staff member';
-      toastRef.current?.show({
-        severity: 'error',
-        summary: 'Delete Failed',
-        detail: msg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setIsDeleting(false);
     }
@@ -226,8 +205,6 @@ export default function StaffManagementPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Top Header matching Figma: Title, Subtitle, Add staff Button */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -448,22 +425,8 @@ export default function StaffManagementPage() {
         visible={Boolean(statusStaff)}
         onHide={() => setStatusStaff(null)}
         staff={statusStaff}
-        onSuccess={(updatedStatus) => {
-          toastRef.current?.show({
-            severity: 'success',
-            summary: 'Status Updated',
-            detail: `Staff status updated to ${updatedStatus.replace(/_/g, ' ')}`,
-            life: 3000,
-          });
+        onSuccess={() => {
           setRefreshTrigger((prev) => prev + 1);
-        }}
-        onError={(msg) => {
-          toastRef.current?.show({
-            severity: 'error',
-            summary: 'Update Failed',
-            detail: msg,
-            life: 4000,
-          });
         }}
       />
 

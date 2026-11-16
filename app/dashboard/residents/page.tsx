@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Toast } from 'primereact/toast';
 import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput } from '@/components/ui';
+import { useResetOnNavigation } from '@/hooks';
 
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
@@ -27,9 +27,6 @@ const formatPhone = (phone?: string): string => {
 };
 
 export default function ResidentsListPage() {
-  const toastRef = useRef<Toast>(null);
-  const hasShownFlashRef = useRef<boolean>(false);
-
   const [residents, setResidents] = useState<Resident[]>([]);
   const [stats, setStats] = useState<ResidentStats>(DEFAULT_RESIDENT_STATS);
   const [meta, setMeta] = useState<ResidentMeta>({
@@ -53,51 +50,18 @@ export default function ResidentsListPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Display flash toast upon redirection after create or update
-  useEffect(() => {
-    if (typeof window === 'undefined' || hasShownFlashRef.current) return;
-
-    try {
-      const stored = sessionStorage.getItem('homenest_flash_toast');
-      const urlParams = new URLSearchParams(window.location.search);
-      const toastParam = urlParams.get('toast');
-
-      let toastData: { summary: string; detail: string; severity?: 'success' | 'info' | 'warn' | 'error' } | null = null;
-
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.summary) {
-          toastData = parsed;
-        }
-        sessionStorage.removeItem('homenest_flash_toast');
-      } else if (toastParam === 'created') {
-        toastData = {
-          summary: 'Resident Created',
-          detail: 'New resident profile was created successfully.',
-        };
-      } else if (toastParam === 'updated') {
-        toastData = {
-          summary: 'Resident Updated',
-          detail: 'Resident profile was updated successfully.',
-        };
-      }
-
-      if (toastData) {
-        hasShownFlashRef.current = true;
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
-
-        toastRef.current?.show({
-          severity: toastData.severity || 'success',
-          summary: toastData.summary,
-          detail: toastData.detail,
-          life: 3000,
-        });
-      }
-    } catch {
-      // ignore parse error
-    }
+  // Table & Modal Reset callback for page transitions / bfcache
+  const resetTableState = useCallback(() => {
+    setSelectedBranchId(null);
+    setSelectedStatus('');
+    setSelectedRoomType('');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setCurrentPage(1);
+    setDeletingResident(null);
   }, []);
+
+  useResetOnNavigation(resetTableState, { cleanQueryToast: true });
 
   // Debounce search query by 350ms
   useEffect(() => {
@@ -170,8 +134,6 @@ export default function ResidentsListPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5]">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Top Header: Title & "Add Resident" Action Button matching Figma */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
@@ -432,22 +394,11 @@ export default function ResidentsListPage() {
           if (!deletingResident) return;
           setIsDeleting(true);
           try {
-            const res = await residentService.deleteResident(deletingResident.id);
-            toastRef.current?.show({
-              severity: 'success',
-              summary: 'Resident Deleted',
-              detail: res.message || 'Resident deleted successfully',
-              life: 3000,
-            });
+            await residentService.deleteResident(deletingResident.id);
             setDeletingResident(null);
             setRefreshTrigger((prev) => prev + 1);
-          } catch (err) {
-            toastRef.current?.show({
-              severity: 'error',
-              summary: 'Delete Failed',
-              detail: err instanceof Error ? err.message : 'Failed to delete resident',
-              life: 3000,
-            });
+          } catch {
+            // Backend error toast is handled automatically by apiClient
           } finally {
             setIsDeleting(false);
           }

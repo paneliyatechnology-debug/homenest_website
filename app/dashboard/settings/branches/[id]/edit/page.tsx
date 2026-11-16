@@ -69,7 +69,7 @@ export default function EditBranchPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1200px] w-full mx-auto space-y-5 sm:space-y-6 bg-[#F7F7F5]">
-      <BranchForm mode="edit" initialData={branch} />
+      <BranchForm mode="edit" initialData={branch} key={branch.id} />
     </main>
   );
 }

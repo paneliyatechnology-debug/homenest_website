@@ -1,18 +1,83 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AppDatePicker } from '@/components/ui/app-date-picker';
-import { Dropdown, BrandLoader } from '@/components/ui';
+import { Dropdown } from '@/components/ui';
 import { ResidentDropdown } from '@/components/residents/resident-dropdown';
-import { AgreementRecord, AgreementStatus, CreateAgreementInput, UpdateAgreementInput } from '@/types/agreement';
+import {
+  AgreementRecord,
+  AgreementStatus,
+  CreateAgreementInput,
+  UpdateAgreementInput,
+} from '@/types/agreement';
 import { Resident } from '@/types/resident';
 import { agreementService } from '@/services/agreement.service';
-import { Toast } from 'primereact/toast';
+
+export interface AgreementFormData {
+  selectedResident: Resident | null;
+  agreement_no: string;
+  agreement_type: string;
+  start_date: string;
+  end_date: string;
+  status: AgreementStatus;
+}
+
+export const initialAgreementFormData: AgreementFormData = {
+  selectedResident: null,
+  agreement_no: '',
+  agreement_type: '',
+  start_date: '',
+  end_date: '',
+  status: 'pending',
+};
+
+const parseDateString = (raw?: string): string => {
+  if (!raw) return '';
+  let d = raw;
+  if (d.includes(' ')) {
+    const datePart = d.split(' ')[0];
+    if (datePart.includes('-')) {
+      const parts = datePart.split('-');
+      if (parts[0].length === 2) {
+        // DD-MM-YYYY -> YYYY-MM-DD
+        d = `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+  }
+  return d;
+};
+
+export const buildAgreementFormData = (
+  initialData?: AgreementRecord | null
+): AgreementFormData => ({
+  selectedResident: initialData
+    ? {
+        id: initialData.resident_id,
+        name: initialData.resident_name,
+        email: initialData.resident_email || '',
+        phone: initialData.resident_phone || '',
+        gender: 'male',
+        status: 'active',
+        room_no: initialData.room_number || null,
+        room_type: initialData.room_type || null,
+        building_name: initialData.pg_name || null,
+        room_id: initialData.room_id || null,
+        building_id: initialData.branch_id || initialData.pg_id || 1,
+        created_at: initialData.created_at || '',
+        updated_at: initialData.updated_at || '',
+        role: 'resident',
+      }
+    : null,
+  agreement_no: initialData?.agreement_no || '',
+  agreement_type: initialData?.agreement_type || '',
+  start_date: parseDateString(initialData?.start_date),
+  end_date: parseDateString(initialData?.end_date),
+  status: initialData?.status || 'pending',
+});
 
 interface AgreementFormProps {
   onSuccess?: () => void;
-  toastRef?: React.RefObject<Toast | null>;
   initialData?: AgreementRecord | null;
   isEdit?: boolean;
 }
@@ -32,70 +97,62 @@ const STATUS_OPTIONS: { value: AgreementStatus; label: string }[] = [
   { value: 'expired', label: 'Expired' },
 ];
 
-const parseDateString = (raw?: string): string => {
-  if (!raw) return '';
-  let d = raw;
-  if (d.includes(' ')) {
-    const datePart = d.split(' ')[0];
-    if (datePart.includes('-')) {
-      const parts = datePart.split('-');
-      if (parts[0].length === 2) {
-        // DD-MM-YYYY -> YYYY-MM-DD
-        d = `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-    }
-  }
-  return d;
-};
-
 export const AgreementForm: React.FC<AgreementFormProps> = ({
   onSuccess,
-  toastRef,
   initialData,
   isEdit = false,
 }) => {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
-  // Resident selection — drives auto-fill
-  const [selectedResident, setSelectedResident] = useState<Resident | null>(() => {
-    if (!initialData) return null;
-    return {
-      id: initialData.resident_id,
-      name: initialData.resident_name,
-      email: initialData.resident_email || '',
-      phone: initialData.resident_phone || '',
-      gender: 'male',
-      status: 'active',
-      room_no: initialData.room_number || null,
-      room_type: initialData.room_type || null,
-      building_name: initialData.pg_name || null,
-      room_id: initialData.room_id || null,
-      building_id: initialData.branch_id || initialData.pg_id || 1,
-      created_at: initialData.created_at || '',
-      updated_at: initialData.updated_at || '',
-      role: 'resident',
-    };
-  });
-
-  // Form fields
-  const [agreementNo, setAgreementNo] = useState(() => initialData?.agreement_no || '');
-  const [agreementType, setAgreementType] = useState(() => initialData?.agreement_type || '');
-  const [startDate, setStartDate] = useState(() => parseDateString(initialData?.start_date));
-  const [endDate, setEndDate] = useState(() => parseDateString(initialData?.end_date));
-  const [status, setStatus] = useState<AgreementStatus>(() => initialData?.status || 'pending');
+  // Centralized Form State
+  const [formData, setFormData] = useState<AgreementFormData>(() =>
+    buildAgreementFormData(initialData)
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const resetForm = () => {
-    setSelectedResident(null);
-    setAgreementNo('');
-    setAgreementType('');
-    setStartDate('');
-    setEndDate('');
-    setStatus('pending');
-    setErrors({});
+  // Reusable Single Change Handler for standard input elements
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
   };
+
+  // Reusable Field Change Handler for custom controls (dates, resident dropdown, radios)
+  const handleFieldChange = <K extends keyof AgreementFormData>(
+    field: K,
+    value: AgreementFormData[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (errors[field as string]) {
+      setErrors((prev) => ({ ...prev, [field as string]: '' }));
+    }
+  };
+
+  const resetForm = useCallback(() => {
+    setFormData(buildAgreementFormData(isEdit ? initialData : null));
+    setErrors({});
+  }, [isEdit, initialData]);
+
+  const [prevRecordId, setPrevRecordId] = useState<number | null>(initialData?.id ?? null);
+
+  // Synchronize on initialData changes in edit mode during render phase
+  if (isEdit && initialData && initialData.id !== prevRecordId) {
+    setPrevRecordId(initialData.id);
+    setFormData(buildAgreementFormData(initialData));
+    setErrors({});
+  }
 
   // Clean all fields when leaving the page/component unmounts (only for create mode)
   useEffect(() => {
@@ -104,27 +161,36 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
         resetForm();
       }
     };
-  }, [isEdit]);
+  }, [isEdit, resetForm]);
 
-  const clearError = (key: string) => {
-    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }));
-  };
+  // Reset fields on browser back/forward bfcache restoration
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && !isEdit) {
+        resetForm();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [isEdit, resetForm]);
 
   const handleResidentSelect = (resident: Resident | null) => {
-    setSelectedResident(resident);
-    clearError('residentId');
+    handleFieldChange('selectedResident', resident);
+    if (errors.residentId) {
+      setErrors((prev) => ({ ...prev, residentId: '' }));
+    }
   };
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!isEdit && !selectedResident) {
+    if (!isEdit && !formData.selectedResident) {
       errs.residentId = 'Please select a resident';
-    } else if (!isEdit && selectedResident && !selectedResident.room_id) {
+    } else if (!isEdit && formData.selectedResident && !formData.selectedResident.room_id) {
       errs.residentId = 'Selected resident does not have an allocated room';
     }
-    if (!agreementNo.trim()) errs.agreementNo = 'Agreement number is required';
-    if (!agreementType) errs.agreementType = 'Agreement type is required';
-    if (!startDate) errs.startDate = 'Start date is required';
+    if (!formData.agreement_no.trim()) errs.agreement_no = 'Agreement number is required';
+    if (!formData.agreement_type) errs.agreement_type = 'Agreement type is required';
+    if (!formData.start_date) errs.start_date = 'Start date is required';
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -138,58 +204,33 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
     try {
       if (isEdit && initialData) {
         const updateInput: UpdateAgreementInput = {
-          agreement_type: agreementType,
-          status,
-          start_date: startDate,
-          end_date: endDate,
+          agreement_type: formData.agreement_type,
+          status: formData.status,
+          start_date: formData.start_date,
+          end_date: formData.end_date,
         };
-        const res = await agreementService.updateAgreement(initialData.id, updateInput);
-
-        try {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Agreement Updated',
-              detail: res.message || `Agreement ${initialData.agreement_no} updated successfully.`,
-            })
-          );
-        } catch {
-          // ignore
-        }
+        await agreementService.updateAgreement(initialData.id, updateInput);
       } else {
-        if (!selectedResident) return;
-        const roomId = selectedResident.room_id ? String(selectedResident.room_id) : '';
-        const roomType = selectedResident.room_type || 'single';
-        const branchId = String(selectedResident.building_id || 1);
+        if (!formData.selectedResident) return;
+        const roomId = formData.selectedResident.room_id
+          ? String(formData.selectedResident.room_id)
+          : '';
+        const roomType = formData.selectedResident.room_type || 'single';
+        const branchId = String(formData.selectedResident.building_id || 1);
 
         const input: CreateAgreementInput = {
-          resident_id: selectedResident.id,
-          agreement_no: agreementNo.trim(),
-          agreement_type: agreementType,
-          start_date: startDate,
-          end_date: endDate || startDate,
+          resident_id: formData.selectedResident.id,
+          agreement_no: formData.agreement_no.trim(),
+          agreement_type: formData.agreement_type,
+          start_date: formData.start_date,
+          end_date: formData.end_date || formData.start_date,
           branch_id: branchId,
           room_id: roomId,
           room_type: roomType,
-          status,
+          status: formData.status,
         };
 
-        const created = await agreementService.createAgreement(input);
-
-        try {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Agreement Created',
-              detail: created.message || `Agreement ${input.agreement_no} created successfully.`,
-            })
-          );
-        } catch {
-          // ignore
-        }
-
+        await agreementService.createAgreement(input);
         resetForm();
       }
 
@@ -198,13 +239,8 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
       } else {
         router.push('/dashboard/residents/agreements');
       }
-    } catch (err) {
-      toastRef?.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: err instanceof Error ? err.message : 'Failed to save agreement. Please try again.',
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setSubmitting(false);
     }
@@ -212,17 +248,9 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Professional Brand Loader Overlay when submitting */}
-      {submitting && (
-        <BrandLoader
-          overlay
-          message={isEdit ? 'Updating agreement...' : 'Saving agreement...'}
-        />
-      )}
-      <div className="space-y-6">
-
-        {/* Row 1: Resident & Agreement No. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] p-5 sm:p-7 space-y-6">
+        {/* Row 1: Resident & Agreement No */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start">
           <div>
             <label className="text-xs sm:text-[13px] font-medium text-gray-700 block mb-1.5">
               Resident name {isEdit ? <span className="text-gray-400 font-normal">(locked)</span> : <span className="text-rose-500">*</span>}
@@ -237,7 +265,7 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
             ) : (
               <>
                 <ResidentDropdown
-                  selectedResidentId={selectedResident?.id ?? null}
+                  selectedResidentId={formData.selectedResident?.id ?? null}
                   onSelect={handleResidentSelect}
                   hasError={Boolean(errors.residentId)}
                 />
@@ -254,49 +282,50 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
             </label>
             <input
               type="text"
-              value={agreementNo}
-              onChange={(e) => { setAgreementNo(e.target.value); clearError('agreementNo'); }}
+              name="agreement_no"
+              value={formData.agreement_no}
+              onChange={handleChange}
               disabled={isEdit}
               placeholder="e.g. AGR-2026-003"
               className={`w-full h-11 px-4 py-2.5 rounded-xl border ${
                 isEdit
                   ? 'bg-gray-50/80 border-gray-200/80 text-gray-500 cursor-not-allowed select-none'
-                  : errors.agreementNo
+                  : errors.agreement_no
                   ? 'bg-white border-rose-400 text-gray-800'
                   : 'bg-white border-gray-200/90 hover:border-gray-300 text-gray-800'
               } text-xs sm:text-sm placeholder-gray-400 outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all`}
             />
-            {errors.agreementNo && (
-              <span className="text-[11px] text-rose-500 mt-1 block">{errors.agreementNo}</span>
+            {errors.agreement_no && (
+              <span className="text-[11px] text-rose-500 mt-1 block">{errors.agreement_no}</span>
             )}
           </div>
         </div>
 
         {/* Resident Summary Details Banner */}
-        {selectedResident && (
+        {formData.selectedResident && (
           <div className="flex flex-wrap items-center gap-2.5 px-4 py-3 bg-[#F0FAF5] border border-[#C6E9D7] rounded-xl text-xs text-[#175C46]">
             <svg className="w-4 h-4 shrink-0 text-[#175C46]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="font-semibold text-gray-700">Resident Details:</span>
-            {selectedResident.room_no && (
+            {formData.selectedResident.room_no && (
               <span className="bg-white/80 px-2.5 py-1 rounded-md border border-[#C6E9D7] font-medium text-gray-800">
-                Room: <strong className="text-[#175C46]">{selectedResident.room_no}</strong>
+                Room: <strong className="text-[#175C46]">{formData.selectedResident.room_no}</strong>
               </span>
             )}
-            {selectedResident.room_type && (
+            {formData.selectedResident.room_type && (
               <span className="bg-white/80 px-2.5 py-1 rounded-md border border-[#C6E9D7] font-medium text-gray-800">
-                Type: <strong className="text-[#175C46] capitalize">{selectedResident.room_type}</strong>
+                Type: <strong className="text-[#175C46] capitalize">{formData.selectedResident.room_type}</strong>
               </span>
             )}
-            {selectedResident.building_name && (
+            {formData.selectedResident.building_name && (
               <span className="bg-white/80 px-2.5 py-1 rounded-md border border-[#C6E9D7] font-medium text-gray-800">
-                Building: <strong className="text-[#175C46]">{selectedResident.building_name}</strong>
+                Building: <strong className="text-[#175C46]">{formData.selectedResident.building_name}</strong>
               </span>
             )}
-            {selectedResident.bed_number && (
+            {formData.selectedResident.bed_number && (
               <span className="bg-white/80 px-2.5 py-1 rounded-md border border-[#C6E9D7] font-medium text-gray-800">
-                Bed: <strong className="text-[#175C46]">{selectedResident.bed_number}</strong>
+                Bed: <strong className="text-[#175C46]">{formData.selectedResident.bed_number}</strong>
               </span>
             )}
           </div>
@@ -305,17 +334,15 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
         {/* Row 2: Agreement Type & Status */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-start">
           <Dropdown
-              label="Agreement Type"
-              required
-              placeholder="Select agreement type"
-              value={agreementType}
-              onChange={(e) => {
-                setAgreementType(e.target.value);
-                clearError('agreementType');
-              }}
-              error={errors.agreementType}
-              options={AGREEMENT_TYPE_OPTIONS}
-            />
+            label="Agreement Type"
+            name="agreement_type"
+            required
+            placeholder="Select agreement type"
+            value={formData.agreement_type}
+            onChange={handleChange}
+            error={errors.agreement_type}
+            options={AGREEMENT_TYPE_OPTIONS}
+          />
 
           <div>
             <label className="text-xs sm:text-[13px] font-medium text-gray-700 block mb-2.5">
@@ -331,8 +358,8 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
                     type="radio"
                     name="agreement_status"
                     value={opt.value}
-                    checked={status === opt.value}
-                    onChange={() => setStatus(opt.value)}
+                    checked={formData.status === opt.value}
+                    onChange={() => handleFieldChange('status', opt.value)}
                     className="w-4 h-4 border-gray-300 focus:ring-[#175C46] accent-[#175C46] cursor-pointer"
                   />
                   <span>{opt.label}</span>
@@ -350,12 +377,12 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
             </label>
             <AppDatePicker
               placeholder="Select Start date"
-              value={startDate}
-              onChange={(val) => { setStartDate(val); clearError('startDate'); }}
-              hasError={Boolean(errors.startDate)}
+              value={formData.start_date}
+              onChange={(val) => handleFieldChange('start_date', val)}
+              hasError={Boolean(errors.start_date)}
             />
-            {errors.startDate && (
-              <span className="text-[11px] text-rose-500 mt-1 block">{errors.startDate}</span>
+            {errors.start_date && (
+              <span className="text-[11px] text-rose-500 mt-1 block">{errors.start_date}</span>
             )}
           </div>
 
@@ -365,8 +392,8 @@ export const AgreementForm: React.FC<AgreementFormProps> = ({
             </label>
             <AppDatePicker
               placeholder="Select end date"
-              value={endDate}
-              onChange={(val) => setEndDate(val)}
+              value={formData.end_date}
+              onChange={(val) => handleFieldChange('end_date', val)}
             />
           </div>
         </div>

@@ -53,6 +53,13 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Clear file input DOM value when photo is cleared/reset
+  React.useEffect(() => {
+    if (!previewUrl && !file && fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [previewUrl, file]);
+
   const handleFile = (selectedFile: File) => {
     // Validate file type
     if (!selectedFile.type.startsWith('image/')) {

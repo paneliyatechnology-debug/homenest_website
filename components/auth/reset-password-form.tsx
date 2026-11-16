@@ -3,23 +3,55 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { FormPasswordInput } from '@/components/ui/password-input';
 import { Button } from '@/components/ui/button';
 import { authService } from '@/services/auth.service';
-import { ApiError } from '@/lib/api-client';
+import { toast } from '@/lib/toast';
+
+export interface ResetPasswordFormData {
+  password: string;
+  confirmPassword: string;
+}
+
+export const initialResetPasswordFormData: ResetPasswordFormData = {
+  password: '',
+  confirmPassword: '',
+};
 
 export const ResetPasswordForm: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token') || '';
-  const toast = useRef<Toast>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState<ResetPasswordFormData>(initialResetPasswordFormData);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ password?: string; confirmPassword?: string }>({});
+
+  const resetForm = () => {
+    setFormData(initialResetPasswordFormData);
+    setErrors({});
+    formRef.current?.reset();
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const fieldKey =
+      name === 'no_autofill_new_password'
+        ? 'password'
+        : name === 'no_autofill_confirm_password'
+          ? 'confirmPassword'
+          : name;
+
+    setFormData((prev) => ({
+      ...prev,
+      [fieldKey]: value,
+    }));
+
+    if (errors[fieldKey as keyof ResetPasswordFormData]) {
+      setErrors((prev) => ({ ...prev, [fieldKey]: undefined }));
+    }
+  };
 
   // Strictly wipe fields on mount and browser back/forward cache navigation
   useEffect(() => {
@@ -42,10 +74,7 @@ export const ResetPasswordForm: React.FC = () => {
 
     const handlePageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
-        setPassword('');
-        setConfirmPassword('');
-        setErrors({});
-        formRef.current?.reset();
+        resetForm();
         wipeDomInputs();
       }
     };
@@ -59,10 +88,7 @@ export const ResetPasswordForm: React.FC = () => {
   }, []);
 
   const handleClearAndNavigate = (path: string) => {
-    setPassword('');
-    setConfirmPassword('');
-    setErrors({});
-    formRef.current?.reset();
+    resetForm();
     router.push(path);
   };
 
@@ -70,26 +96,21 @@ export const ResetPasswordForm: React.FC = () => {
     e.preventDefault();
 
     if (!token) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Invalid Token',
-        detail: 'Invalid or missing password reset token. Please request a new link.',
-        life: 4000,
-      });
+      toast.error('Invalid or missing password reset token. Please request a new link.');
       return;
     }
 
     const newErrors: { password?: string; confirmPassword?: string } = {};
 
-    if (!password) {
+    if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
+    } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
-    if (!confirmPassword) {
+    if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
+    } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
@@ -104,59 +125,22 @@ export const ResetPasswordForm: React.FC = () => {
     try {
       const response = await authService.resetPassword({
         token,
-        password,
+        password: formData.password,
       });
       setLoading(false);
 
       if (response.success) {
-        // Save flash toast for display on login page
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              type: 'password_reset_success',
-              detail:
-                response.message ||
-                'Password has been reset successfully. You can now login with your new password.',
-            })
-          );
-        }
-
-        // Clear password inputs and redirect immediately to Login Page
-        setPassword('');
-        setConfirmPassword('');
-        formRef.current?.reset();
-        router.push('/?toast=password_reset_success');
-      } else {
-        // On error, stay on Reset Password page and show error toast
-        toast.current?.show({
-          severity: 'error',
-          summary: 'Error',
-          detail: response.message || 'Failed to reset password',
-          life: 4000,
-        });
+        resetForm();
+        router.push('/');
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
-      const errorMsg =
-        err instanceof ApiError
-          ? err.message || 'Reset token expired or invalid.'
-          : 'Unable to connect to server. Please verify backend is running on port 5000.';
-
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Reset Failed',
-        detail: errorMsg,
-        life: 4000,
-      });
+      // Backend error toast is handled automatically by apiClient
     }
   };
 
   return (
     <div className="w-full h-full lg:h-screen flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-10 bg-white overflow-y-auto">
-      {/* PrimeReact Toast Component */}
-      <Toast ref={toast} position="top-right" />
-
       {/* Centered Form Wrapper matching Figma's exact 420px scale */}
       <div className="w-full max-w-[420px] mx-auto my-auto flex flex-col justify-center">
         {/* Title Header */}
@@ -239,11 +223,8 @@ export const ResetPasswordForm: React.FC = () => {
               name="no_autofill_new_password"
               label="New Password"
               placeholder="Enter new password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
-              }}
+              value={formData.password}
+              onChange={handleChange}
               error={errors.password}
               autoComplete="new-password"
               data-lpignore="true"
@@ -255,11 +236,8 @@ export const ResetPasswordForm: React.FC = () => {
               name="no_autofill_confirm_password"
               label="Confirm Password"
               placeholder="Re-enter new password"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
-              }}
+              value={formData.confirmPassword}
+              onChange={handleChange}
               error={errors.confirmPassword}
               autoComplete="new-password"
               data-lpignore="true"

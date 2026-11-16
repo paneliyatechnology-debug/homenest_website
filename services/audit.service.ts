@@ -134,7 +134,9 @@ class AuditService {
       success?: boolean;
       message?: string;
       data?: AuditExportResponse;
-    }>(`/audits/export?${query.toString()}`);
+    }>(`/audits/export?${query.toString()}`, {
+      showSuccessToast: true,
+    });
 
     if (!res || !res.data) {
       throw new Error(res?.message ?? 'Failed to export audit report');

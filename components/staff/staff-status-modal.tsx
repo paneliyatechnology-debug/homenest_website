@@ -11,7 +11,7 @@ interface StaffStatusModalProps {
   onHide: () => void;
   staff: StaffMember | null;
   onSuccess: (updatedStatus: StaffStatus) => void;
-  onError: (message: string) => void;
+  onError?: (message: string) => void;
 }
 
 const STATUS_CHOICES: {
@@ -51,12 +51,22 @@ export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
     return (staff?.status as StaffStatus) || 'active';
   });
   const [prevStaffId, setPrevStaffId] = useState<number | null>(staff?.id ?? null);
+  const [prevVisible, setPrevVisible] = useState(visible);
   const [loading, setLoading] = useState(false);
 
-  if (staff && staff.id !== prevStaffId) {
-    setPrevStaffId(staff.id);
-    setSelectedStatus((staff.status as StaffStatus) || 'active');
+  // Synchronize selection during render phase when visibility or staff member changes
+  if (visible !== prevVisible || (staff && staff.id !== prevStaffId)) {
+    setPrevVisible(visible);
+    setPrevStaffId(staff?.id ?? null);
+    setSelectedStatus((staff?.status as StaffStatus) || 'active');
   }
+
+  const handleClose = () => {
+    if (staff) {
+      setSelectedStatus((staff.status as StaffStatus) || 'active');
+    }
+    onHide();
+  };
 
   if (!staff) return null;
 
@@ -65,10 +75,10 @@ export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
     try {
       await staffService.updateStaffStatus(staff.id, selectedStatus);
       onSuccess(selectedStatus);
-      onHide();
+      handleClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to update staff status';
-      onError(msg);
+      onError?.(msg);
     } finally {
       setLoading(false);
     }
@@ -77,7 +87,7 @@ export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
   return (
     <Dialog
       visible={visible}
-      onHide={onHide}
+      onHide={handleClose}
       modal
       draggable={false}
       resizable={false}
@@ -166,7 +176,7 @@ export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
           <button
             type="button"
-            onClick={onHide}
+            onClick={handleClose}
             disabled={loading}
             className="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
           >

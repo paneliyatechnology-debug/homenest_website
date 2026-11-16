@@ -2,10 +2,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { AppDatePicker } from '@/components/ui/app-date-picker';
 import { PageHeader, Dropdown, PhotoUpload, BrandLoader } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
+import { toast } from '@/lib/toast';
 import {
   ResidentDetail,
   Branch,
@@ -174,7 +174,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   initialData,
 }) => {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
 
   // File input refs
   const aadharInputRef = useRef<HTMLInputElement>(null);
@@ -478,6 +477,17 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     };
   }, [mode]);
 
+  // Reset fields on browser back/forward bfcache restoration
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted && mode === 'create') {
+        resetAllFields();
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, [mode]);
+
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -594,12 +604,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     setErrorMessage(null);
 
     if (!validateForm()) {
-      toastRef.current?.show({
-        severity: 'warn',
-        summary: 'Required Fields Missing',
-        detail: 'Please fill in all required fields marked in red.',
-        life: 4000,
-      });
+      toast.warn('Please fill in all required fields marked in red.');
       return;
     }
 
@@ -708,42 +713,15 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
       if (mode === 'create') {
         await residentService.createResident(fd);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Resident Created',
-              detail: 'New resident profile was created successfully.',
-            })
-          );
-        }
-        router.push('/dashboard/residents?toast=created');
         resetAllFields();
+        router.push('/dashboard/residents');
       } else if (residentId) {
         await residentService.updateResident(residentId, fd);
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem(
-            'homenest_flash_toast',
-            JSON.stringify({
-              severity: 'success',
-              summary: 'Resident Updated',
-              detail: 'Resident profile was updated successfully.',
-            })
-          );
-        }
-        router.push('/dashboard/residents?toast=updated');
         resetAllFields();
+        router.push('/dashboard/residents');
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to save resident details.';
-      setErrorMessage(msg);
-      toastRef.current?.show({
-        severity: 'error',
-        summary: 'Error Saving Resident',
-        detail: msg,
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient; form state is preserved
     } finally {
       setSubmitting(false);
     }
@@ -758,7 +736,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           message={mode === 'edit' ? 'Updating resident profile...' : 'Saving new resident...'}
         />
       )}
-      <Toast ref={toastRef} position="top-right" />
 
       {/* Top Header matching Figma screenshot */}
       <PageHeader
@@ -983,12 +960,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   setPhotoPreview(null);
                 }}
                 onError={(msg) => {
-                  toastRef.current?.show({
-                    severity: 'warn',
-                    summary: 'Invalid Photo',
-                    detail: msg,
-                    life: 3000,
-                  });
+                  toast.warn(msg);
                 }}
               />
             </div>

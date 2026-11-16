@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Toast } from 'primereact/toast';
 import { AgreementRecord, AgreementMeta, AgreementStats } from '@/types/agreement';
 import {
   agreementService,
   INITIAL_AGREEMENT_STATS,
 } from '@/services/agreement.service';
 import { AgreementStatsCards } from '@/components/agreements/agreement-stats-cards';
+import { useResetOnNavigation } from '@/hooks';
 
 import { AgreementDetailsModal } from '@/components/agreements/agreement-details-modal';
 
@@ -27,8 +27,6 @@ const formatAgreementType = (val: string) => AGREEMENT_TYPE_LABELS[val] ?? val;
 
 export default function AgreementRecordsPage() {
   const router = useRouter();
-  const toastRef = useRef<Toast>(null);
-  const hasShownFlashRef = useRef<boolean>(false);
 
   const [records, setRecords] = useState<AgreementRecord[]>([]);
   const [stats, setStats] = useState<AgreementStats>(INITIAL_AGREEMENT_STATS);
@@ -58,27 +56,32 @@ export default function AgreementRecordsPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Table & Modal Reset callback for page transitions / bfcache
+  const resetTableState = useCallback(() => {
+    setSelectedBranchId(null);
+    setSelectedAgreementType('');
+    setSelectedStatus('');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setCurrentPage(1);
+    setSelectedRecord(null);
+    setIsModalOpen(false);
+    setDeletingRecord(null);
+    setIsDeleteModalOpen(false);
+  }, []);
+
+  useResetOnNavigation(resetTableState, { cleanQueryToast: true });
+
   const handleDeleteAgreement = async () => {
     if (!deletingRecord) return;
     setIsDeleting(true);
     try {
-      const res = await agreementService.deleteAgreement(deletingRecord.id);
-      toastRef.current?.show({
-        severity: 'success',
-        summary: 'Agreement Deleted',
-        detail: res.message || 'Agreement deleted successfully',
-        life: 3000,
-      });
+      await agreementService.deleteAgreement(deletingRecord.id);
       setIsDeleteModalOpen(false);
       setDeletingRecord(null);
       setRefreshTrigger((prev) => prev + 1);
-    } catch (err) {
-      toastRef.current?.show({
-        severity: 'error',
-        summary: 'Delete Failed',
-        detail: err instanceof Error ? err.message : 'Failed to delete agreement',
-        life: 4000,
-      });
+    } catch {
+      // Backend error toast is handled automatically by apiClient
     } finally {
       setIsDeleting(false);
     }
@@ -86,29 +89,6 @@ export default function AgreementRecordsPage() {
 
   // Trigger data refresh after edit or delete
   const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Flash toast on redirect
-  useEffect(() => {
-    if (typeof window === 'undefined' || hasShownFlashRef.current) return;
-    try {
-      const stored = sessionStorage.getItem('homenest_flash_toast');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.summary) {
-          hasShownFlashRef.current = true;
-          sessionStorage.removeItem('homenest_flash_toast');
-          toastRef.current?.show({
-            severity: parsed.severity || 'success',
-            summary: parsed.summary,
-            detail: parsed.detail,
-            life: 3000,
-          });
-        }
-      }
-    } catch {
-      // ignore
-    }
-  }, []);
 
   // Debounce search
   useEffect(() => {
@@ -159,8 +139,6 @@ export default function AgreementRecordsPage() {
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-5 sm:space-y-6 bg-[#F7F7F5]">
-      <Toast ref={toastRef} position="top-right" />
-
       {/* Header: Title & Subtitle + "New Agreement" Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
