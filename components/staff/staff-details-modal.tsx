@@ -24,10 +24,10 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
   const branchList: string[] = staff.branches && staff.branches.length > 0
     ? staff.branches.map((b) => b.name).filter(Boolean)
     : staff.branch_names
-    ? staff.branch_names.split(',').map((s) => s.trim()).filter(Boolean)
-    : staff.branch_name
-    ? [staff.branch_name.trim()]
-    : [];
+      ? staff.branch_names.split(',').map((s) => s.trim()).filter(Boolean)
+      : staff.branch_name
+        ? [staff.branch_name.trim()]
+        : [];
 
   return (
     <Dialog
@@ -121,16 +121,6 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
                 ))
               )}
             </div>
-          </div>
-
-          <div className="p-3 bg-white rounded-xl border border-gray-100 space-y-1">
-            <span className="text-gray-400 font-medium block">Joined Date</span>
-            <span className="font-semibold text-gray-700 block">{staff.created_at || '—'}</span>
-          </div>
-
-          <div className="p-3 bg-white rounded-xl border border-gray-100 space-y-1">
-            <span className="text-gray-400 font-medium block">Last Updated</span>
-            <span className="font-semibold text-gray-700 block">{staff.updated_at || '—'}</span>
           </div>
         </div>
 
