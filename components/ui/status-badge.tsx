@@ -95,26 +95,34 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           ? 'Sent'
           : 'Active');
     } else if (
+      normalized === 'in_progress' ||
+      normalized === 'in progress'
+    ) {
+      badgeStyle = 'bg-[#E8F1FD] text-[#2563EB]';
+      displayLabel = label || 'In Progress';
+    } else if (
       normalized === 'pending' ||
       normalized === 'pending_sign' ||
       normalized === 'pending signature' ||
       normalized === 'pending_approval' ||
       normalized === 'pending approval' ||
       normalized === 'unpaid' ||
-      normalized === 'in_progress' ||
-      normalized === 'in progress' ||
       normalized === 'scheduled'
     ) {
       badgeStyle = 'bg-[#FEF7E6] text-[#B06000]';
       displayLabel =
         label ||
-        (normalized === 'in_progress' || normalized === 'in progress'
-          ? 'In Progress'
-          : normalized === 'scheduled'
+        (normalized === 'scheduled'
           ? 'Scheduled'
           : normalized === 'pending_approval' || normalized === 'pending approval'
           ? 'Pending'
           : 'Pending');
+    } else if (
+      normalized === 'cancelled' ||
+      normalized === 'canceled'
+    ) {
+      badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
+      displayLabel = label || 'Cancelled';
     } else if (normalized === 'left') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || 'Left';
