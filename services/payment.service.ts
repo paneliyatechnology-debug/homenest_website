@@ -246,7 +246,9 @@ class PaymentService {
         amount: number;
         status: string;
       };
-    }>(`/payments/${id}/receipt`);
+    }>(`/payments/${id}/receipt`, {
+      showSuccessToast: true,
+    });
     return res.data;
   }
 }

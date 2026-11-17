@@ -15,6 +15,7 @@ import { PaymentOverviewStatsCards } from '@/components/payments/payment-overvie
 import { PaymentDetailsModal } from '@/components/payments/payment-details-modal';
 import { useResetOnNavigation } from '@/hooks';
 import { toast } from '@/lib/toast';
+import { config } from '@/lib/config';
 import {
   DataTable,
   ColumnDef,
@@ -41,6 +42,13 @@ function getDefaultMonthRange() {
     return `${y}-${m}-${day}`;
   };
   return { start: fmt(start), end: fmt(end) };
+}
+
+function resolveFileUrl(fileUrl?: string): string {
+  if (!fileUrl) return '';
+  if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) return fileUrl;
+  const base = config.api.baseUrl.replace(/\/api\/v1\/?$/, '');
+  return `${base}/${fileUrl.replace(/^\//, '')}`;
 }
 
 export default function PaymentOverviewPage() {
@@ -239,16 +247,34 @@ export default function PaymentOverviewPage() {
 
   const handleDownloadReceipt = async (payment: PaymentRecord) => {
     try {
-      toast.info('Generating payment receipt PDF...');
       const res = await paymentService.getPaymentReceipt(payment.id);
       if (res?.file_url) {
-        window.open(res.file_url, '_blank');
-      } else {
-        toast.error('Unable to generate receipt PDF');
+        const fullUrl = resolveFileUrl(res.file_url);
+        const fileName = res.filename || `${res.receipt_no || `receipt-${payment.id}`}.pdf`;
+        try {
+          const fileResp = await fetch(fullUrl, { mode: 'cors' });
+          if (!fileResp.ok) throw new Error('File fetch failed');
+          const blob = await fileResp.blob();
+          const blobUrl = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = blobUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
+        } catch {
+          const link = document.createElement('a');
+          link.href = fullUrl;
+          link.setAttribute('download', fileName);
+          link.setAttribute('target', '_blank');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
       }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to download receipt';
-      toast.error(errorMsg);
+    } catch {
+      // Backend success or error notifications are handled automatically by apiClient
     }
   };
 
