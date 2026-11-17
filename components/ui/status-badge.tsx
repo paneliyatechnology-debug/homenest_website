@@ -69,7 +69,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       normalized === 'signed' ||
       normalized === 'paid' ||
       normalized === 'completed' ||
-      normalized === 'success'
+      normalized === 'success' ||
+      normalized === 'resolved'
     ) {
       badgeStyle = 'bg-[#E8F8F0] text-[#175C46]';
       displayLabel =
@@ -80,15 +81,38 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           ? 'Completed'
           : normalized === 'paid'
           ? 'Paid'
+          : normalized === 'resolved'
+          ? 'Resolved'
           : 'Active');
     } else if (
       normalized === 'pending' ||
       normalized === 'pending_sign' ||
       normalized === 'pending signature' ||
-      normalized === 'unpaid'
+      normalized === 'unpaid' ||
+      normalized === 'in_progress' ||
+      normalized === 'in progress'
     ) {
       badgeStyle = 'bg-[#FEF7E6] text-[#B06000]';
-      displayLabel = label || 'Pending';
+      displayLabel =
+        label ||
+        (normalized === 'in_progress' || normalized === 'in progress'
+          ? 'In Progress'
+          : 'Pending');
+    } else if (normalized === 'open') {
+      badgeStyle = 'bg-[#E8F1FD] text-[#2563EB]';
+      displayLabel = label || 'Open';
+    } else if (normalized === 'high') {
+      badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
+      displayLabel = label || 'High';
+    } else if (normalized === 'medium') {
+      badgeStyle = 'bg-[#FEF7E6] text-[#B06000]';
+      displayLabel = label || 'Medium';
+    } else if (normalized === 'low') {
+      badgeStyle = 'bg-gray-100 text-gray-700';
+      displayLabel = label || 'Low';
+    } else if (normalized === 'closed') {
+      badgeStyle = 'bg-gray-100 text-gray-700';
+      displayLabel = label || 'Closed';
     } else if (normalized === 'overdue') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || 'Overdue';

@@ -737,6 +737,30 @@ span.p-password,
   scrollbar-width: none !important; /* Firefox */
 }
 
+/* Sleek custom scrollbar for cards and lists */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
 /* Cursor pointer on any element that shows a title tooltip on hover */
 [title]:not(:disabled):not([disabled]) {
   cursor: pointer;

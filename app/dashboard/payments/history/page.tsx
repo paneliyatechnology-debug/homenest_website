@@ -183,8 +183,7 @@ export default function PaymentHistoryPage() {
         toast.info('Export request completed');
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to export payments history';
-      toast.error(message);
+      console.warn('Failed to export payments history:', err);
     } finally {
       setIsExporting(false);
       setExportingFormat(null);

@@ -225,8 +225,7 @@ export default function PaymentOverviewPage() {
         toast.info('Export request completed');
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to export payment report';
-      toast.error(message);
+      console.warn('Failed to export payment report:', err);
     } finally {
       setIsExporting(false);
       setExportingFormat(null);

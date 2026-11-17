@@ -3,12 +3,13 @@
 import React from 'react';
 import { Calendar } from 'primereact/calendar';
 
-interface AppDatePickerProps {
+export interface AppDatePickerProps {
   id?: string;
   name?: string;
   value?: string | null;
   onChange: (value: string) => void;
   placeholder?: string;
+  dateFormat?: string;
   required?: boolean;
   disabled?: boolean;
   className?: string;
@@ -16,15 +17,15 @@ interface AppDatePickerProps {
 }
 
 /**
- * Parses date string in either YYYY-MM-DD, DD-MM-YYYY, or ISO format into a Date object.
+ * Parses date string in either YYYY-MM-DD, DD-MM-YYYY, DD/MM/YYYY, or ISO format into a Date object.
  */
 export function parseDateString(str?: string | null): Date | null {
   if (!str || !str.trim()) return null;
   const clean = str.trim().split(' ')[0];
-  const parts = clean.split('-');
+  const parts = clean.includes('/') ? clean.split('/') : clean.split('-');
 
   if (parts.length === 3) {
-    // Format: YYYY-MM-DD
+    // Format: YYYY-MM-DD or YYYY/MM/DD
     if (parts[0].length === 4) {
       const year = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
@@ -32,7 +33,7 @@ export function parseDateString(str?: string | null): Date | null {
       const d = new Date(year, month, day);
       return isNaN(d.getTime()) ? null : d;
     }
-    // Format: DD-MM-YYYY
+    // Format: DD-MM-YYYY or DD/MM/YYYY
     if (parts[2].length === 4) {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10) - 1;
@@ -57,12 +58,61 @@ export function formatDateForApi(d: Date | null): string {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * Formats any date string or Date object to DD/MM/YYYY
+ */
+export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
+  if (!dateInput) return '—';
+
+  if (dateInput instanceof Date) {
+    if (isNaN(dateInput.getTime())) return '—';
+    const day = String(dateInput.getDate()).padStart(2, '0');
+    const month = String(dateInput.getMonth() + 1).padStart(2, '0');
+    const year = dateInput.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  const clean = String(dateInput).trim();
+  if (!clean) return '—';
+
+  // DD-MM-YYYY or DD/MM/YYYY with optional time
+  const ddmmyyyyMatch = clean.match(/^(\d{2})[-/](\d{2})[-/](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if (ddmmyyyyMatch) {
+    const day = ddmmyyyyMatch[1];
+    const month = ddmmyyyyMatch[2];
+    const year = ddmmyyyyMatch[3];
+    const time = ddmmyyyyMatch[4] && ddmmyyyyMatch[5] ? ` ${ddmmyyyyMatch[4]}:${ddmmyyyyMatch[5]}` : '';
+    return `${day}/${month}/${year}${time}`;
+  }
+
+  // YYYY-MM-DD or YYYY/MM/DD with optional time
+  const yyyymmddMatch = clean.match(/^(\d{4})[-/](\d{2})[-/](\d{2})(?:[T\s](\d{1,2}):(\d{2}))?/);
+  if (yyyymmddMatch) {
+    const year = yyyymmddMatch[1];
+    const month = yyyymmddMatch[2];
+    const day = yyyymmddMatch[3];
+    const time = yyyymmddMatch[4] && yyyymmddMatch[5] ? ` ${yyyymmddMatch[4]}:${yyyymmddMatch[5]}` : '';
+    return `${day}/${month}/${year}${time}`;
+  }
+
+  const d = new Date(clean);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  return clean;
+}
+
 export const AppDatePicker: React.FC<AppDatePickerProps> = ({
   id,
   name,
   value,
   onChange,
-  placeholder = 'dd-mm-yyyy',
+  placeholder = 'dd/mm/yyyy',
+  dateFormat = 'dd/mm/yy',
   required = false,
   disabled = false,
   className = '',
@@ -92,7 +142,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         name={name}
         value={dateObj}
         onChange={handleChange}
-        dateFormat="dd-mm-yy"
+        dateFormat={dateFormat}
         placeholder={placeholder}
         disabled={disabled}
         required={required}
