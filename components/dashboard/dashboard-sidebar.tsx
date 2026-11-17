@@ -97,6 +97,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       children: [
         { label: 'Room Inventory', href: '/dashboard/rooms' },
         { label: 'Room Details & Allocation', href: '/dashboard/rooms/allocation' },
+        { label: 'Buildings & Floors', href: '/dashboard/rooms/buildings' },
       ],
     },
     {
@@ -274,6 +275,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
               item.children?.some(
                 (child) =>
                   pathname === child.href ||
+                  (child.href !== '/dashboard/rooms' && child.href !== '/dashboard/settings' && pathname.startsWith(child.href)) ||
+                  (child.href === '/dashboard/rooms' && (pathname.startsWith('/dashboard/rooms/new') || Boolean(pathname.match(/^\/dashboard\/rooms\/\d+/)))) ||
                   (child.href === '/dashboard/settings/staff' && pathname === '/dashboard/settings')
               );
 
@@ -336,6 +339,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
                     {item.children?.map((sub) => {
                       const isSubActive =
                         pathname === sub.href ||
+                        (sub.href !== '/dashboard/rooms' && sub.href !== '/dashboard/settings' && pathname.startsWith(sub.href)) ||
+                        (sub.href === '/dashboard/rooms' && (pathname.startsWith('/dashboard/rooms/new') || Boolean(pathname.match(/^\/dashboard\/rooms\/\d+/)))) ||
                         (sub.href === '/dashboard/settings/staff' && pathname === '/dashboard/settings');
 
                       return (

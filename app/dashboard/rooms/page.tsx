@@ -197,6 +197,28 @@ export default function RoomInventoryPage() {
       {/* 5 Summary Stat Cards matching Figma pixel-for-pixel */}
       <RoomStatsCards stats={stats} />
 
+      {/* Navigation Tabs Bar */}
+      <div className="flex items-center gap-6 border-b border-gray-200/80 pb-3">
+        <button
+          type="button"
+          className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
+        >
+          Room Inventory
+        </button>
+        <Link
+          href="/dashboard/rooms/allocation"
+          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
+        >
+          Room Details & Allocation
+        </Link>
+        <Link
+          href="/dashboard/rooms/buildings"
+          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
+        >
+          Buildings & Floors
+        </Link>
+      </div>
+
       {/* Filter Controls Row matching Figma: Branch, Status, Room Type, Search */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
         {/* Branch Filter */}

@@ -349,21 +349,14 @@ export const residentService = {
    */
   async getFloors(buildingId: number | string): Promise<Floor[]> {
     try {
-      const response = await apiClient<ApiResponse<Floor[]>>(`/floors?building_id=${buildingId}&page=1&limit=50`);
-      if (response && response.success && Array.isArray(response.data)) {
-        return response.data;
+      if (!buildingId || buildingId === 'all') return [];
+      const response = await apiClient<ApiResponse<{ floors?: Floor[] }>>(`/buildings/${buildingId}`);
+      if (response?.data && Array.isArray(response.data.floors)) {
+        return response.data.floors;
       }
-      return [
-        { id: 1, name: '1st Floor', floor_number: 1, building_id: Number(buildingId) },
-        { id: 2, name: '2nd Floor', floor_number: 2, building_id: Number(buildingId) },
-        { id: 3, name: '3rd Floor', floor_number: 3, building_id: Number(buildingId) },
-      ];
+      return [];
     } catch {
-      return [
-        { id: 1, name: '1st Floor', floor_number: 1, building_id: Number(buildingId) },
-        { id: 2, name: '2nd Floor', floor_number: 2, building_id: Number(buildingId) },
-        { id: 3, name: '3rd Floor', floor_number: 3, building_id: Number(buildingId) },
-      ];
+      return [];
     }
   },
 

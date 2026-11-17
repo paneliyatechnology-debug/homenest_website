@@ -1,33 +1,78 @@
 'use client';
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Room, RoomStats, RoomBuilding } from '@/types/room';
+import { Branch } from '@/types/branch';
 import { roomService, INITIAL_ROOM_STATS } from '@/services/room.service';
+import { branchService } from '@/services/branch.service';
 import { RoomStatsCards } from '@/components/rooms/room-stats-cards';
 import { Dropdown } from '@/components/ui';
+import { useResetOnNavigation } from '@/hooks';
 
 export default function RoomDetailsAllocationPage() {
+  // Master Branches State
+  const [branches, setBranches] = useState<Branch[]>([]);
+
   // Data States
   const [stats, setStats] = useState<RoomStats>(INITIAL_ROOM_STATS);
   const [buildings, setBuildings] = useState<RoomBuilding[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Selection States
+  // Selection & Filter States
+  const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
   const [selectedFloorId, setSelectedFloorId] = useState<string>('all');
   const [activeFloorKey, setActiveFloorKey] = useState<{ buildingId: number; floorNumber: number } | null>(null);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
-  // Fetch initial data
+  // Sidebar Filter & Accordion States
+  const [sidebarSearch, setSidebarSearch] = useState<string>('');
+  const [collapsedBuildingIds, setCollapsedBuildingIds] = useState<Set<number>>(new Set());
+
+  // Reset filters callback on navigation
+  const resetFilters = useCallback(() => {
+    setSelectedBranchId('all');
+    setSelectedBuildingId('all');
+    setSelectedFloorId('all');
+    setSidebarSearch('');
+  }, []);
+
+  useResetOnNavigation(resetFilters, { cleanQueryToast: true });
+
+  // Fetch branches on mount
   useEffect(() => {
     let isMounted = true;
+    branchService
+      .getBranches({ limit: 50, status: 'all', sort_by: 'created_at', order: 'desc' })
+      .then((res) => {
+        if (!isMounted) return;
+        setBranches(res.data);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBranches([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch Stats, Buildings, and Rooms when selectedBranchId changes
+  useEffect(() => {
+    let isMounted = true;
+    const branchParam = selectedBranchId !== 'all' ? selectedBranchId : undefined;
+
     Promise.all([
-      roomService.getRoomStats().catch(() => INITIAL_ROOM_STATS),
-      roomService.getRoomBuildings().catch(() => []),
-      roomService.getRooms({ limit: 100 }).catch(() => ({ data: [], meta: { page: 1, limit: 100, total_pages: 1, total_items: 0 } })),
+      roomService.getRoomStats(branchParam).catch(() => INITIAL_ROOM_STATS),
+      roomService.getRoomBuildings(branchParam).catch(() => []),
+      roomService.getRooms({ limit: 100, branch_id: branchParam }).catch(() => ({
+        data: [],
+        meta: { page: 1, limit: 100, total_pages: 1, total_items: 0 },
+      })),
     ]).then(([statsData, buildingsData, roomsRes]) => {
       if (!isMounted) return;
       setStats(statsData);
@@ -36,6 +81,7 @@ export default function RoomDetailsAllocationPage() {
       setLoading(false);
 
       // Default active floor to the first building with floors
+      let found = false;
       if (buildingsData.length > 0) {
         for (const b of buildingsData) {
           if (b.floor_details && b.floor_details.length > 0) {
@@ -44,21 +90,27 @@ export default function RoomDetailsAllocationPage() {
               buildingId: b.building_id,
               floorNumber: firstFloor.floor_number,
             });
+            found = true;
             break;
           }
         }
+      }
+      if (!found) {
+        setActiveFloorKey(null);
       }
 
       // Default selected room
       if (roomsRes.data.length > 0) {
         setSelectedRoom(roomsRes.data[0]);
+      } else {
+        setSelectedRoom(null);
       }
     });
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedBranchId]);
 
   // Current building's floors for dependent dropdown
   const currentBuildingFloors = useMemo(() => {
@@ -66,6 +118,29 @@ export default function RoomDetailsAllocationPage() {
     const found = buildings.find((x) => String(x.building_id) === String(selectedBuildingId));
     return found?.floor_details || [];
   }, [buildings, selectedBuildingId]);
+
+  // Filtered buildings for the left sidebar explorer
+  const filteredSidebarBuildings = useMemo(() => {
+    if (!sidebarSearch.trim()) return buildings;
+    const q = sidebarSearch.toLowerCase();
+    return buildings.filter(
+      (b) =>
+        b.building_name.toLowerCase().includes(q) ||
+        b.floor_details?.some((f) => f.name?.toLowerCase().includes(q))
+    );
+  }, [buildings, sidebarSearch]);
+
+  const toggleBuildingCollapse = (buildingId: number) => {
+    setCollapsedBuildingIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(buildingId)) {
+        next.delete(buildingId);
+      } else {
+        next.add(buildingId);
+      }
+      return next;
+    });
+  };
 
   // Filtered rooms based on selected Building and Floor dropdowns (or floor plan active item)
   const currentFloorRooms = useMemo(() => {
@@ -141,26 +216,52 @@ export default function RoomDetailsAllocationPage() {
 
       {/* Tab Bar & Filters Row matching Figma */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-200/80 pb-3">
-        {/* Left Tabs: Floor Plan (active) & Room List */}
+        {/* Left Tabs: Room Inventory, Room Details & Allocation (active), Buildings & Floors */}
         <div className="flex items-center gap-6">
-          <button
-            type="button"
-            className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
-          >
-            Floor Plan
-          </button>
           <Link
             href="/dashboard/rooms"
             className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
           >
-            Room List
+            Room Inventory
+          </Link>
+          <button
+            type="button"
+            className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
+          >
+            Room Details & Allocation
+          </button>
+          <Link
+            href="/dashboard/rooms/buildings"
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
+          >
+            Buildings & Floors
           </Link>
         </div>
 
         {/* Right Filters & Status Legend matching Figma */}
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
+          {/* Branch Dropdown */}
+          <div className="w-36 sm:w-44">
+            <Dropdown
+              value={selectedBranchId}
+              onChange={(e) => {
+                const bVal = e.target.value;
+                setSelectedBranchId(bVal);
+                setSelectedBuildingId('all');
+                setSelectedFloorId('all');
+              }}
+              options={[
+                { label: 'All Branches', value: 'all' },
+                ...branches.map((b) => ({
+                  label: b.name,
+                  value: String(b.id),
+                })),
+              ]}
+            />
+          </div>
+
           {/* Building Dropdown */}
-          <div className="w-40 sm:w-48">
+          <div className="w-36 sm:w-44">
             <Dropdown
               value={selectedBuildingId}
               onChange={(e) => {
@@ -188,7 +289,7 @@ export default function RoomDetailsAllocationPage() {
           </div>
 
           {/* Floor Dropdown (Dependent on Building) */}
-          <div className="w-36 sm:w-40">
+          <div className="w-32 sm:w-36">
             <Dropdown
               value={selectedFloorId}
               disabled={selectedBuildingId === 'all'}
@@ -214,7 +315,7 @@ export default function RoomDetailsAllocationPage() {
           </div>
 
           {/* Status Legend matching Figma: Occupied, Vacant, Maintenance */}
-          <div className="flex items-center gap-4 text-xs font-medium text-gray-600 pl-2">
+          <div className="flex items-center gap-4 text-xs font-medium text-gray-600 pl-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
               <span>Occupied</span>
@@ -233,60 +334,149 @@ export default function RoomDetailsAllocationPage() {
 
       {/* Main Content Area: 2-Column Floor Explorer matching Figma */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        {/* Left Sidebar: Buildings & Floors Tree */}
-        <div className="lg:col-span-3 bg-white rounded-2xl p-4 sm:p-5 border border-gray-100 shadow-2xs space-y-5">
-          {buildings.length === 0 ? (
-            <div className="text-xs text-gray-400 py-4 text-center">
-              {loading ? 'Loading buildings...' : 'No buildings registered.'}
+        {/* Left Sidebar: Buildings & Floors Tree with Scroll & Improved UX */}
+        <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-100 shadow-2xs overflow-hidden flex flex-col max-h-[640px] lg:sticky lg:top-24">
+          {/* Sidebar Top Header */}
+          <div className="p-3.5 sm:p-4 border-b border-gray-100 bg-gray-50/70 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#175C46]" />
+              <h3 className="text-xs font-bold text-gray-900 tracking-tight uppercase">
+                Buildings & Floors
+              </h3>
             </div>
-          ) : (
-            buildings.map((building) => (
-              <div key={building.building_id} className="space-y-2">
-                <h3 className="text-xs font-bold text-gray-900 tracking-tight flex items-center justify-between">
-                  <span>{building.building_name}</span>
-                </h3>
+            <span className="text-[11px] font-semibold text-[#175C46] bg-[#E8F8F0] px-2 py-0.5 rounded-full">
+              {buildings.length} {buildings.length === 1 ? 'Building' : 'Buildings'}
+            </span>
+          </div>
 
-                <div className="space-y-1">
-                  {building.floor_details && building.floor_details.length > 0 ? (
-                    building.floor_details.map((floor) => {
-                      const isActive =
-                        activeFloorKey?.buildingId === building.building_id &&
-                        activeFloorKey?.floorNumber === floor.floor_number;
-
-                      return (
-                        <button
-                          key={floor.id}
-                          type="button"
-                          onClick={() => {
-                            setActiveFloorKey({
-                              buildingId: building.building_id,
-                              floorNumber: floor.floor_number,
-                            });
-                          }}
-                          className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
-                            isActive
-                              ? 'bg-[#EBF7F2] text-[#175C46] font-semibold shadow-2xs'
-                              : 'text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          <span>{floor.name || `Floor ${floor.floor_number}`}</span>
-                          {floor.total_rooms > 0 && (
-                            <span className="text-[11px] text-gray-400">
-                              {floor.total_rooms} rooms
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <div className="text-[11px] text-gray-400 pl-3.5 py-1">
-                      Floor 1
-                    </div>
-                  )}
-                </div>
+          {/* Quick Search inside Sidebar */}
+          {buildings.length > 2 && (
+            <div className="p-3 border-b border-gray-100/70 bg-white shrink-0">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search building..."
+                  value={sidebarSearch}
+                  onChange={(e) => setSidebarSearch(e.target.value)}
+                  className="w-full h-8 pl-8 pr-7 text-xs rounded-lg bg-gray-50 border border-gray-200 text-gray-800 placeholder-gray-400 focus:bg-white focus:border-[#175C46] outline-none transition-all"
+                />
+                <svg
+                  className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-gray-400 pointer-events-none"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
+                </svg>
+                {sidebarSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setSidebarSearch('')}
+                    className="absolute right-2.5 top-1.5 text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+                  >
+                    &times;
+                  </button>
+                )}
               </div>
-            ))
+            </div>
           )}
+
+          {/* Scrollable Building Tree */}
+          <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4">
+            {filteredSidebarBuildings.length === 0 ? (
+              <div className="text-xs text-gray-400 py-8 text-center">
+                {loading
+                  ? 'Loading buildings...'
+                  : sidebarSearch
+                  ? 'No matching buildings.'
+                  : 'No buildings registered.'}
+              </div>
+            ) : (
+              filteredSidebarBuildings.map((building) => {
+                const isCollapsed = collapsedBuildingIds.has(building.building_id);
+
+                return (
+                  <div key={building.building_id} className="space-y-1.5">
+                    {/* Building Section Header (Collapsible) */}
+                    <button
+                      type="button"
+                      onClick={() => toggleBuildingCollapse(building.building_id)}
+                      className="w-full flex items-center justify-between text-left py-1 px-1 rounded-lg hover:bg-gray-50 transition-colors group cursor-pointer"
+                    >
+                      <span className="text-xs font-bold text-gray-900 tracking-tight group-hover:text-[#175C46] transition-colors truncate pr-2">
+                        {building.building_name}
+                      </span>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-[10px] text-gray-400 font-medium">
+                          {building.floor_details?.length ?? 0} floors
+                        </span>
+                        <svg
+                          className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
+                            isCollapsed ? '-rotate-90' : 'rotate-0'
+                          }`}
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="2.5"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {/* Floor List */}
+                    {!isCollapsed && (
+                      <div className="space-y-1 pl-1">
+                        {building.floor_details && building.floor_details.length > 0 ? (
+                          building.floor_details.map((floor) => {
+                            const isActive =
+                              activeFloorKey?.buildingId === building.building_id &&
+                              activeFloorKey?.floorNumber === floor.floor_number;
+
+                            return (
+                              <button
+                                key={floor.id}
+                                type="button"
+                                onClick={() => {
+                                  setActiveFloorKey({
+                                    buildingId: building.building_id,
+                                    floorNumber: floor.floor_number,
+                                  });
+                                  setSelectedBuildingId(String(building.building_id));
+                                  setSelectedFloorId(String(floor.floor_number));
+                                }}
+                                className={`w-full text-left px-3.5 py-2 rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
+                                  isActive
+                                    ? 'bg-[#EBF7F2] text-[#175C46] font-semibold shadow-2xs'
+                                    : 'text-gray-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                <span>{floor.name || `Floor ${floor.floor_number}`}</span>
+                                {floor.total_rooms > 0 && (
+                                  <span
+                                    className={`text-[11px] ${
+                                      isActive ? 'text-[#175C46]/80 font-semibold' : 'text-gray-400'
+                                    }`}
+                                  >
+                                    {floor.total_rooms} rooms
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })
+                        ) : (
+                          <div className="text-[11px] text-gray-400 pl-3.5 py-1">
+                            Floor 1
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {/* Right Main Panel: Room Grid + Room Details Card matching Figma */}
@@ -367,14 +557,8 @@ export default function RoomDetailsAllocationPage() {
                     </p>
                     <p>
                       <span className="text-gray-500">Size :</span>{' '}
-                      <span className="font-semibold text-gray-900">{activeSelectedRoom.size || '12 m*2'}</span>
+                      <span className="font-semibold text-gray-900">{activeSelectedRoom.size || '14 m*2'}</span>
                     </p>
-                    {activeSelectedRoom.current_occupant_name && (
-                      <p>
-                        <span className="text-gray-500">Occupant :</span>{' '}
-                        <span className="font-semibold text-gray-900">{activeSelectedRoom.current_occupant_name}</span>
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>

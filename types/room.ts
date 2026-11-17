@@ -11,6 +11,7 @@ export interface BuildingItem {
   name: string;
   total_floors?: number;
   total_rooms?: number;
+  floors?: FloorItem[];
   created_at?: string;
   updated_at?: string;
 }

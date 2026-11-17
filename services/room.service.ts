@@ -70,7 +70,7 @@ class RoomService {
   }
 
   /**
-   * GET /floors?building_id=&page=1&limit=50&search=
+   * GET /buildings//floors
    */
   async getFloors(buildingId: number | string): Promise<FloorItem[]> {
     try {
@@ -78,9 +78,9 @@ class RoomService {
       const res = await apiClient<{
         success?: boolean;
         message?: string;
-        data?: FloorItem[];
-      }>(`/floors?building_id=${buildingId}&page=1&limit=50&search=`);
-      return Array.isArray(res?.data) ? res.data : [];
+        data?: { floors?: FloorItem[] };
+      }>(`/buildings/${buildingId}`);
+      return Array.isArray(res?.data?.floors) ? res.data.floors : [];
     } catch {
       return [];
     }
