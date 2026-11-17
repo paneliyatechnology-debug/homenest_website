@@ -119,10 +119,11 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           : 'Pending');
     } else if (
       normalized === 'cancelled' ||
-      normalized === 'canceled'
+      normalized === 'canceled' ||
+      normalized === 'rejected'
     ) {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
-      displayLabel = label || 'Cancelled';
+      displayLabel = label || (normalized === 'rejected' ? 'Rejected' : 'Cancelled');
     } else if (normalized === 'left') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || 'Left';
