@@ -6,7 +6,6 @@ import {
   PaymentStats,
   PaymentMeta,
   formatPaymentType,
-  formatPaymentMethod,
   formatCurrency,
 } from '@/types/payment';
 import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.service';
@@ -195,101 +194,19 @@ export default function PaymentHistoryPage() {
     setIsModalOpen(true);
   };
 
-  const handleDownloadReceipt = (payment: PaymentRecord) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      toast.error('Unable to open print window. Please allow popups.');
-      return;
+  const handleDownloadReceipt = async (payment: PaymentRecord) => {
+    try {
+      toast.info('Generating payment receipt PDF...');
+      const res = await paymentService.getPaymentReceipt(payment.id);
+      if (res?.file_url) {
+        window.open(res.file_url, '_blank');
+      } else {
+        toast.error('Unable to generate receipt PDF');
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to download receipt';
+      toast.error(errorMsg);
     }
-    const receiptId =
-      payment.receipt_no ||
-      payment.transaction_id ||
-      `TXN${String(payment.id).padStart(6, '0')}`;
-
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Receipt - ${receiptId}</title>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1f2937; line-height: 1.5; }
-            .header { border-bottom: 2px solid #175C46; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
-            .title { font-size: 24px; font-weight: bold; color: #175C46; margin: 0; }
-            .subtitle { font-size: 14px; color: #6b7280; margin-top: 4px; }
-            .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background: #e8f8f0; color: #175C46; }
-            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
-            .box { background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
-            .box h4 { margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; }
-            .box p { margin: 4px 0; font-size: 14px; }
-            .table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-            .table th { background: #f3f4f6; text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; color: #4b5563; }
-            .table td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
-            .total-row { font-weight: bold; font-size: 16px; color: #175C46; }
-            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
-            @media print { body { padding: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div>
-              <h1 class="title">${payment.pg_name || 'HouseNest Admin Portal'}</h1>
-              <div class="subtitle">Payment Receipt</div>
-            </div>
-            <div style="text-align: right;">
-              <div class="badge">${payment.status}</div>
-              <p style="margin: 6px 0 0; font-size: 13px; font-weight: 600;">Receipt #: ${receiptId}</p>
-            </div>
-          </div>
-
-          <div class="grid">
-            <div class="box">
-              <h4>Resident Details</h4>
-              <p><strong>Name:</strong> ${payment.resident?.name || '—'}</p>
-              <p><strong>Phone:</strong> ${payment.resident?.phone || '—'}</p>
-              <p><strong>Email:</strong> ${payment.resident?.email || '—'}</p>
-            </div>
-            <div class="box">
-              <h4>Room & Stay Details</h4>
-              <p><strong>Room No:</strong> ${payment.room_no || '—'}</p>
-              <p><strong>Room Type:</strong> ${payment.room_type || '—'}</p>
-              <p><strong>Building:</strong> ${[payment.building_name, payment.floor_name].filter(Boolean).join(' • ') || '—'}</p>
-            </div>
-          </div>
-
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>Due Date</th>
-                <th>Method</th>
-                <th style="text-align: right;">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${payment.title || 'Accommodation Fee'}</td>
-                <td>${payment.due_date || '—'}</td>
-                <td>${formatPaymentMethod(payment.payment_method)}</td>
-                <td style="text-align: right;">₹ ${Number(payment.amount).toLocaleString('en-IN')}</td>
-              </tr>
-              <tr class="total-row">
-                <td colspan="3" style="text-align: right;">Total Amount:</td>
-                <td style="text-align: right;">₹ ${Number(payment.amount).toLocaleString('en-IN')}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div class="footer">
-            Thank you for choosing HouseNest. This is a computer-generated receipt.
-          </div>
-          <script>
-            window.onload = function() { window.print(); }
-          </script>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(html);
-    printWindow.document.close();
   };
 
   const formatDateTime = (dateStr?: string | null): string => {

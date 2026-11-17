@@ -44,7 +44,9 @@ export type { PhotoUploadProps } from './photo-upload';
 export { BrandLoader } from './brand-loader';
 export type { BrandLoaderProps } from './brand-loader';
 
-export { AppDatePicker } from './app-date-picker';
+export { AppDatePicker, formatDateToDDMMYYYY, formatDateForApi, parseDateString } from './app-date-picker';
+export { AppTimePicker, parseTimeString, formatTimeToString } from './app-time-picker';
+export type { AppTimePickerProps } from './app-time-picker';
 
 export { IconButton, TableActions } from './icon-button';
 export type { IconButtonProps, IconButtonVariant, IconButtonSize, TableActionsProps } from './icon-button';

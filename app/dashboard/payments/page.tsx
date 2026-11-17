@@ -237,6 +237,21 @@ export default function PaymentOverviewPage() {
     setIsModalOpen(true);
   };
 
+  const handleDownloadReceipt = async (payment: PaymentRecord) => {
+    try {
+      toast.info('Generating payment receipt PDF...');
+      const res = await paymentService.getPaymentReceipt(payment.id);
+      if (res?.file_url) {
+        window.open(res.file_url, '_blank');
+      } else {
+        toast.error('Unable to generate receipt PDF');
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to download receipt';
+      toast.error(errorMsg);
+    }
+  };
+
   const formatDisplayDate = (dateStr?: string | null): string => {
     if (!dateStr) return '—';
     const clean = dateStr.split(' ')[0];
@@ -524,6 +539,7 @@ export default function PaymentOverviewPage() {
           setIsModalOpen(false);
           setSelectedPayment(null);
         }}
+        onDownloadReceipt={handleDownloadReceipt}
       />
     </main>
   );

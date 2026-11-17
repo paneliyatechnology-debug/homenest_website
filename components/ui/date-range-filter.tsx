@@ -141,7 +141,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
       <button
         type="button"
         onClick={handleToggle}
-        className="w-full inline-flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50/50 shadow-2xs transition-all cursor-pointer min-w-[190px]"
+        className="w-full h-11 inline-flex items-center justify-between gap-3 px-3.5 sm:px-4 py-2 sm:py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50/50 shadow-2xs transition-all cursor-pointer min-w-[190px]"
       >
         <div className="flex items-center gap-2 truncate">
           <svg

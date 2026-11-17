@@ -220,6 +220,35 @@ class PaymentService {
 
     return res.data;
   }
+
+  /**
+   * GET /payments/:id/receipt
+   * Generate and retrieve official payment receipt PDF
+   */
+  async getPaymentReceipt(id: number | string): Promise<{
+    file_url: string;
+    filename: string;
+    receipt_no: string;
+    payment_id: number;
+    resident_name: string;
+    amount: number;
+    status: string;
+  }> {
+    const res = await apiClient<{
+      success?: boolean;
+      message?: string;
+      data: {
+        file_url: string;
+        filename: string;
+        receipt_no: string;
+        payment_id: number;
+        resident_name: string;
+        amount: number;
+        status: string;
+      };
+    }>(`/payments/${id}/receipt`);
+    return res.data;
+  }
 }
 
 export const paymentService = new PaymentService();

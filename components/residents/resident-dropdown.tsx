@@ -8,12 +8,16 @@ import { SearchInput } from '@/components/ui';
 
 interface ResidentDropdownProps {
   selectedResidentId: number | null;
+  selectedResidentName?: string;
+  placeholder?: string;
   onSelect: (resident: Resident | null) => void;
   hasError?: boolean;
 }
 
 export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
   selectedResidentId,
+  selectedResidentName,
+  placeholder = 'Select resident',
   onSelect,
   hasError,
 }) => {
@@ -110,8 +114,10 @@ export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
   const selectedLabel = useMemo(() => {
     if (!selectedResidentId) return null;
     const found = residents.find((r) => r.id === selectedResidentId);
-    return found ? found.name : `Resident #${selectedResidentId}`;
-  }, [selectedResidentId, residents]);
+    if (found) return found.name;
+    if (selectedResidentName) return selectedResidentName;
+    return `Resident #${selectedResidentId}`;
+  }, [selectedResidentId, selectedResidentName, residents]);
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -126,7 +132,7 @@ export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
         } flex items-center justify-between text-xs sm:text-sm text-gray-800 transition-colors shadow-2xs cursor-pointer outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46]`}
       >
         <span className={`truncate ${!selectedLabel ? 'text-gray-400' : ''}`}>
-          {selectedLabel ?? 'Select resident'}
+          {selectedLabel ?? placeholder}
         </span>
         <svg
           className={`w-4 h-4 text-gray-500 shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}

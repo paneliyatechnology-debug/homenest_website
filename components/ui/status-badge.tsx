@@ -70,12 +70,19 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       normalized === 'paid' ||
       normalized === 'completed' ||
       normalized === 'success' ||
-      normalized === 'resolved'
+      normalized === 'resolved' ||
+      normalized === 'in_office' ||
+      normalized === 'in office' ||
+      normalized === 'approved'
     ) {
       badgeStyle = 'bg-[#E8F8F0] text-[#175C46]';
       displayLabel =
         label ||
-        (normalized === 'signed'
+        (normalized === 'in_office' || normalized === 'in office'
+          ? 'In Office'
+          : normalized === 'approved'
+          ? 'Approved'
+          : normalized === 'signed'
           ? 'Signed'
           : normalized === 'completed'
           ? 'Completed'
@@ -88,6 +95,8 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       normalized === 'pending' ||
       normalized === 'pending_sign' ||
       normalized === 'pending signature' ||
+      normalized === 'pending_approval' ||
+      normalized === 'pending approval' ||
       normalized === 'unpaid' ||
       normalized === 'in_progress' ||
       normalized === 'in progress'
@@ -97,7 +106,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
         label ||
         (normalized === 'in_progress' || normalized === 'in progress'
           ? 'In Progress'
+          : normalized === 'pending_approval' || normalized === 'pending approval'
+          ? 'Pending'
           : 'Pending');
+    } else if (normalized === 'left') {
+      badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
+      displayLabel = label || 'Left';
     } else if (normalized === 'open') {
       badgeStyle = 'bg-[#E8F1FD] text-[#2563EB]';
       displayLabel = label || 'Open';
