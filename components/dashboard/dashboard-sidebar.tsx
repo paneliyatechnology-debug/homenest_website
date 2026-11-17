@@ -29,6 +29,41 @@ interface NavItem {
   children?: SubNavItem[];
 }
 
+function isSubmenuItemActive(
+  subHref: string,
+  siblings: SubNavItem[],
+  currentPath: string
+): boolean {
+  // 1. Exact match is always active
+  if (currentPath === subHref) return true;
+
+  // 2. Settings root /dashboard/settings defaults to staff management
+  if (subHref === '/dashboard/settings/staff' && currentPath === '/dashboard/settings') {
+    return true;
+  }
+
+  // 3. Sub-route prefix matching (e.g. /dashboard/residents/123 under /dashboard/residents)
+  // Must match with a trailing slash to avoid partial string matches
+  if (!currentPath.startsWith(subHref + '/')) {
+    return false;
+  }
+
+  // 4. If another sibling in the same group is a more specific match, this one is not active.
+  // For example:
+  // - subHref = '/dashboard/payments'
+  // - currentPath = '/dashboard/payments/history'
+  // - Sibling '/dashboard/payments/history' is longer and matches currentPath.
+  // Therefore, '/dashboard/payments' is NOT active.
+  const hasMoreSpecificSibling = siblings.some(
+    (sibling) =>
+      sibling.href !== subHref &&
+      sibling.href.length > subHref.length &&
+      (currentPath === sibling.href || currentPath.startsWith(sibling.href + '/'))
+  );
+
+  return !hasMoreSpecificSibling;
+}
+
 export const DashboardSidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
@@ -272,12 +307,8 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
             // Check if any child of this parent is currently the active route
             const hasActiveChild =
               hasChildren &&
-              item.children?.some(
-                (child) =>
-                  pathname === child.href ||
-                  (child.href !== '/dashboard/rooms' && child.href !== '/dashboard/settings' && pathname.startsWith(child.href)) ||
-                  (child.href === '/dashboard/rooms' && (pathname.startsWith('/dashboard/rooms/new') || Boolean(pathname.match(/^\/dashboard\/rooms\/\d+/)))) ||
-                  (child.href === '/dashboard/settings/staff' && pathname === '/dashboard/settings')
+              item.children?.some((child) =>
+                isSubmenuItemActive(child.href, item.children || [], pathname)
               );
 
             return (
@@ -337,11 +368,11 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
                 {hasChildren && isMenuOpen && (
                   <div className="flex flex-col py-0.5">
                     {item.children?.map((sub) => {
-                      const isSubActive =
-                        pathname === sub.href ||
-                        (sub.href !== '/dashboard/rooms' && sub.href !== '/dashboard/settings' && pathname.startsWith(sub.href)) ||
-                        (sub.href === '/dashboard/rooms' && (pathname.startsWith('/dashboard/rooms/new') || Boolean(pathname.match(/^\/dashboard\/rooms\/\d+/)))) ||
-                        (sub.href === '/dashboard/settings/staff' && pathname === '/dashboard/settings');
+                      const isSubActive = isSubmenuItemActive(
+                        sub.href,
+                        item.children || [],
+                        pathname
+                      );
 
                       return (
                         <Link

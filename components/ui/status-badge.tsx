@@ -15,6 +15,11 @@ export type StatusVariant =
   | 'expired'
   | 'on_leave'
   | 'on leave'
+  | 'paid'
+  | 'completed'
+  | 'overdue'
+  | 'refunded'
+  | 'failed'
   | string;
 
 export interface StatusBadgeProps {
@@ -58,17 +63,41 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       displayLabel = label || 'Upcoming';
     }
   } else {
-    // Resident / Agreement / General palette matching Figma
-    if (normalized === 'active' || normalized === 'signed') {
+    // Resident / Agreement / Payment / General palette matching Figma
+    if (
+      normalized === 'active' ||
+      normalized === 'signed' ||
+      normalized === 'paid' ||
+      normalized === 'completed' ||
+      normalized === 'success'
+    ) {
       badgeStyle = 'bg-[#E8F8F0] text-[#175C46]';
-      displayLabel = label || (normalized === 'signed' ? 'Signed' : 'Active');
+      displayLabel =
+        label ||
+        (normalized === 'signed'
+          ? 'Signed'
+          : normalized === 'completed'
+          ? 'Completed'
+          : normalized === 'paid'
+          ? 'Paid'
+          : 'Active');
     } else if (
       normalized === 'pending' ||
       normalized === 'pending_sign' ||
-      normalized === 'pending signature'
+      normalized === 'pending signature' ||
+      normalized === 'unpaid'
     ) {
       badgeStyle = 'bg-[#FEF7E6] text-[#B06000]';
       displayLabel = label || 'Pending';
+    } else if (normalized === 'overdue') {
+      badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
+      displayLabel = label || 'Overdue';
+    } else if (normalized === 'refunded' || normalized === 'refund') {
+      badgeStyle = 'bg-[#FEE2E2]/60 text-[#DC2626]';
+      displayLabel = label || 'Refunded';
+    } else if (normalized === 'failed') {
+      badgeStyle = 'bg-[#FEF2F2] text-[#991B1B] border border-red-200/60';
+      displayLabel = label || 'Failed';
     } else if (normalized === 'expired' || normalized === 'inactive') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || (normalized === 'expired' ? 'Expired' : 'Inactive');

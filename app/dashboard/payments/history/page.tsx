@@ -1,12 +1,560 @@
-import { ModulePlaceholder } from '@/components/dashboard/module-placeholder';
+'use client';
 
-export default function PaymentHistoryPage() {
-  return (
-    <ModulePlaceholder
-      section="Payments"
-      title="Payment History & Receipts"
-      description="Access complete payment logs, download invoices, and inspect transaction receipts."
-    />
-  );
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import {
+  PaymentRecord,
+  PaymentStats,
+  PaymentMeta,
+  formatPaymentType,
+  formatPaymentMethod,
+  formatCurrency,
+} from '@/types/payment';
+import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.service';
+import { PaymentHistoryStatsCards } from '@/components/payments/payment-history-stats-cards';
+import { PaymentDetailsModal } from '@/components/payments/payment-details-modal';
+import { useResetOnNavigation } from '@/hooks';
+import { toast } from '@/lib/toast';
+import {
+  DataTable,
+  ColumnDef,
+  IconButton,
+  TableActions,
+  Dropdown,
+  SearchInput,
+  StatusBadge,
+  DateRangeFilter,
+  ExportDropdown,
+  ExportFormat,
+} from '@/components/ui';
+
+function getDefaultMonthRange() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const fmt = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  return { start: fmt(start), end: fmt(end) };
 }
 
+export default function PaymentHistoryPage() {
+  // Initialize date range to current month to match Figma design
+  const defaultDates = useMemo(() => getDefaultMonthRange(), []);
+  const [startDate, setStartDate] = useState<string>(defaultDates.start);
+  const [endDate, setEndDate] = useState<string>(defaultDates.end);
+
+  // Filter States
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+
+  // Data States
+  const [stats, setStats] = useState<PaymentStats>(INITIAL_PAYMENT_STATS);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
+  const [meta, setMeta] = useState<PaymentMeta>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    total_pages: 1,
+    total_records: 0,
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
+
+  // Modal State
+  const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Reset Table on Navigation
+  const resetTableState = useCallback(() => {
+    setSelectedType('all');
+    setSelectedStatus('all');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    const cur = getDefaultMonthRange();
+    setStartDate(cur.start);
+    setEndDate(cur.end);
+    setCurrentPage(1);
+    setSelectedPayment(null);
+    setIsModalOpen(false);
+  }, []);
+
+  useResetOnNavigation(resetTableState, { cleanQueryToast: true });
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Fetch Stats
+  useEffect(() => {
+    let isMounted = true;
+    paymentService
+      .getPaymentStats({
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        setStats(data);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setStats(INITIAL_PAYMENT_STATS);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [startDate, endDate]);
+
+  // Fetch Payments List
+  useEffect(() => {
+    let isMounted = true;
+    paymentService
+      .getPayments({
+        page: currentPage,
+        limit: 10,
+        status: selectedStatus !== 'all' ? selectedStatus : undefined,
+        payment_type: selectedType !== 'all' ? selectedType : undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        date_by: 'created_at',
+        search: debouncedSearch || undefined,
+      })
+      .then((res) => {
+        if (!isMounted) return;
+        setPayments(res.data);
+        setMeta(res.meta);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setPayments([]);
+        setMeta({
+          page: 1,
+          limit: 10,
+          total: 0,
+          total_pages: 1,
+          total_records: 0,
+        });
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentPage, selectedType, selectedStatus, startDate, endDate, debouncedSearch]);
+
+  // Handle Export (Excel or PDF)
+  const handleExport = async (format: ExportFormat = 'xlsx') => {
+    try {
+      setIsExporting(true);
+      setExportingFormat(format);
+      const result = await paymentService.exportPayments({
+        status: selectedStatus !== 'all' ? selectedStatus : undefined,
+        payment_type: selectedType !== 'all' ? selectedType : undefined,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+        search: debouncedSearch || undefined,
+        format,
+      });
+
+      if (result && result.file_url) {
+        const link = document.createElement('a');
+        link.href = result.file_url;
+        link.setAttribute('download', result.filename || `payments_history.${format}`);
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        toast.success(`Payments history (${format.toUpperCase()}) exported successfully`);
+      } else {
+        toast.info('Export request completed');
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to export payments history';
+      toast.error(message);
+    } finally {
+      setIsExporting(false);
+      setExportingFormat(null);
+    }
+  };
+
+  const handleView = (payment: PaymentRecord) => {
+    setSelectedPayment(payment);
+    setIsModalOpen(true);
+  };
+
+  const handleDownloadReceipt = (payment: PaymentRecord) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error('Unable to open print window. Please allow popups.');
+      return;
+    }
+    const receiptId =
+      payment.receipt_no ||
+      payment.transaction_id ||
+      `TXN${String(payment.id).padStart(6, '0')}`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Receipt - ${receiptId}</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1f2937; line-height: 1.5; }
+            .header { border-bottom: 2px solid #175C46; padding-bottom: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; }
+            .title { font-size: 24px; font-weight: bold; color: #175C46; margin: 0; }
+            .subtitle { font-size: 14px; color: #6b7280; margin-top: 4px; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; background: #e8f8f0; color: #175C46; }
+            .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px; }
+            .box { background: #f9fafb; padding: 16px; border-radius: 12px; border: 1px solid #e5e7eb; }
+            .box h4 { margin: 0 0 8px 0; font-size: 12px; color: #6b7280; text-transform: uppercase; }
+            .box p { margin: 4px 0; font-size: 14px; }
+            .table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+            .table th { background: #f3f4f6; text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; color: #4b5563; }
+            .table td { padding: 12px; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+            .total-row { font-weight: bold; font-size: 16px; color: #175C46; }
+            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 16px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <h1 class="title">${payment.pg_name || 'HouseNest Admin Portal'}</h1>
+              <div class="subtitle">Payment Receipt</div>
+            </div>
+            <div style="text-align: right;">
+              <div class="badge">${payment.status}</div>
+              <p style="margin: 6px 0 0; font-size: 13px; font-weight: 600;">Receipt #: ${receiptId}</p>
+            </div>
+          </div>
+
+          <div class="grid">
+            <div class="box">
+              <h4>Resident Details</h4>
+              <p><strong>Name:</strong> ${payment.resident?.name || '—'}</p>
+              <p><strong>Phone:</strong> ${payment.resident?.phone || '—'}</p>
+              <p><strong>Email:</strong> ${payment.resident?.email || '—'}</p>
+            </div>
+            <div class="box">
+              <h4>Room & Stay Details</h4>
+              <p><strong>Room No:</strong> ${payment.room_no || '—'}</p>
+              <p><strong>Room Type:</strong> ${payment.room_type || '—'}</p>
+              <p><strong>Building:</strong> ${[payment.building_name, payment.floor_name].filter(Boolean).join(' • ') || '—'}</p>
+            </div>
+          </div>
+
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>Due Date</th>
+                <th>Method</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${payment.title || 'Accommodation Fee'}</td>
+                <td>${payment.due_date || '—'}</td>
+                <td>${formatPaymentMethod(payment.payment_method)}</td>
+                <td style="text-align: right;">₹ ${Number(payment.amount).toLocaleString('en-IN')}</td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="3" style="text-align: right;">Total Amount:</td>
+                <td style="text-align: right;">₹ ${Number(payment.amount).toLocaleString('en-IN')}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="footer">
+            Thank you for choosing HouseNest. This is a computer-generated receipt.
+          </div>
+          <script>
+            window.onload = function() { window.print(); }
+          </script>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const formatDateTime = (dateStr?: string | null): string => {
+    if (!dateStr) return '—';
+    const parts = dateStr.trim().split(' ');
+    let d: Date | null = null;
+    if (parts.length >= 2 && parts[0].includes('-')) {
+      const dParts = parts[0].split('-');
+      const tParts = parts[1].split(':');
+      if (dParts.length === 3 && dParts[2].length === 4) {
+        d = new Date(
+          parseInt(dParts[2], 10),
+          parseInt(dParts[1], 10) - 1,
+          parseInt(dParts[0], 10),
+          parseInt(tParts[0] || '0', 10),
+          parseInt(tParts[1] || '0', 10)
+        );
+      } else if (dParts.length === 3 && dParts[0].length === 4) {
+        d = new Date(
+          parseInt(dParts[0], 10),
+          parseInt(dParts[1], 10) - 1,
+          parseInt(dParts[2], 10),
+          parseInt(tParts[0] || '0', 10),
+          parseInt(tParts[1] || '0', 10)
+        );
+      }
+    }
+    if (!d || isNaN(d.getTime())) {
+      d = new Date(dateStr);
+    }
+    if (isNaN(d.getTime())) return dateStr;
+
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = d.toLocaleString('en-US', { month: 'short' });
+    const year = d.getFullYear();
+    let hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12 || 12;
+    const hourStr = String(hours).padStart(2, '0');
+
+    return `${day} ${month} ${year}, ${hourStr}:${minutes} ${ampm}`;
+  };
+
+  // Payment type options matching enum('rent','maintenance','security_deposit','electricity','other','laundry')
+  const typeOptions = [
+    { label: 'All Types', value: 'all' },
+    { label: 'Rent', value: 'rent' },
+    { label: 'Maintenance', value: 'maintenance' },
+    { label: 'Security Deposit', value: 'security_deposit' },
+    { label: 'Electricity', value: 'electricity' },
+    { label: 'Laundry', value: 'laundry' },
+    { label: 'Other', value: 'other' },
+  ];
+
+  // Status options matching enum('paid','pending','overdue','refunded','failed')
+  const statusOptions = [
+    { label: 'All status', value: 'all' },
+    { label: 'Paid', value: 'paid' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Overdue', value: 'overdue' },
+    { label: 'Refunded', value: 'refunded' },
+    { label: 'Failed', value: 'failed' },
+  ];
+
+  // Table Columns matching Figma pixel-for-pixel
+  const columns: ColumnDef<PaymentRecord>[] = [
+    {
+      key: 'sr_no',
+      header: 'Sr no.',
+      width: '70px',
+      cell: (_, idx) => (
+        <span className="text-gray-500 font-medium">
+          {(currentPage - 1) * meta.limit + idx + 1}
+        </span>
+      ),
+    },
+    {
+      key: 'transaction_id',
+      header: 'Transaction Id',
+      cell: (item) => (
+        <span className="text-gray-900 font-medium">
+          {item.transaction_id || `TXN${String(item.id).padStart(6, '0')}`}
+        </span>
+      ),
+    },
+    {
+      key: 'resident_name',
+      header: 'Resident Name',
+      cell: (item) => (
+        <span className="font-medium text-gray-900">
+          {item.resident?.name || 'Aarav sharma'}
+        </span>
+      ),
+    },
+    {
+      key: 'room_no',
+      header: 'Room No.',
+      cell: (item) => (
+        <span className="text-gray-700 font-medium">{item.room_no || '—'}</span>
+      ),
+    },
+    {
+      key: 'payment_type',
+      header: 'Payment type',
+      cell: (item) => (
+        <span className="text-gray-700 font-medium">
+          {formatPaymentType(item.payment_type)}
+        </span>
+      ),
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      cell: (item) => (
+        <span className="text-gray-900 font-semibold">{formatCurrency(item.amount)}</span>
+      ),
+    },
+    {
+      key: 'date_time',
+      header: 'Date & Time',
+      cell: (item) => (
+        <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
+          {formatDateTime(item.paid_at || item.created_at || item.due_date)}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (item) => <StatusBadge status={item.status} />,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      cell: (item) => (
+        <TableActions>
+          <IconButton
+            variant="view"
+            title="View Details"
+            onClick={() => handleView(item)}
+          />
+          <button
+            type="button"
+            title="Download Receipt"
+            onClick={() => handleDownloadReceipt(item)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-[#175C46] hover:bg-emerald-50/80 transition-colors cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+          </button>
+        </TableActions>
+      ),
+    },
+  ];
+
+  return (
+    <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5] animate-fade-in">
+      {/* Top Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
+            Payments History and Receipts
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500 font-normal mt-0.5">
+            View all payment transactions with receipt details.
+          </p>
+        </div>
+
+        {/* Export Dropdown Button */}
+        <div>
+          <ExportDropdown
+            onExport={(format) => handleExport(format)}
+            isExporting={isExporting}
+            exportingFormat={exportingFormat}
+          />
+        </div>
+      </div>
+
+      {/* 4 Summary Stat Cards */}
+      <PaymentHistoryStatsCards stats={stats} />
+
+      {/* Filters Row: 4 responsive columns matching Figma layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-center">
+        {/* Date Range Filter */}
+        <div className="w-full">
+          <DateRangeFilter
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+              setCurrentPage(1);
+            }}
+            className="w-full"
+          />
+        </div>
+
+        {/* Payment Types Dropdown */}
+        <div>
+          <Dropdown
+            value={selectedType}
+            options={typeOptions}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="All Types"
+          />
+        </div>
+
+        {/* Status Dropdown */}
+        <div>
+          <Dropdown
+            value={selectedStatus}
+            options={statusOptions}
+            onChange={(e) => {
+              setSelectedStatus(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="All status"
+          />
+        </div>
+
+        {/* Search Input */}
+        <div>
+          <SearchInput
+            value={searchTerm}
+            onChange={(val) => setSearchTerm(val)}
+            placeholder="Search resident or transaction ID"
+          />
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <DataTable
+        columns={columns}
+        data={payments}
+        loading={loading}
+        loadingLabel="Loading transaction records..."
+        emptyTitle="No Transactions Found"
+        emptyDescription="There are no transaction records matching your filter criteria."
+        pagination={{
+          currentPage,
+          totalCount: meta.total_records ?? meta.total,
+          pageSize: meta.limit,
+          itemCount: payments.length,
+          itemLabel: 'records',
+          onPageChange: (page) => setCurrentPage(page),
+        }}
+      />
+
+      {/* Payment Details Modal */}
+      <PaymentDetailsModal
+        payment={selectedPayment}
+        visible={isModalOpen}
+        onHide={() => {
+          setIsModalOpen(false);
+          setSelectedPayment(null);
+        }}
+        onDownloadReceipt={handleDownloadReceipt}
+      />
+    </main>
+  );
+}
