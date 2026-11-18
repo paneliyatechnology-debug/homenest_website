@@ -18,13 +18,6 @@ export default function EditResidentPage() {
 
   const residentId = params?.id ? String(params.id) : '';
 
-  const [prevId, setPrevId] = useState(residentId);
-  if (residentId !== prevId) {
-    setPrevId(residentId);
-    setLoading(true);
-    setError(null);
-  }
-
   useEffect(() => {
     if (!residentId) {
       router.push('/dashboard/residents');

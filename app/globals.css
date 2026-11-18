@@ -605,14 +605,17 @@ span.p-password,
 /* ==========================================================================
    PrimeReact Calendar / DatePicker Custom Styling matching HomeNest theme
    ========================================================================== */
-.p-datepicker {
+.p-datepicker,
+.p-datepicker.p-component,
+body > .p-datepicker,
+.p-dialog-mask ~ .p-datepicker {
   background: #ffffff !important;
   border-radius: 1rem !important; /* 16px */
   border: 1px solid #f0f0ee !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
   padding: 1rem !important;
   font-family: 'Inter', sans-serif !important;
-  z-index: 1100 !important;
+  z-index: 100000 !important;
 }
 
 /* Header with month/year and prev/next navigation */
@@ -723,6 +726,38 @@ span.p-password,
 .p-datepicker table td.p-datepicker-other-month > span {
   color: #d1d5db !important;
   font-weight: 400 !important;
+}
+
+/* Month and Year picker styling */
+.p-datepicker .p-monthpicker,
+.p-datepicker .p-yearpicker {
+  margin: 0.5rem 0 !important;
+}
+
+.p-datepicker .p-monthpicker .p-monthpicker-month,
+.p-datepicker .p-yearpicker .p-yearpicker-year {
+  border-radius: 0.625rem !important;
+  padding: 0.5rem 0.25rem !important;
+  color: #374151 !important;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.15s ease !important;
+}
+
+.p-datepicker .p-monthpicker .p-monthpicker-month:not(.p-highlight):hover,
+.p-datepicker .p-yearpicker .p-yearpicker-year:not(.p-highlight):hover {
+  background: #edf5f1 !important;
+  color: #175C46 !important;
+}
+
+/* Selected month & year: brand green with clear visible white text */
+.p-datepicker .p-highlight,
+.p-datepicker .p-monthpicker .p-monthpicker-month.p-highlight,
+.p-datepicker .p-yearpicker .p-yearpicker-year.p-highlight {
+  background: #175C46 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 4px rgba(23, 92, 70, 0.25) !important;
 }
 
 /* Hide scrollbar while preserving scroll functionality */

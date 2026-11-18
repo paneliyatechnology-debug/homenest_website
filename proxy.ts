@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 // Public routes accessible without authentication
 const PUBLIC_PATHS = ['/', '/forgot-password', '/reset-password'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Bypass static resources, next internals, and api calls
@@ -42,4 +42,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
-

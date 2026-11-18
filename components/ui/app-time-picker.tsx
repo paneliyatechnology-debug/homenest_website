@@ -13,6 +13,7 @@ export interface AppTimePickerProps {
   disabled?: boolean;
   className?: string;
   hasError?: boolean;
+  appendTo?: 'self' | HTMLElement | undefined | null | (() => HTMLElement);
 }
 
 export function parseTimeString(timeStr?: string | null): Date | null {
@@ -51,8 +52,15 @@ export const AppTimePicker: React.FC<AppTimePickerProps> = ({
   disabled = false,
   className = '',
   hasError = false,
+  appendTo,
 }) => {
   const timeObj = parseTimeString(value);
+  const resolvedAppendTo =
+    appendTo !== undefined
+      ? appendTo
+      : typeof document !== 'undefined'
+      ? document.body
+      : undefined;
 
   const handleChange = (e: { value?: unknown }) => {
     if (!e.value) {
@@ -82,12 +90,16 @@ export const AppTimePicker: React.FC<AppTimePickerProps> = ({
         disabled={disabled}
         required={required}
         className="w-full"
+        appendTo={resolvedAppendTo}
+        touchUI={false}
         inputClassName={`w-full h-11 px-4 pr-10 py-2.5 bg-white border ${
           hasError
             ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
             : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
         } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans`}
-        panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans p-2"
+        baseZIndex={100000}
+        panelStyle={{ zIndex: 100000 }}
+        panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans p-2 !z-[100000]"
       />
       <svg
         className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"

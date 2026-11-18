@@ -300,21 +300,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     initialData?.documents?.signature || rawInitial?.signature || null
   );
 
-  // Render-phase state synchronization: if initialData arrives or updates after initial render,
-  // sync formData and document previews synchronously during render (React-recommended pattern)
-  const [prevInitialDataId, setPrevInitialDataId] = useState<number | string | null>(initialData?.id ?? null);
-  if (mode === 'edit' && initialData && initialData.id !== prevInitialDataId) {
-    setPrevInitialDataId(initialData.id);
-    setFormData(buildInitialFormData(initialData));
-    const raw = initialData as FormInitialDataSource;
-    setPhotoPreview(initialData.profile_photo_url || initialData.profile_photo || raw.photo_url || null);
-    setExistingAadhar(initialData.documents?.aadhar_card || raw.aadhar_card || null);
-    setExistingAddressProof(initialData.documents?.address_proof || raw.address_proof || null);
-    setExistingEducationCert(initialData.documents?.education_certificate || raw.education_certificate || null);
-    setExistingAgreementFile(initialData.documents?.agreement_file || raw.agreement_file || raw.agreement || null);
-    setExistingSignature(initialData.documents?.signature || raw.signature || null);
-  }
-
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -822,7 +807,11 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (formData.room_type) fd.append('room_type', formData.room_type);
       fd.append('bed_number', formData.bed_number.trim());
       fd.append('monthly_rent', String(formData.monthly_rent).trim());
-      fd.append('security_deposit', String(formData.security_deposit || 9000));
+      if (formData.security_deposit !== '' && formData.security_deposit !== undefined && formData.security_deposit !== null) {
+        fd.append('security_deposit', String(formData.security_deposit).trim());
+      } else {
+        fd.append('security_deposit', '0');
+      }
 
       // Dates and Maintenance
       if (formData.check_in_date) {
@@ -831,8 +820,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (formData.check_out_date) {
         fd.append('check_out_date', formData.check_out_date);
       }
-      if (formData.maintenance_amount) {
-        fd.append('maintenance_amount', String(formData.maintenance_amount));
+      if (formData.maintenance_amount && String(formData.maintenance_amount).trim()) {
+        fd.append('maintenance_amount', String(formData.maintenance_amount).trim());
       }
 
       // Address Fields
@@ -868,9 +857,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         const effectivePgId = selectedBranch?.pg_id || formData.pg_id;
         if (effectivePgId) {
           fd.append('pg_id', String(effectivePgId));
-        }
-        if (!formData.maintenance_amount) {
-          fd.append('maintenance_amount', '1000');
         }
         fd.append('subscription_plan_id', String(formData.subscription_plan_id || 1));
         if (formData.password?.trim()) {
