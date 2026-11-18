@@ -169,7 +169,7 @@ export default function CheckoutAndRefundApprovalsPage() {
       if (result?.file_url) {
         const fullUrl = result.file_url.startsWith('http')
           ? result.file_url
-          : `${config.api.baseUrl.replace('/api/v1', '')}/${result.file_url.replace(/^\//, '')}`;
+          : `${config.backendUrl || ''}/${result.file_url.replace(/^\//, '')}`;
         const fileName = result.filename || `checkout-refunds-report.${apiFormat === 'pdf' ? 'pdf' : 'xlsx'}`;
 
         try {

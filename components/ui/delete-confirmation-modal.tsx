@@ -31,7 +31,6 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   itemName,
   itemType = 'item',
   message,
-  details,
   confirmLabel,
   cancelLabel = 'Cancel',
   loading = false,
@@ -89,23 +88,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
       }
     >
       <div className="space-y-4 pt-2">
-        {/* Optional Context Details Card matching Figma */}
-        {details && details.length > 0 && (
-          <div className="bg-[#F9FAFB] rounded-xl p-3.5 sm:p-4 border border-gray-100 grid grid-cols-2 gap-4">
-            {details.map((d, i) => (
-              <div key={i} className="space-y-0.5">
-                <span className="text-[11px] sm:text-xs text-gray-400 font-medium block">
-                  {d.label}
-                </span>
-                <span className="text-xs sm:text-sm font-semibold text-gray-900 block truncate">
-                  {d.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Confirmation Message */}
+        {/* Confirmation Message (Only message in middle section) */}
         <div className="text-xs sm:text-sm text-gray-600 leading-relaxed">
           {message || defaultMessage}
         </div>

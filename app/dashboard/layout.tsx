@@ -4,6 +4,7 @@ import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
 import { User } from '@/types/auth';
+import { config } from '@/lib/config';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { DashboardTopbar } from '@/components/dashboard/dashboard-topbar';
 
@@ -112,10 +113,9 @@ export default function DashboardLayout({
       return trimmed;
     }
 
-    const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1')
-      .replace(/\/api\/v1\/?$/, '');
+    const apiBase = config.backendUrl || '';
     const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-    return `${apiBase}${cleanPath}`;
+    return apiBase ? `${apiBase}${cleanPath}` : cleanPath;
   };
 
   // Real authenticated user photo from API response; null if not mounted

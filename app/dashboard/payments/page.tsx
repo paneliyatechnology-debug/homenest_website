@@ -47,7 +47,7 @@ function getDefaultMonthRange() {
 function resolveFileUrl(fileUrl?: string): string {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) return fileUrl;
-  const base = config.api.baseUrl.replace(/\/api\/v1\/?$/, '');
+  const base = config.backendUrl || '';
   return `${base}/${fileUrl.replace(/^\//, '')}`;
 }
 

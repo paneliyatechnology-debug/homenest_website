@@ -305,7 +305,12 @@ export default function RoomShiftRequestPage() {
         }}
         onConfirm={handleConfirmDelete}
         title="Delete Room Shift Request"
-        subtitle="Are you sure you want to delete this room shift request? This action cannot be undone."
+        subtitle="This action is permanent and cannot be undone."
+        message={
+          shiftToDelete?.resident?.name
+            ? `Are you sure you want to delete the room shift request for ${shiftToDelete.resident.name}?`
+            : 'Are you sure you want to delete this room shift request?'
+        }
         loading={isDeleting}
         details={deleteDetails}
       />
