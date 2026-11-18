@@ -49,7 +49,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
       .getResidentById(residentId)
       .then((data) => {
         if (!isMounted) return;
-        setResident(data);
+        setResident(data || DEFAULT_RESIDENT_DETAIL);
         setLoading(false);
       })
       .catch((err) => {

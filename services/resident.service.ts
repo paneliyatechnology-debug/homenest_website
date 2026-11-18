@@ -185,15 +185,35 @@ export const residentService = {
    * Fetches single resident user details from GET /users/:id
    * Endpoint: /users/67
    */
-  async getResidentById(id: number | string): Promise<ResidentDetail> {
+  async getResidentById(id: number | string): Promise<ResidentDetail | null> {
     try {
-      const response = await apiClient<ResidentDetailApiResponse>(`/users/${id}`);
-      if (response && response.success && response.data) {
-        return response.data;
+      const response = await apiClient<
+        | ResidentDetailApiResponse
+        | { success?: boolean; user?: ResidentDetail; data?: ResidentDetail }
+        | ResidentDetail
+      >(`/users/${id}`);
+
+      if (!response) return null;
+
+      // Format 1: { success: true, data: { ... } } or { data: { ... } }
+      if ('data' in response && response.data && typeof response.data === 'object') {
+        return response.data as ResidentDetail;
       }
-      return DEFAULT_RESIDENT_DETAIL;
-    } catch {
-      return DEFAULT_RESIDENT_DETAIL;
+
+      // Format 2: { user: { ... } }
+      if ('user' in response && response.user && typeof response.user === 'object') {
+        return response.user as ResidentDetail;
+      }
+
+      // Format 3: direct object { id: 165, name: '...', ... }
+      if ('id' in response && (response as ResidentDetail).id) {
+        return response as ResidentDetail;
+      }
+
+      return null;
+    } catch (err) {
+      console.error(`Failed to fetch resident with id ${id}:`, err);
+      return null;
     }
   },
 

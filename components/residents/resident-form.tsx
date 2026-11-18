@@ -72,12 +72,61 @@ interface FormState {
  */
 function toInputDate(val?: string | null): string {
   if (!val) return '';
-  const cleanVal = val.split(' ')[0];
-  const parts = cleanVal.split('-');
-  if (parts.length === 3 && parts[0].length === 2 && parts[2].length === 4) {
-    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+  const cleanVal = String(val).trim().split(' ')[0].split('T')[0];
+  const parts = cleanVal.split(/[-/]/);
+  if (parts.length === 3) {
+    if (parts[0].length <= 2 && parts[2].length === 4) {
+      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+    }
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
   }
   return cleanVal;
+}
+
+interface FormInitialDataSource extends Partial<ResidentDetail> {
+  name?: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  status?: string;
+  branch_id?: number | string | null;
+  building_id?: number | string | null;
+  floor_id?: number | string | null;
+  room_id?: number | string | null;
+  room_no?: string | null;
+  room_type?: string | null;
+  bed_number?: string | null;
+  monthly_rent?: number | string | null;
+  security_deposit?: number | string | null;
+  maintenance_amount?: number | string | null;
+  check_in_date?: string | null;
+  check_out_date?: string | null;
+  address_line_1?: string | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  pincode?: string | number | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_relationship?: string | null;
+  emergency_contact_phone?: string | null;
+  date_of_birth?: string | null;
+  nationality?: string | null;
+  marital_status?: string | null;
+  occupation?: string | null;
+  branch_name?: string | null;
+  building_name?: string | null;
+  floor_name?: string | null;
+  photo_url?: string | null;
+  aadhar_card?: string | null;
+  address_proof?: string | null;
+  education_certificate?: string | null;
+  agreement_file?: string | null;
+  agreement?: string | null;
+  signature?: string | null;
+  pg_id?: number | string | null;
+  subscription_plan_id?: string | number | null;
 }
 
 /**
@@ -121,41 +170,68 @@ function buildInitialFormData(initialData?: ResidentDetail | null): FormState {
     };
   }
 
+  // Support both nested structured format (personal_info, contact_info, room_info)
+  // and flat top-level user fields returned from backend
+  const raw = initialData as FormInitialDataSource;
+  const personal = initialData.personal_info;
+  const contact = initialData.contact_info;
+  const room = initialData.room_info;
+
   return {
-    name: initialData.name || initialData.personal_info?.name || '',
-    email: initialData.email || initialData.contact_info?.email || '',
-    phone: initialData.phone || initialData.contact_info?.phone || '',
-    gender: (initialData.gender || initialData.personal_info?.gender || 'male').toLowerCase(),
-    status: (initialData.status || initialData.room_info?.current_status || 'active').toLowerCase(),
-    date_of_birth: toInputDate(initialData.personal_info?.date_of_birth),
-    nationality: initialData.personal_info?.nationality || 'Indian',
-    marital_status: (initialData.personal_info?.marital_status || 'single').toLowerCase(),
-    occupation: initialData.personal_info?.occupation || '',
-    branch_id: initialData.room_info?.branch_id || '1',
-    building_id: initialData.room_info?.building_id || '1',
-    floor_id: initialData.room_info?.floor_id || '2',
-    room_id: initialData.room_info?.room_id || '1',
-    room_no: initialData.room_info?.room_no || 'A-201',
-    room_type: (initialData.room_info?.room_type || 'single').toLowerCase(),
-    bed_number: initialData.room_info?.bed_number || 'Bed-1',
-    monthly_rent: String(initialData.room_info?.monthly_rent ?? 9000),
-    security_deposit: String(initialData.room_info?.security_deposit ?? 9000),
-    maintenance_amount: '1000',
-    check_in_date: toInputDate(initialData.room_info?.check_in_date),
-    check_out_date: toInputDate(initialData.room_info?.check_out_date),
+    name: initialData.name || personal?.name || raw.name || '',
+    email: initialData.email || contact?.email || raw.email || '',
+    phone: initialData.phone || contact?.phone || raw.phone || '',
+    gender: (initialData.gender || personal?.gender || raw.gender || 'male').toLowerCase(),
+    status: (initialData.status || room?.current_status || raw.status || 'active').toLowerCase(),
+    date_of_birth: toInputDate(personal?.date_of_birth || raw.date_of_birth),
+    nationality: personal?.nationality || raw.nationality || 'Indian',
+    marital_status: (personal?.marital_status || raw.marital_status || 'single').toLowerCase(),
+    occupation: personal?.occupation || raw.occupation || '',
+
+    branch_id: room?.branch_id ? String(room.branch_id) : (raw.branch_id ? String(raw.branch_id) : ''),
+    building_id: room?.building_id ? String(room.building_id) : (raw.building_id ? String(raw.building_id) : ''),
+    floor_id: room?.floor_id ? String(room.floor_id) : (raw.floor_id ? String(raw.floor_id) : ''),
+    room_id: room?.room_id ? String(room.room_id) : (raw.room_id ? String(raw.room_id) : ''),
+    room_no: room?.room_no || raw.room_no || '',
+    room_type: (room?.room_type || raw.room_type || '').toLowerCase(),
+    bed_number: room?.bed_number || raw.bed_number || '',
+    monthly_rent:
+      room?.monthly_rent !== undefined && room.monthly_rent !== null
+        ? String(room.monthly_rent)
+        : raw.monthly_rent !== undefined && raw.monthly_rent !== null
+          ? String(raw.monthly_rent)
+          : '',
+    security_deposit:
+      room?.security_deposit !== undefined && room.security_deposit !== null
+        ? String(room.security_deposit)
+        : raw.security_deposit !== undefined && raw.security_deposit !== null
+          ? String(raw.security_deposit)
+          : '',
+    maintenance_amount:
+      raw.maintenance_amount !== undefined && raw.maintenance_amount !== null
+        ? String(raw.maintenance_amount)
+        : '',
+    check_in_date: toInputDate(room?.check_in_date || raw.check_in_date),
+    check_out_date: toInputDate(room?.check_out_date || raw.check_out_date),
+
     address_line_1:
-      initialData.contact_info?.address_line_1 ||
-      initialData.contact_info?.address ||
+      contact?.address_line_1 ||
+      contact?.address ||
+      raw.address_line_1 ||
+      raw.address ||
       '',
-    city: initialData.contact_info?.city || '',
-    state: initialData.contact_info?.state || '',
-    pincode: initialData.contact_info?.pincode || '',
-    emergency_contact_name: initialData.contact_info?.emergency_contact_name || '',
-    emergency_contact_relationship: initialData.contact_info?.emergency_contact_relationship || '',
-    emergency_contact_phone: initialData.contact_info?.emergency_contact_phone || '',
+    city: contact?.city || raw.city || '',
+    state: contact?.state || raw.state || '',
+    pincode: contact?.pincode ? String(contact.pincode) : (raw.pincode ? String(raw.pincode) : ''),
+    emergency_contact_name:
+      contact?.emergency_contact_name || raw.emergency_contact_name || '',
+    emergency_contact_relationship:
+      contact?.emergency_contact_relationship || raw.emergency_contact_relationship || '',
+    emergency_contact_phone:
+      contact?.emergency_contact_phone || raw.emergency_contact_phone || '',
     password: '',
-    pg_id: initialData.room_info?.pg_id ? String(initialData.room_info.pg_id) : '',
-    subscription_plan_id: '1',
+    pg_id: room?.pg_id ? String(room.pg_id) : (raw.pg_id ? String(raw.pg_id) : ''),
+    subscription_plan_id: String(raw.subscription_plan_id || '1'),
   };
 }
 
@@ -197,21 +273,47 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const [loadingRooms, setLoadingRooms] = useState(false);
 
   // File states
+  const rawInitial = initialData as FormInitialDataSource;
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.profile_photo_url || initialData?.profile_photo || null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(
+    initialData?.profile_photo_url || initialData?.profile_photo || rawInitial?.photo_url || null
+  );
 
   const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
   const [educationCertFile, setEducationCertFile] = useState<File | null>(null);
   const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
-  const [existingAadhar, setExistingAadhar] = useState<string | null>(initialData?.documents?.aadhar_card || null);
-  const [existingAddressProof, setExistingAddressProof] = useState<string | null>(initialData?.documents?.address_proof || null);
-  const [existingEducationCert, setExistingEducationCert] = useState<string | null>(initialData?.documents?.education_certificate || null);
-  const [existingAgreementFile, setExistingAgreementFile] = useState<string | null>(
-    initialData?.documents?.agreement_file || null
+  const [existingAadhar, setExistingAadhar] = useState<string | null>(
+    initialData?.documents?.aadhar_card || rawInitial?.aadhar_card || null
   );
-  const [existingSignature, setExistingSignature] = useState<string | null>(initialData?.documents?.signature || null);
+  const [existingAddressProof, setExistingAddressProof] = useState<string | null>(
+    initialData?.documents?.address_proof || rawInitial?.address_proof || null
+  );
+  const [existingEducationCert, setExistingEducationCert] = useState<string | null>(
+    initialData?.documents?.education_certificate || rawInitial?.education_certificate || null
+  );
+  const [existingAgreementFile, setExistingAgreementFile] = useState<string | null>(
+    initialData?.documents?.agreement_file || rawInitial?.agreement_file || rawInitial?.agreement || null
+  );
+  const [existingSignature, setExistingSignature] = useState<string | null>(
+    initialData?.documents?.signature || rawInitial?.signature || null
+  );
+
+  // Render-phase state synchronization: if initialData arrives or updates after initial render,
+  // sync formData and document previews synchronously during render (React-recommended pattern)
+  const [prevInitialDataId, setPrevInitialDataId] = useState<number | string | null>(initialData?.id ?? null);
+  if (mode === 'edit' && initialData && initialData.id !== prevInitialDataId) {
+    setPrevInitialDataId(initialData.id);
+    setFormData(buildInitialFormData(initialData));
+    const raw = initialData as FormInitialDataSource;
+    setPhotoPreview(initialData.profile_photo_url || initialData.profile_photo || raw.photo_url || null);
+    setExistingAadhar(initialData.documents?.aadhar_card || raw.aadhar_card || null);
+    setExistingAddressProof(initialData.documents?.address_proof || raw.address_proof || null);
+    setExistingEducationCert(initialData.documents?.education_certificate || raw.education_certificate || null);
+    setExistingAgreementFile(initialData.documents?.agreement_file || raw.agreement_file || raw.agreement || null);
+    setExistingSignature(initialData.documents?.signature || raw.signature || null);
+  }
 
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -722,9 +824,21 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       fd.append('monthly_rent', String(formData.monthly_rent).trim());
       fd.append('security_deposit', String(formData.security_deposit || 9000));
 
+      // Dates and Maintenance
+      if (formData.check_in_date) {
+        fd.append('check_in_date', formData.check_in_date);
+      }
+      if (formData.check_out_date) {
+        fd.append('check_out_date', formData.check_out_date);
+      }
+      if (formData.maintenance_amount) {
+        fd.append('maintenance_amount', String(formData.maintenance_amount));
+      }
+
       // Address Fields
       if (formData.address_line_1) {
         fd.append('address_line_1', formData.address_line_1.trim());
+        fd.append('address', formData.address_line_1.trim());
       }
       if (formData.city) {
         fd.append('city', formData.city.trim());
@@ -750,17 +864,14 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       // Create-mode specifics
       if (mode === 'create') {
         fd.append('role', 'resident');
-        if (formData.check_in_date) {
-          fd.append('check_in_date', formData.check_in_date);
-        }
         const selectedBranch = branches.find((b) => String(b.id) === String(formData.branch_id));
         const effectivePgId = selectedBranch?.pg_id || formData.pg_id;
         if (effectivePgId) {
           fd.append('pg_id', String(effectivePgId));
         }
-        fd.append('maintenance_amount', String(formData.maintenance_amount || 1000));
-        fd.append('address', formData.address_line_1 || '');
-        fd.append('check_out_date', formData.check_out_date || '');
+        if (!formData.maintenance_amount) {
+          fd.append('maintenance_amount', '1000');
+        }
         fd.append('subscription_plan_id', String(formData.subscription_plan_id || 1));
         if (formData.password?.trim()) {
           fd.append('password', formData.password.trim());
@@ -836,7 +947,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       <PageHeader
         title={mode === 'edit' ? 'Edit Resident Profile' : 'Create New Resident'}
         subtitle={mode === 'edit' ? 'Update resident information and room allocation.' : 'Create a new resident.'}
-        backHref={mode === 'edit' && residentId ? `/dashboard/residents/${residentId}` : '/dashboard/residents'}
+        backHref="/dashboard/residents"
         onBackClick={() => {
           if (mode === 'create') {
             resetAllFields();
@@ -903,10 +1014,18 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                       <span className="text-[10px] text-gray-400">Loading...</span>
                     ) : undefined
                   }
-                  options={branches.map((b) => ({
-                    label: b.name,
-                    value: b.id,
-                  }))}
+                  options={[
+                    ...(formData.branch_id && !branches.some((b) => String(b.id) === String(formData.branch_id))
+                      ? [{
+                          label: initialData?.room_info?.branch_name || (initialData as FormInitialDataSource)?.branch_name || `Branch ${formData.branch_id}`,
+                          value: formData.branch_id,
+                        }]
+                      : []),
+                    ...branches.map((b) => ({
+                      label: b.name,
+                      value: b.id,
+                    })),
+                  ]}
                 />
 
                 {/* Building Dropdown (dependent on branch) */}
@@ -930,10 +1049,18 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                       <span className="text-[10px] text-gray-400">Loading...</span>
                     ) : undefined
                   }
-                  options={buildings.map((b) => ({
-                    label: b.name || b.building_name || `Building ${b.id}`,
-                    value: b.id,
-                  }))}
+                  options={[
+                    ...(formData.building_id && !buildings.some((b) => String(b.id) === String(formData.building_id))
+                      ? [{
+                          label: initialData?.room_info?.building_name || (initialData as FormInitialDataSource)?.building_name || `Building ${formData.building_id}`,
+                          value: formData.building_id,
+                        }]
+                      : []),
+                    ...buildings.map((b) => ({
+                      label: b.name || b.building_name || `Building ${b.id}`,
+                      value: b.id,
+                    })),
+                  ]}
                 />
               </div>
 
@@ -960,10 +1087,18 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                       <span className="text-[10px] text-gray-400">Loading...</span>
                     ) : undefined
                   }
-                  options={floors.map((f) => ({
-                    label: f.floor_name || f.name || `Floor ${f.floor_number ?? f.id}`,
-                    value: f.id,
-                  }))}
+                  options={[
+                    ...(formData.floor_id && !floors.some((f) => String(f.id) === String(formData.floor_id))
+                      ? [{
+                          label: initialData?.room_info?.floor_name || (initialData as FormInitialDataSource)?.floor_name || `Floor ${formData.floor_id}`,
+                          value: formData.floor_id,
+                        }]
+                      : []),
+                    ...floors.map((f) => ({
+                      label: f.floor_name || f.name || `Floor ${f.floor_number ?? f.id}`,
+                      value: f.id,
+                    })),
+                  ]}
                 />
 
                 {/* Room Dropdown (dependent on floor, building, branch) */}
@@ -987,10 +1122,18 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                       <span className="text-[10px] text-gray-400">Loading...</span>
                     ) : undefined
                   }
-                  options={rooms.map((r) => ({
-                    label: `${r.room_no || r.room_number || r.name} ${r.room_type || r.type ? `(${r.room_type || r.type})` : ''}`,
-                    value: r.id,
-                  }))}
+                  options={[
+                    ...(formData.room_id && !rooms.some((r) => String(r.id) === String(formData.room_id))
+                      ? [{
+                          label: `${formData.room_no || 'Room'} ${formData.room_type ? `(${formData.room_type})` : ''}`.trim(),
+                          value: formData.room_id,
+                        }]
+                      : []),
+                    ...rooms.map((r) => ({
+                      label: `${r.room_no || r.room_number || r.name} ${r.room_type || r.type ? `(${r.room_type || r.type})` : ''}`,
+                      value: r.id,
+                    })),
+                  ]}
                 />
               </div>
 
