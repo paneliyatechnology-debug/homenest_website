@@ -3,13 +3,14 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { RoomShiftRequest } from '@/types/room-shift';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, formatDateToDDMMYYYY } from '@/components/ui';
 
 interface RoomShiftDetailsModalProps {
   visible: boolean;
   onHide: () => void;
   shift: RoomShiftRequest | null;
   onOpenStatusModal?: (shift: RoomShiftRequest) => void;
+  onEdit?: (shift: RoomShiftRequest) => void;
 }
 
 export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
@@ -17,6 +18,7 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
   onHide,
   shift,
   onOpenStatusModal,
+  onEdit,
 }) => {
   if (!shift) return null;
 
@@ -43,7 +45,7 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
               <StatusBadge status={shift.status} label={shift.status} />
             </div>
             <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Request #{shift.id} • Created on {shift.created_at}
+              Request #{shift.id} • Created on {formatDateToDDMMYYYY(shift.created_at)}
             </p>
           </div>
         </div>
@@ -51,7 +53,7 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
       contentClassName="p-5 sm:p-6 space-y-5 bg-gray-50/50 max-h-[75vh] overflow-y-auto"
       footer={
         <div className="flex items-center justify-between gap-3 pt-3 border-t border-gray-100 bg-white">
-          <div>
+          <div className="flex items-center gap-2">
             {onOpenStatusModal && (
               <button
                 type="button"
@@ -59,9 +61,21 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
                   onHide();
                   onOpenStatusModal(shift);
                 }}
-                className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#175C46] text-white hover:bg-[#124937] transition-all shadow-xs"
+                className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#175C46] text-white hover:bg-[#124937] transition-all shadow-xs cursor-pointer"
               >
                 Review & Update Status
+              </button>
+            )}
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  onHide();
+                  onEdit(shift);
+                }}
+                className="px-4 py-2 text-xs font-semibold rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                Edit Request
               </button>
             )}
           </div>
@@ -159,7 +173,7 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
           <div className="pt-2 border-t border-gray-50 flex items-center justify-between">
             <span className="text-xs font-medium text-gray-500">Expected Move Date:</span>
             <span className="text-xs font-bold text-gray-800">
-              {shift.expected_move_date}
+              {formatDateToDDMMYYYY(shift.expected_move_date)}
             </span>
           </div>
         )}
@@ -176,7 +190,7 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
               <p>
                 <span className="font-medium text-gray-500">Reviewed by:</span>{' '}
                 <span className="font-semibold text-gray-900">{shift.reviewer_name}</span>
-                {shift.reviewed_at && ` on ${shift.reviewed_at}`}
+                {shift.reviewed_at && ` on ${formatDateToDDMMYYYY(shift.reviewed_at)}`}
               </p>
             )}
             {shift.admin_notes && (

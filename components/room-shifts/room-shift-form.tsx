@@ -3,29 +3,72 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BackButton } from '@/components/ui/back-button';
+import { AppDatePicker } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
 import { roomShiftService } from '@/services/room-shift.service';
+import { roomService } from '@/services/room.service';
 import { Resident, Branch, Building, Floor, RoomOption } from '@/types/resident';
+import { RoomShiftRequest, CreateRoomShiftPayload } from '@/types/room-shift';
 
-export const RoomShiftForm: React.FC = () => {
+export interface RoomShiftFormProps {
+  mode?: 'create' | 'edit';
+  shiftId?: number | string;
+  initialData?: RoomShiftRequest | null;
+}
+
+export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
+  mode = 'create',
+  shiftId,
+  initialData,
+}) => {
   const router = useRouter();
+  const isEdit = mode === 'edit';
 
   // Form Fields
-  const [residentId, setResidentId] = useState<number | ''>('');
-  const [reason, setReason] = useState('');
-  const [status, setStatus] = useState<'approved' | 'pending' | 'rejected'>('pending');
+  const [residentId, setResidentId] = useState<number | ''>(
+    initialData?.resident?.id || ''
+  );
+  const [reason, setReason] = useState(initialData?.reason || '');
+  const [preferredRoomType, setPreferredRoomType] = useState(
+    initialData?.preferred_room_type || 'Double Sharing'
+  );
+  const [expectedMoveDate, setExpectedMoveDate] = useState(() => {
+    if (!initialData?.expected_move_date) return '';
+    const d = new Date(initialData.expected_move_date);
+    return !isNaN(d.getTime())
+      ? d.toISOString().split('T')[0]
+      : initialData.expected_move_date;
+  });
+  const [additionalNotes, setAdditionalNotes] = useState(
+    initialData?.additional_notes || initialData?.notes || ''
+  );
+  const [status, setStatus] = useState<'approved' | 'pending' | 'rejected'>(
+    (initialData?.status as 'approved' | 'pending' | 'rejected') || 'pending'
+  );
 
   // Resident Current Details (viewable upon selecting resident)
-  const [currentRoomNo, setCurrentRoomNo] = useState('');
-  const [currentBranchName, setCurrentBranchName] = useState('');
-  const [currentBuildingName, setCurrentBuildingName] = useState('');
-  const [currentFloorName, setCurrentFloorName] = useState('');
+  const [currentRoomNo, setCurrentRoomNo] = useState(
+    initialData?.current_room?.room_no || ''
+  );
+  const [currentBranchName, setCurrentBranchName] = useState(
+    initialData?.branch_name || ''
+  );
+  const [currentBuildingName, setCurrentBuildingName] = useState(
+    initialData?.current_room?.building_name || ''
+  );
+  const [currentFloorName, setCurrentFloorName] = useState(
+    initialData?.current_room?.floor_number
+      ? `Floor ${initialData.current_room.floor_number}`
+      : ''
+  );
 
   // Target Room Selection (cascading dropdowns)
   const [targetBranchId, setTargetBranchId] = useState<number | ''>('');
   const [targetBuildingId, setTargetBuildingId] = useState<number | ''>('');
   const [targetFloorId, setTargetFloorId] = useState<number | ''>('');
-  const [requestedRoomId, setRequestedRoomId] = useState<number | ''>('');
+  const [requestedRoomId, setRequestedRoomId] = useState<number | ''>(
+    initialData?.requested_room?.id || ''
+  );
 
   // Dropdown Data Sources
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -66,6 +109,132 @@ export const RoomShiftForm: React.FC = () => {
       isMounted = false;
     };
   }, []);
+
+  // Prefill in Edit Mode
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupShiftData = async (data: RoomShiftRequest) => {
+      if (!isMounted) return;
+
+      setResidentId(data.resident?.id || '');
+      setReason(data.reason || '');
+      if (
+        data.status === 'approved' ||
+        data.status === 'pending' ||
+        data.status === 'rejected'
+      ) {
+        setStatus(data.status);
+      }
+      if (data.preferred_room_type) {
+        setPreferredRoomType(data.preferred_room_type);
+      }
+      if (data.additional_notes || data.notes) {
+        setAdditionalNotes(data.additional_notes || data.notes || '');
+      }
+      if (data.expected_move_date) {
+        const d = new Date(data.expected_move_date);
+        setExpectedMoveDate(
+          !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : data.expected_move_date
+        );
+      }
+
+      // Populate resident location info
+      if (data.current_room?.room_no) setCurrentRoomNo(data.current_room.room_no);
+      if (data.branch_name) setCurrentBranchName(data.branch_name);
+      if (data.current_room?.building_name) {
+        setCurrentBuildingName(data.current_room.building_name);
+      }
+      if (data.current_room?.floor_number) {
+        setCurrentFloorName(`Floor ${data.current_room.floor_number}`);
+      }
+
+      // Also fetch full resident detail if some location fields are missing
+      if (data.resident?.id) {
+        try {
+          const detail = await residentService.getResidentById(data.resident.id);
+          if (isMounted && detail?.room_info) {
+            if (!data.current_room?.room_no && detail.room_info.room_no) {
+              setCurrentRoomNo(detail.room_info.room_no);
+            }
+            if (!data.branch_name && detail.room_info.branch_name) {
+              setCurrentBranchName(detail.room_info.branch_name);
+            }
+            if (!data.current_room?.building_name && detail.room_info.building_name) {
+              setCurrentBuildingName(detail.room_info.building_name);
+            }
+            if (!data.current_room?.floor_number && (detail.room_info.floor_name || detail.room_info.floor_number)) {
+              setCurrentFloorName(
+                detail.room_info.floor_name || `Floor ${detail.room_info.floor_number}`
+              );
+            }
+          }
+        } catch {
+          // ignore optional prefill error
+        }
+      }
+
+      // Requested room cascading initialization
+      const reqRoomId = data.requested_room?.id;
+      const branchId = data.branch_id;
+
+      if (reqRoomId) {
+        setRequestedRoomId(reqRoomId);
+        try {
+          const roomDetails = await roomService.getRoomById(reqRoomId);
+          if (!isMounted) return;
+
+          const bBranchId = roomDetails?.branch_id || branchId;
+          const bBuildingId = roomDetails?.building_id;
+          const bFloorId = roomDetails?.floor_id;
+
+          if (bBranchId) {
+            setTargetBranchId(bBranchId);
+            const blds = await residentService.getBuildings(bBranchId);
+            if (isMounted) setBuildings(blds || []);
+          }
+          if (bBuildingId) {
+            setTargetBuildingId(bBuildingId);
+            const flrs = await residentService.getFloors(bBuildingId);
+            if (isMounted) setFloors(flrs || []);
+          }
+          if (bBranchId && bBuildingId && bFloorId) {
+            setTargetFloorId(bFloorId);
+            const rms = await residentService.getRooms({
+              branch_id: bBranchId,
+              building_id: bBuildingId,
+              floor_id: bFloorId,
+            });
+            if (isMounted) setAvailableRooms(rms || []);
+          }
+        } catch (err) {
+          console.warn('Failed to prefill requested room cascading dropdowns:', err);
+        }
+      } else if (branchId) {
+        setTargetBranchId(branchId);
+        try {
+          const blds = await residentService.getBuildings(branchId);
+          if (isMounted) setBuildings(blds || []);
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    if (initialData) {
+      setupShiftData(initialData);
+    } else if (isEdit && shiftId) {
+      roomShiftService.getShiftById(shiftId).then((data) => {
+        if (data && isMounted) {
+          setupShiftData(data);
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isEdit, shiftId, initialData]);
 
   // Cascading Handler: Target Branch change
   const handleTargetBranchChange = async (branchId: number | '') => {
@@ -137,7 +306,7 @@ export const RoomShiftForm: React.FC = () => {
     }
   };
 
-  // When resident is picked: populate current details and optionally initialize target branch
+  // When resident is picked: populate current details and initialize target branch
   const handleResidentChange = async (selectedId: number | '') => {
     setResidentId(selectedId);
     if (!selectedId) {
@@ -206,21 +375,30 @@ export const RoomShiftForm: React.FC = () => {
 
     try {
       setSubmitting(true);
-      // Only the required fields are passed to the API
-      await roomShiftService.createShift({
+
+      const payload: CreateRoomShiftPayload = {
         resident_id: Number(residentId),
         reason: reason.trim(),
+        preferred_room_type: preferredRoomType || 'Double Sharing',
         requested_room_id: requestedRoomId ? Number(requestedRoomId) : null,
+        expected_move_date: expectedMoveDate || undefined,
+        additional_notes: additionalNotes.trim() || undefined,
         status,
-        preferred_room_type: 'Double Sharing',
-      });
+      };
+
+      if (isEdit && (shiftId || initialData?.id)) {
+        const idToUpdate = shiftId || initialData!.id;
+        await roomShiftService.updateShift(idToUpdate, payload);
+      } else {
+        await roomShiftService.createShift(payload);
+      }
 
       router.push('/dashboard/settings/room-shifts');
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err
           ? String((err as { message: unknown }).message)
-          : 'Failed to create room shift request';
+          : `Failed to ${isEdit ? 'update' : 'create'} room shift request`;
       setErrorMessage(msg);
     } finally {
       setSubmitting(false);
@@ -234,10 +412,12 @@ export const RoomShiftForm: React.FC = () => {
         <BackButton href="/dashboard/settings/room-shifts" />
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            Add New Room Shift Request
+            {isEdit ? 'Edit Room Shift Request' : 'Add New Room Shift Request'}
           </h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-            Add a new room shift request.
+            {isEdit
+              ? 'Edit and update room shift request details.'
+              : 'Add a new room shift request.'}
           </p>
         </div>
       </div>
@@ -479,6 +659,55 @@ export const RoomShiftForm: React.FC = () => {
             </div>
           </div>
 
+          {/* Row: Expected Move Date & Preferred Room Type */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Expected Move Date */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
+                Expected Move Date <span className="text-gray-400 font-normal">(Optional)</span>
+              </label>
+              <AppDatePicker
+                value={expectedMoveDate}
+                onChange={(val) => setExpectedMoveDate(val)}
+                disabled={submitting}
+                placeholder="dd/mm/yyyy"
+              />
+            </div>
+
+            {/* Preferred Room Type */}
+            <div>
+              <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
+                Preferred Room Type <span className="text-gray-400 font-normal">(Optional)</span>
+              </label>
+              <select
+                value={preferredRoomType}
+                onChange={(e) => setPreferredRoomType(e.target.value)}
+                disabled={submitting}
+                className="w-full h-11 px-3.5 text-xs sm:text-sm bg-white border border-gray-200 rounded-lg text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors"
+              >
+                <option value="Single">Single</option>
+                <option value="Double Sharing">Double Sharing</option>
+                <option value="Triple Sharing">Triple Sharing</option>
+                <option value="Four Sharing">Four Sharing</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Special Instructions / Additional Notes */}
+          <div>
+            <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
+              Special Instructions / Additional Notes <span className="text-gray-400 font-normal">(Optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={additionalNotes}
+              onChange={(e) => setAdditionalNotes(e.target.value)}
+              placeholder="e.g. Prefer quiet room facing garden, study table required, etc."
+              disabled={submitting}
+              className="w-full p-3.5 text-xs sm:text-sm bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors resize-none"
+            />
+          </div>
+
           {/* Status * */}
           <div className="pt-1">
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-3">
@@ -530,7 +759,11 @@ export const RoomShiftForm: React.FC = () => {
               disabled={submitting}
               className="w-full h-12 rounded-lg bg-[#175C46] hover:bg-[#124937] text-white font-semibold text-sm transition-colors shadow-xs disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
-              {submitting ? 'Saving...' : 'Save'}
+              {submitting
+                ? 'Saving...'
+                : isEdit
+                ? 'Save Changes'
+                : 'Save'}
             </button>
           </div>
         </form>

@@ -120,12 +120,33 @@ class RoomShiftService {
     const res = await apiClient<{
       success: boolean;
       message: string;
-      data: RoomShiftRequest;
+      id?: number;
+      data?: RoomShiftRequest;
     }>('/rooms/shifts', {
       method: 'POST',
       body: JSON.stringify(payload),
     });
-    return res.data;
+    return (res.data || res) as unknown as RoomShiftRequest;
+  }
+
+  /**
+   * PUT /rooms/shifts/:id
+   * Updates an existing room shift request (same fields as create)
+   */
+  async updateShift(
+    id: number | string,
+    payload: Partial<CreateRoomShiftPayload>
+  ): Promise<RoomShiftRequest> {
+    const res = await apiClient<{
+      success: boolean;
+      message: string;
+      id?: number;
+      data?: RoomShiftRequest;
+    }>(`/rooms/shifts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return (res.data || res) as unknown as RoomShiftRequest;
   }
 
   /**

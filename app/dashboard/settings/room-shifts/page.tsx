@@ -196,16 +196,16 @@ export default function RoomShiftRequestPage() {
               title="View Shift Details"
               onClick={() => handleView(item)}
             />
-            <button
-              type="button"
+            <IconButton
+              variant="edit"
+              title="Edit Shift Request"
+              onClick={() => router.push(`/dashboard/settings/room-shifts/${item.id}/edit`)}
+            />
+            <IconButton
+              variant="status"
               title="Review & Update Status"
               onClick={() => handleOpenStatusModal(item)}
-              className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-500 hover:text-[#175C46] hover:border-emerald-300 hover:bg-emerald-50/50 flex items-center justify-center transition-colors cursor-pointer"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </button>
+            />
             <IconButton
               variant="delete"
               title="Delete Shift Request"
@@ -215,7 +215,7 @@ export default function RoomShiftRequestPage() {
         ),
       },
     ],
-    [currentPage, handleView, handleOpenStatusModal, handleDeleteClick]
+    [currentPage, router, handleView, handleOpenStatusModal, handleDeleteClick]
   );
 
   const deleteDetails: DeleteDetailItem[] = shiftToDelete
@@ -282,6 +282,7 @@ export default function RoomShiftRequestPage() {
         }}
         shift={selectedShift}
         onOpenStatusModal={(s) => handleOpenStatusModal(s)}
+        onEdit={(s) => router.push(`/dashboard/settings/room-shifts/${s.id}/edit`)}
       />
 
       {/* Shift Status Update Modal */}

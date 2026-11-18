@@ -45,7 +45,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         'border border-gray-200 bg-white text-gray-600 hover:text-[#175C46] hover:border-gray-300';
     } else if (variant === 'status') {
       variantClasses =
-        'border border-gray-200 bg-white text-gray-600 hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50/40';
+        'border border-gray-200 bg-white text-gray-600 hover:text-[#175C46] hover:border-emerald-300 hover:bg-emerald-50/40';
     } else if (variant === 'delete') {
       variantClasses =
         'border border-gray-200 bg-white text-gray-600 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50';
@@ -98,15 +98,15 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
       if (variant === 'status') {
         return (
           <svg
-            className="w-3.5 h-3.5 stroke-current"
+            className="w-4 h-4 stroke-current"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth="2"
+            strokeWidth="1.9"
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
             />
           </svg>
         );
