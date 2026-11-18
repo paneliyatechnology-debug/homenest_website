@@ -22,6 +22,7 @@ import {
   StatusBadge,
   Dropdown,
   DeleteConfirmationModal,
+  ClearFilterButton,
 } from '@/components/ui';
 
 type NoticeTab = 'all' | 'draft' | 'scheduled' | 'sent';
@@ -227,9 +228,26 @@ export default function NoticesPage() {
 
   const isFilterActive = selectedCategory !== 'all' || selectedPriority !== 'all';
 
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedCategory !== 'all' ||
+      selectedPriority !== 'all' ||
+      Boolean(searchTerm.trim())
+    );
+  }, [selectedCategory, selectedPriority, searchTerm]);
+
   const clearFilters = () => {
     setSelectedCategory('all');
     setSelectedPriority('all');
+    setShowFilterDropdown(false);
+    setCurrentPage(1);
+  };
+
+  const handleClearAllFilters = () => {
+    setSelectedCategory('all');
+    setSelectedPriority('all');
+    setSearchTerm('');
+    setDebouncedSearch('');
     setShowFilterDropdown(false);
     setCurrentPage(1);
   };
@@ -404,6 +422,11 @@ export default function NoticesPage() {
             <SearchInput
               value={searchTerm}
               onChange={(val) => setSearchTerm(val)}
+              onClear={() => {
+                setSearchTerm('');
+                setDebouncedSearch('');
+                setCurrentPage(1);
+              }}
               placeholder="Search notices..."
               size="sm"
             />
@@ -489,6 +512,14 @@ export default function NoticesPage() {
               </div>
             )}
           </div>
+
+          {/* Dynamic Clear Filter Button */}
+          {hasActiveFilters && (
+            <ClearFilterButton
+              onClick={handleClearAllFilters}
+              className="!h-9 !w-9 !rounded-xl"
+            />
+          )}
         </div>
       </div>
 

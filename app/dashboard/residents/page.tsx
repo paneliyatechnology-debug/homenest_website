@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput } from '@/components/ui';
+import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput, ClearFilterButton } from '@/components/ui';
 import { useResetOnNavigation } from '@/hooks';
 
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
@@ -49,6 +49,26 @@ export default function ResidentsListPage() {
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Active Filters State
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedBranchId !== null ||
+      Boolean(selectedStatus) ||
+      Boolean(selectedRoomType) ||
+      Boolean(searchTerm.trim())
+    );
+  }, [selectedBranchId, selectedStatus, selectedRoomType, searchTerm]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    setSelectedBranchId(null);
+    setSelectedStatus('');
+    setSelectedRoomType('');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setCurrentPage(1);
+  };
 
   // Table & Modal Reset callback for page transitions / bfcache
   const resetTableState = useCallback(() => {
@@ -199,13 +219,27 @@ export default function ResidentsListPage() {
           ]}
         />
 
-        {/* Search Resident Input using unified SearchInput */}
-        <SearchInput
-          label="Search Resident"
-          value={searchTerm}
-          onChange={(val) => setSearchTerm(val)}
-          placeholder="Search name, phone, room..."
-        />
+        {/* Search Resident Input & Clear Filter Button */}
+        <div className="space-y-1.5">
+          <label className="text-xs font-normal text-gray-500 block">Search Resident</label>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <SearchInput
+                value={searchTerm}
+                onChange={(val) => setSearchTerm(val)}
+                onClear={() => {
+                  setSearchTerm('');
+                  setDebouncedSearch('');
+                  setCurrentPage(1);
+                }}
+                placeholder="Search name, phone, room..."
+              />
+            </div>
+            {hasActiveFilters && (
+              <ClearFilterButton onClick={handleClearAllFilters} />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* 4 Summary Stat Cards matching Figma pixel-for-pixel */}

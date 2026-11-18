@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -21,6 +21,7 @@ import {
   IconButton,
   DateRangeFilter,
   DeleteConfirmationModal,
+  ClearFilterButton,
 } from '@/components/ui';
 
 export default function VisitorsPage() {
@@ -41,6 +42,27 @@ export default function VisitorsPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedBranch !== 'all' ||
+      selectedPurpose !== 'all' ||
+      selectedStatus !== 'all' ||
+      Boolean(startDate) ||
+      Boolean(endDate)
+    );
+  }, [selectedBranch, selectedPurpose, selectedStatus, startDate, endDate]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    setSelectedBranch('all');
+    setSelectedPurpose('all');
+    setSelectedStatus('all');
+    setStartDate('');
+    setEndDate('');
+    setCurrentPage(1);
+  };
 
   // Modal states
   const [selectedVisitor, setSelectedVisitor] = useState<Visitor | null>(null);
@@ -333,7 +355,7 @@ export default function VisitorsPage() {
         {/* Purpose Dropdown */}
         <div className="flex flex-col gap-1 w-full">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
-            Prpose
+            Purpose
           </label>
           <Dropdown
             options={purposeOptions}
@@ -360,22 +382,29 @@ export default function VisitorsPage() {
           />
         </div>
 
-        {/* Date Range Filter */}
+        {/* Date Range Filter & Clear Filter Button */}
         <div className="flex flex-col gap-1 w-full">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
             Date Range
           </label>
-          <DateRangeFilter
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(s, e) => {
-              setStartDate(s);
-              setEndDate(e);
-              setCurrentPage(1);
-            }}
-            placeholder="Select date range"
-            className="w-full"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <DateRangeFilter
+                startDate={startDate}
+                endDate={endDate}
+                onChange={(s, e) => {
+                  setStartDate(s);
+                  setEndDate(e);
+                  setCurrentPage(1);
+                }}
+                placeholder="Select date range"
+                className="w-full"
+              />
+            </div>
+            {hasActiveFilters && (
+              <ClearFilterButton onClick={handleClearAllFilters} />
+            )}
+          </div>
         </div>
       </div>
 

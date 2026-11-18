@@ -8,7 +8,7 @@ import { useResetOnNavigation } from '@/hooks';
 
 import { AuditDetailsModal } from '@/components/audit/audit-details-modal';
 import { AppDatePicker, formatDateForApi } from '@/components/ui/app-date-picker';
-import { Dropdown, DataTable, IconButton, TableActions, ExportDropdown, ExportFormat } from '@/components/ui';
+import { Dropdown, DataTable, IconButton, TableActions, ExportDropdown, ExportFormat, ClearFilterButton } from '@/components/ui';
 
 const MONTH_NAMES = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
@@ -471,33 +471,12 @@ export default function AdministrativeActivityLogPage() {
           </div>
         </div>
 
-        {/* Filter / Reset Action Button matching Figma */}
-        <div className="self-end pb-0">
-          <button
-            type="button"
-            onClick={resetFilters}
-            title={hasActiveFilters ? 'Reset Filters' : 'Active Filter'}
-            className={`h-11 px-4.5 rounded-xl border text-xs sm:text-sm font-medium flex items-center justify-center gap-2 cursor-pointer shadow-2xs transition-colors shrink-0 ${
-              hasActiveFilters
-                ? 'bg-emerald-50 text-[#175C46] border-[#175C46]/30 hover:bg-emerald-100'
-                : 'bg-white text-gray-700 border-gray-200/90 hover:bg-gray-50'
-            }`}
-          >
-            <svg
-              className="w-4 h-4 stroke-current"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-              />
-            </svg>
-            <span>{hasActiveFilters ? 'Clear Filter' : 'Filter'}</span>
-          </button>
-        </div>
+        {/* Dynamic Clear Filter Button matching all modules */}
+        {hasActiveFilters && (
+          <div className="self-end pb-0">
+            <ClearFilterButton onClick={resetFilters} />
+          </div>
+        )}
       </div>
 
       {/* Audit Log Table using unified DataTable */}

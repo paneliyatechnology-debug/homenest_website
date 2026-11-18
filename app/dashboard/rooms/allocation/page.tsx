@@ -7,7 +7,7 @@ import { Branch } from '@/types/branch';
 import { roomService, INITIAL_ROOM_STATS } from '@/services/room.service';
 import { branchService } from '@/services/branch.service';
 import { RoomStatsCards } from '@/components/rooms/room-stats-cards';
-import { Dropdown } from '@/components/ui';
+import { Dropdown, ClearFilterButton } from '@/components/ui';
 import { useResetOnNavigation } from '@/hooks';
 
 export default function RoomDetailsAllocationPage() {
@@ -302,31 +302,7 @@ export default function RoomDetailsAllocationPage() {
 
           {/* Dynamic Clear Filters Button */}
           {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={resetFilters}
-              title="Clear all filters"
-              aria-label="Clear all filters"
-              className="h-11 w-11 shrink-0 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/90 flex items-center justify-center transition-all cursor-pointer shadow-2xs group"
-            >
-              <div className="relative flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 stroke-current group-hover:scale-110 transition-transform"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                  />
-                </svg>
-                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold leading-none shadow-xs">
-                  &times;
-                </span>
-              </div>
-            </button>
+            <ClearFilterButton onClick={resetFilters} />
           )}
         </div>
 

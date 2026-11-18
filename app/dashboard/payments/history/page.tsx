@@ -25,6 +25,7 @@ import {
   DateRangeFilter,
   ExportDropdown,
   ExportFormat,
+  ClearFilterButton,
 } from '@/components/ui';
 
 function getDefaultMonthRange() {
@@ -78,6 +79,28 @@ export default function PaymentHistoryPage() {
   // Modal State
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedType !== 'all' ||
+      selectedStatus !== 'all' ||
+      Boolean(searchTerm.trim()) ||
+      startDate !== defaultDates.start ||
+      endDate !== defaultDates.end
+    );
+  }, [selectedType, selectedStatus, searchTerm, startDate, endDate, defaultDates]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    setSelectedType('all');
+    setSelectedStatus('all');
+    setSearchTerm('');
+    setDebouncedSearch('');
+    setStartDate(defaultDates.start);
+    setEndDate(defaultDates.end);
+    setCurrentPage(1);
+  };
 
   // Reset Table on Navigation
   const resetTableState = useCallback(() => {
@@ -470,13 +493,23 @@ export default function PaymentHistoryPage() {
           />
         </div>
 
-        {/* Search Input */}
-        <div>
-          <SearchInput
-            value={searchTerm}
-            onChange={(val) => setSearchTerm(val)}
-            placeholder="Search resident or transaction ID"
-          />
+        {/* Search Input & Clear Filter Button */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 min-w-0">
+            <SearchInput
+              value={searchTerm}
+              onChange={(val) => setSearchTerm(val)}
+              onClear={() => {
+                setSearchTerm('');
+                setDebouncedSearch('');
+                setCurrentPage(1);
+              }}
+              placeholder="Search resident or transaction ID"
+            />
+          </div>
+          {hasActiveFilters && (
+            <ClearFilterButton onClick={handleClearAllFilters} />
+          )}
         </div>
       </div>
 

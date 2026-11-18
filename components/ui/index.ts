@@ -84,5 +84,8 @@ export type {
 export { DateRangeFilter } from './date-range-filter';
 export type { DateRangeFilterProps } from './date-range-filter';
 
+export { ClearFilterButton } from './clear-filter-button';
+export type { ClearFilterButtonProps } from './clear-filter-button';
+
 export { ExportDropdown } from './export-dropdown';
 export type { ExportDropdownProps, ExportFormat } from './export-dropdown';

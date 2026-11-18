@@ -18,6 +18,7 @@ import {
   DataTable,
   ColumnDef,
   IconButton,
+  ClearFilterButton,
 } from '@/components/ui';
 
 function formatComplaintDate(dateStr?: string | null): string {
@@ -69,6 +70,25 @@ export default function ComplaintsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedCategory !== 'all' ||
+      selectedPriority !== 'all' ||
+      selectedStatus !== 'all' ||
+      Boolean(searchTerm.trim())
+    );
+  }, [selectedCategory, selectedPriority, selectedStatus, searchTerm]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    setSelectedCategory('all');
+    setSelectedPriority('all');
+    setSelectedStatus('all');
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
 
   // Load Categories & Initial Stats on mount
   useEffect(() => {
@@ -319,23 +339,30 @@ export default function ComplaintsPage() {
           />
         </div>
 
-        {/* Search Input */}
+        {/* Search Input & Clear Filter Button */}
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight opacity-0 select-none">
             Search
           </label>
-          <SearchInput
-            placeholder="Search complaint ID, title..."
-            value={searchTerm}
-            onChange={(val) => {
-              setSearchTerm(val);
-              setCurrentPage(1);
-            }}
-            onClear={() => {
-              setSearchTerm('');
-              setCurrentPage(1);
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <SearchInput
+                placeholder="Search complaint ID, title..."
+                value={searchTerm}
+                onChange={(val) => {
+                  setSearchTerm(val);
+                  setCurrentPage(1);
+                }}
+                onClear={() => {
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            {hasActiveFilters && (
+              <ClearFilterButton onClick={handleClearAllFilters} />
+            )}
+          </div>
         </div>
       </div>
 

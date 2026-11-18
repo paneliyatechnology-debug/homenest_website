@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useTransition, useCallback } from 'react';
+import React, { useEffect, useState, useTransition, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { StaffMember, StaffStats, StaffMeta } from '@/types/staff';
 import { Branch } from '@/types/branch';
@@ -18,6 +18,7 @@ import {
   Dropdown,
   SearchInput,
   DeleteConfirmationModal,
+  ClearFilterButton,
 } from '@/components/ui';
 
 const ROLE_FILTER_OPTIONS = [
@@ -98,6 +99,28 @@ export default function StaffManagementPage() {
   const [statusStaff, setStatusStaff] = useState<StaffMember | null>(null);
   const [deletingStaff, setDeletingStaff] = useState<StaffMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if any filter is active
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedBranchId !== 'all' ||
+      selectedRole !== 'all' ||
+      selectedStatus !== 'all' ||
+      Boolean(searchTerm.trim())
+    );
+  }, [selectedBranchId, selectedRole, selectedStatus, searchTerm]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    startTransition(() => {
+      setSelectedBranchId('all');
+      setSelectedRole('all');
+      setSelectedStatus('all');
+      setSearchTerm('');
+      setDebouncedSearch('');
+      setCurrentPage(1);
+    });
+  };
 
   // Table & Modal Reset callback for page transitions / bfcache
   const resetTableState = useCallback(() => {
@@ -274,16 +297,28 @@ export default function StaffManagementPage() {
           options={STATUS_FILTER_OPTIONS}
         />
 
-        {/* Search Input matching Figma */}
+        {/* Search Input & Clear Filter Button matching Figma */}
         <div className="space-y-1">
           <label className="text-xs font-normal text-gray-500 block opacity-0 pointer-events-none select-none">
             Search
           </label>
-          <SearchInput
-            value={searchTerm}
-            onChange={(val) => setSearchTerm(val)}
-            placeholder="Search staff..."
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <SearchInput
+                value={searchTerm}
+                onChange={(val) => setSearchTerm(val)}
+                onClear={() => {
+                  setSearchTerm('');
+                  setDebouncedSearch('');
+                  setCurrentPage(1);
+                }}
+                placeholder="Search staff..."
+              />
+            </div>
+            {hasActiveFilters && (
+              <ClearFilterButton onClick={handleClearAllFilters} />
+            )}
+          </div>
         </div>
       </div>
 
