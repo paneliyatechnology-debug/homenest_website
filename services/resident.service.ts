@@ -86,6 +86,8 @@ export const DEFAULT_RESIDENT_DETAIL: ResidentDetail = {
     address_proof_url: null,
     education_certificate: null,
     education_certificate_url: null,
+    agreement_file: null,
+    agreement_file_url: null,
     signature: null,
     signature_url: null,
     terms_accepted: false,

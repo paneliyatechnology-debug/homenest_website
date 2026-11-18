@@ -161,6 +161,8 @@ export interface ResidentDocuments {
   address_proof_url?: string | null;
   education_certificate?: string | null;
   education_certificate_url?: string | null;
+  agreement_file?: string | null;
+  agreement_file_url?: string | null;
   signature?: string | null;
   signature_url?: string | null;
   terms_accepted?: boolean;

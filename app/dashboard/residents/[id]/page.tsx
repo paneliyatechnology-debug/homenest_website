@@ -172,7 +172,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
 
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5]">
-      {/* Top Header Row: Breadcrumb Back Link & Edit Profile Action Button */}
+      {/* Top Header Row: Breadcrumb Back Link */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
           <Link
@@ -187,16 +187,6 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
           <span className="text-gray-300">/</span>
           <span className="text-gray-800 font-semibold">{resident.name}</span>
         </div>
-
-        <Link
-          href={`/dashboard/residents/${resident.id}/edit`}
-          className="px-5 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold rounded-lg shadow-xs transition-colors flex items-center gap-2 cursor-pointer shrink-0"
-        >
-          <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-          <span>Edit Profile</span>
-        </Link>
       </div>
 
       {loading ? (
@@ -586,7 +576,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
           {/* Tab 2: Documents Tab */}
           {activeTab === 'Documents' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 {[
                   {
                     key: 'aadhar_card',
@@ -611,6 +601,14 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     url: resident.documents?.education_certificate_url,
                     status: 'Verified',
                     defaultExt: 'JPG',
+                  },
+                  {
+                    key: 'agreement_file',
+                    title: 'Agreement File',
+                    fileName: resident.documents?.agreement_file,
+                    url: resident.documents?.agreement_file_url,
+                    status: 'Uploaded',
+                    defaultExt: 'PDF',
                   },
                   {
                     key: 'signature',

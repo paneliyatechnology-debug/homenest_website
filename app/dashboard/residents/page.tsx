@@ -398,9 +398,6 @@ export default function ResidentsListPage() {
                 <Link href={`/dashboard/residents/${resident.id}`}>
                   <IconButton variant="view" title="View Details" />
                 </Link>
-                <Link href={`/dashboard/residents/${resident.id}/edit`}>
-                  <IconButton variant="edit" title="Edit Profile" />
-                </Link>
                 <IconButton
                   variant="delete"
                   onClick={() => setDeletingResident(resident)}

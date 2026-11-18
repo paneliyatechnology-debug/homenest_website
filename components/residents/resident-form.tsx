@@ -116,7 +116,7 @@ function buildInitialFormData(initialData?: ResidentDetail | null): FormState {
       emergency_contact_relationship: '',
       emergency_contact_phone: '',
       password: '',
-      pg_id: '1',
+      pg_id: '',
       subscription_plan_id: '1',
     };
   }
@@ -154,7 +154,7 @@ function buildInitialFormData(initialData?: ResidentDetail | null): FormState {
     emergency_contact_relationship: initialData.contact_info?.emergency_contact_relationship || '',
     emergency_contact_phone: initialData.contact_info?.emergency_contact_phone || '',
     password: '',
-    pg_id: initialData.room_info?.pg_id || '1',
+    pg_id: initialData.room_info?.pg_id ? String(initialData.room_info.pg_id) : '',
     subscription_plan_id: '1',
   };
 }
@@ -179,6 +179,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const aadharInputRef = useRef<HTMLInputElement>(null);
   const addressProofInputRef = useRef<HTMLInputElement>(null);
   const educationCertInputRef = useRef<HTMLInputElement>(null);
+  const agreementFileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState<FormState>(() => buildInitialFormData(initialData));
@@ -202,10 +203,14 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [addressProofFile, setAddressProofFile] = useState<File | null>(null);
   const [educationCertFile, setEducationCertFile] = useState<File | null>(null);
+  const [agreementFile, setAgreementFile] = useState<File | null>(null);
   const [signatureFile, setSignatureFile] = useState<File | null>(null);
   const [existingAadhar, setExistingAadhar] = useState<string | null>(initialData?.documents?.aadhar_card || null);
   const [existingAddressProof, setExistingAddressProof] = useState<string | null>(initialData?.documents?.address_proof || null);
   const [existingEducationCert, setExistingEducationCert] = useState<string | null>(initialData?.documents?.education_certificate || null);
+  const [existingAgreementFile, setExistingAgreementFile] = useState<string | null>(
+    initialData?.documents?.agreement_file || null
+  );
   const [existingSignature, setExistingSignature] = useState<string | null>(initialData?.documents?.signature || null);
 
   const [submitting, setSubmitting] = useState(false);
@@ -222,10 +227,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   };
 
   const getInputClass = (fieldName: string, extraClasses = '') =>
-    `w-full h-11 px-4 py-2.5 bg-white border ${
-      errors[fieldName]
-        ? 'border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500 text-red-900 placeholder-red-300'
-        : 'border-gray-200 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-900 placeholder-gray-400'
+    `w-full h-11 px-4 py-2.5 bg-white border ${errors[fieldName]
+      ? 'border-red-500 focus:ring-1 focus:ring-red-500 focus:border-red-500 text-red-900 placeholder-red-300'
+      : 'border-gray-200 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-900 placeholder-gray-400'
     } rounded-xl text-sm focus:outline-none transition-all ${extraClasses}`;
 
 
@@ -250,6 +254,12 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         if (isMounted) {
           setBranches(res.data);
           setLoadingBranches(false);
+          if (res.data?.length > 0 && res.data[0].pg_id) {
+            setFormData((prev) => ({
+              ...prev,
+              pg_id: prev.pg_id || String(res.data[0].pg_id),
+            }));
+          }
         }
       })
       .catch(() => {
@@ -500,7 +510,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       emergency_contact_relationship: '',
       emergency_contact_phone: '',
       password: '',
-      pg_id: '1',
+      pg_id: '',
       subscription_plan_id: '1',
     });
     setBuildings([]);
@@ -511,12 +521,14 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     setAadharFile(null);
     setAddressProofFile(null);
     setEducationCertFile(null);
+    setAgreementFile(null);
     setSignatureFile(null);
 
     // Reset file input DOM values
     if (aadharInputRef.current) aadharInputRef.current.value = '';
     if (addressProofInputRef.current) addressProofInputRef.current.value = '';
     if (educationCertInputRef.current) educationCertInputRef.current.value = '';
+    if (agreementFileInputRef.current) agreementFileInputRef.current.value = '';
     if (signatureInputRef.current) signatureInputRef.current.value = '';
   };
 
@@ -741,7 +753,11 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         if (formData.check_in_date) {
           fd.append('check_in_date', formData.check_in_date);
         }
-        fd.append('pg_id', String(formData.pg_id || 1));
+        const selectedBranch = branches.find((b) => String(b.id) === String(formData.branch_id));
+        const effectivePgId = selectedBranch?.pg_id || formData.pg_id;
+        if (effectivePgId) {
+          fd.append('pg_id', String(effectivePgId));
+        }
         fd.append('maintenance_amount', String(formData.maintenance_amount || 1000));
         fd.append('address', formData.address_line_1 || '');
         fd.append('check_out_date', formData.check_out_date || '');
@@ -776,6 +792,12 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         fd.append('education_certificate', educationCertFile);
       } else if (mode === 'edit' && !existingEducationCert) {
         fd.append('education_certificate', 'null');
+      }
+
+      if (agreementFile) {
+        fd.append('agreement_file', agreementFile);
+      } else if (mode === 'edit' && !existingAgreementFile) {
+        fd.append('agreement_file', 'null');
       }
 
       if (signatureFile) {
@@ -900,8 +922,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     loadingBuildings
                       ? 'Loading buildings...'
                       : !formData.branch_id
-                      ? 'Select branch first'
-                      : 'Select building'
+                        ? 'Select branch first'
+                        : 'Select building'
                   }
                   rightBadge={
                     loadingBuildings ? (
@@ -930,8 +952,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     loadingFloors
                       ? 'Loading floors...'
                       : !formData.building_id
-                      ? 'Select building first'
-                      : 'Select floor'
+                        ? 'Select building first'
+                        : 'Select floor'
                   }
                   rightBadge={
                     loadingFloors ? (
@@ -957,8 +979,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                     loadingRooms
                       ? 'Loading rooms...'
                       : !formData.floor_id
-                      ? 'Select floor first'
-                      : 'Select room no.'
+                        ? 'Select floor first'
+                        : 'Select room no.'
                   }
                   rightBadge={
                     loadingRooms ? (
@@ -1415,7 +1437,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             <span className="text-xs text-gray-400">PDF, JPG, PNG &bull; Max 5MB</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* 1. Aadhaar Card */}
             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 hover:bg-white hover:border-[#175C46] transition-all space-y-3">
               <input
@@ -1584,7 +1606,66 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               </button>
             </div>
 
-            {/* 4. Resident Signature */}
+            {/* 4. Agreement File (Optional) */}
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 hover:bg-white hover:border-[#175C46] transition-all space-y-3">
+              <input
+                ref={agreementFileInputRef}
+                type="file"
+                accept=".pdf,image/png,image/jpeg,image/jpg"
+                onChange={(e) => e.target.files && setAgreementFile(e.target.files[0])}
+                className="hidden"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-900">Agreement File</span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-gray-100 text-gray-600">PDF / IMG</span>
+              </div>
+
+              {agreementFile ? (
+                <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-2">
+                  <span className="text-xs text-emerald-800 font-medium truncate">{agreementFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAgreementFile(null);
+                      if (agreementFileInputRef.current) agreementFileInputRef.current.value = '';
+                    }}
+                    className="text-emerald-700 hover:text-emerald-900 text-sm font-bold"
+                  >
+                    &times;
+                  </button>
+                </div>
+              ) : existingAgreementFile ? (
+                <div className="p-2.5 rounded-lg bg-white border border-gray-200 flex items-center justify-between gap-2">
+                  <span className="text-xs text-gray-600 truncate">{existingAgreementFile}</span>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-[10px] text-emerald-600 font-semibold">Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={() => setExistingAgreementFile(null)}
+                      title="Remove document"
+                      className="text-gray-400 hover:text-rose-600 text-sm font-bold ml-1 cursor-pointer"
+                    >
+                      &times;
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400">No file uploaded</p>
+              )}
+
+              <button
+                type="button"
+                onClick={() => agreementFileInputRef.current?.click()}
+                className="w-full py-2 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              >
+                <svg className="w-3.5 h-3.5 text-gray-500 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                <span>{agreementFile || existingAgreementFile ? 'Replace File' : 'Upload File'}</span>
+              </button>
+            </div>
+
+            {/* 5. Resident Signature */}
             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 hover:bg-white hover:border-[#175C46] transition-all space-y-3">
               <input
                 ref={signatureInputRef}
