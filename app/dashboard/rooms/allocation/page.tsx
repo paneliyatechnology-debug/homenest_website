@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { Room, RoomStats, RoomBuilding } from '@/types/room';
 import { Branch } from '@/types/branch';
@@ -39,6 +38,15 @@ export default function RoomDetailsAllocationPage() {
     setSelectedFloorId('all');
     setSidebarSearch('');
   }, []);
+
+  const hasActiveFilters = useMemo(() => {
+    return (
+      selectedBranchId !== 'all' ||
+      selectedBuildingId !== 'all' ||
+      selectedFloorId !== 'all' ||
+      Boolean(sidebarSearch.trim())
+    );
+  }, [selectedBranchId, selectedBuildingId, selectedFloorId, sidebarSearch]);
 
   useResetOnNavigation(resetFilters, { cleanQueryToast: true });
 
@@ -214,31 +222,9 @@ export default function RoomDetailsAllocationPage() {
       {/* 5 Summary Stat Cards matching Figma pixel-for-pixel */}
       <RoomStatsCards stats={stats} />
 
-      {/* Tab Bar & Filters Row matching Figma */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-200/80 pb-3">
-        {/* Left Tabs: Buildings & Floors, Room Inventory, Room Details & Allocation (active) */}
-        <div className="flex items-center gap-6">
-          <Link
-            href="/dashboard/rooms/buildings"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-          >
-            Buildings & Floors
-          </Link>
-          <Link
-            href="/dashboard/rooms"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-          >
-            Room Inventory
-          </Link>
-          <button
-            type="button"
-            className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
-          >
-            Room Details & Allocation
-          </button>
-        </div>
-
-        {/* Right Filters & Status Legend matching Figma */}
+      {/* Filters & Status Legend matching Figma */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/80 pb-3">
+        {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           {/* Branch Dropdown */}
           <div className="w-36 sm:w-44">
@@ -314,24 +300,53 @@ export default function RoomDetailsAllocationPage() {
             />
           </div>
 
-          {/* Status Legend matching Figma: Occupied, Vacant, Maintenance, Out of service */}
-          <div className="flex items-center gap-4 text-xs font-medium text-gray-600 pl-1">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
-              <span>Occupied</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
-              <span>Vacant</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
-              <span>Maintenance</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
-              <span>Out of service</span>
-            </div>
+          {/* Dynamic Clear Filters Button */}
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              title="Clear all filters"
+              aria-label="Clear all filters"
+              className="h-11 w-11 shrink-0 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/90 flex items-center justify-center transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="relative flex items-center justify-center">
+                <svg
+                  className="w-4 h-4 stroke-current group-hover:scale-110 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                  />
+                </svg>
+                <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold leading-none shadow-xs">
+                  &times;
+                </span>
+              </div>
+            </button>
+          )}
+        </div>
+
+        {/* Status Legend matching Figma: Occupied, Vacant, Maintenance, Out of service */}
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs font-medium text-gray-600 sm:ml-auto shrink-0">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+            <span>Occupied</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#3B82F6]" />
+            <span>Vacant</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
+            <span>Maintenance</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+            <span>Out of service</span>
           </div>
         </div>
       </div>

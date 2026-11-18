@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useTransition, useCallback } from 'react';
+import React, { useEffect, useState, useTransition, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Building, BuildingMeta, BuildingStats } from '@/types/building';
@@ -46,6 +46,21 @@ export default function BuildingsPage() {
   const [viewingBuildingId, setViewingBuildingId] = useState<number | null>(null);
   const [deletingBuilding, setDeletingBuilding] = useState<Building | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Check if any filter is currently applied
+  const hasActiveFilters = useMemo(() => {
+    return selectedBranchId !== 'all' || Boolean(searchTerm.trim());
+  }, [selectedBranchId, searchTerm]);
+
+  // Clear all filters handler
+  const handleClearAllFilters = () => {
+    startTransition(() => {
+      setSelectedBranchId('all');
+      setSearchTerm('');
+      setDebouncedSearch('');
+      setCurrentPage(1);
+    });
+  };
 
   // Reset Table on Navigation
   const resetTableState = useCallback(() => {
@@ -174,28 +189,6 @@ export default function BuildingsPage() {
       {/* Building Statistics Cards matching Room Module UI */}
       <BuildingStatsCards stats={stats} />
 
-      {/* Navigation Tabs Bar */}
-      <div className="flex items-center gap-6 border-b border-gray-200/80 pb-3">
-        <button
-          type="button"
-          className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
-        >
-          Buildings & Floors
-        </button>
-        <Link
-          href="/dashboard/rooms"
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-        >
-          Room Inventory
-        </Link>
-        <Link
-          href="/dashboard/rooms/allocation"
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-        >
-          Room Details & Allocation
-        </Link>
-      </div>
-
       {/* Filter Row: Branch & Search */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end">
         <Dropdown
@@ -218,11 +211,47 @@ export default function BuildingsPage() {
           <label className="text-xs font-semibold text-gray-800 block">
             Search
           </label>
-          <SearchInput
-            value={searchTerm}
-            onChange={(val) => setSearchTerm(val)}
-            placeholder="Search building name"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <SearchInput
+                value={searchTerm}
+                onChange={(val) => setSearchTerm(val)}
+                onClear={() => {
+                  setSearchTerm('');
+                  setDebouncedSearch('');
+                  setCurrentPage(1);
+                }}
+                placeholder="Search building name"
+              />
+            </div>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={handleClearAllFilters}
+                title="Clear all filters"
+                aria-label="Clear all filters"
+                className="h-11 w-11 shrink-0 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/90 flex items-center justify-center transition-all cursor-pointer shadow-2xs group"
+              >
+                <div className="relative flex items-center justify-center">
+                  <svg
+                    className="w-4 h-4 stroke-current group-hover:scale-110 transition-transform"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                  <span className="absolute -top-1.5 -right-1.5 w-3.5 h-3.5 bg-red-600 text-white rounded-full flex items-center justify-center text-[9px] font-bold leading-none shadow-xs">
+                    &times;
+                  </span>
+                </div>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
