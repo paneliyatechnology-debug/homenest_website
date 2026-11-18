@@ -91,7 +91,6 @@ export const DEFAULT_RESIDENT_DETAIL: ResidentDetail = {
     terms_accepted: false,
     terms_accepted_at: null,
   },
-  agreements: [],
   due_amount: 150,
   payment_info: {
     payment_id: 26,

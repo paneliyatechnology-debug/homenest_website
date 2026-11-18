@@ -210,9 +210,6 @@ export default function AdministrativeActivityLogPage() {
       'User login',
       'Create resident',
       'Delete resident',
-      'Create agreement',
-      'Update agreement',
-      'Delete agreement',
     ]);
     if (stats.actions) {
       Object.keys(stats.actions).forEach((k) => list.add(k));

@@ -66,7 +66,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       displayLabel = label || 'Upcoming';
     }
   } else {
-    // Resident / Agreement / Payment / Room / General palette matching Figma
+    // Resident / Payment / Room / General palette matching Figma
     if (
       normalized === 'active' ||
       normalized === 'occupied' ||

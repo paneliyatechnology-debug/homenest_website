@@ -206,7 +206,6 @@ export interface ResidentDetail {
   contact_info?: ResidentContactInfo;
   room_info?: ResidentRoomInfo;
   documents?: ResidentDocuments;
-  agreements?: unknown[];
   due_amount?: number;
   payment_info?: ResidentPaymentInfo;
   subscription_plan?: unknown | null;

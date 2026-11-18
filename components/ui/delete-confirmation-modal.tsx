@@ -14,7 +14,7 @@ export interface DeleteConfirmationModalProps {
   title?: string;
   subtitle?: string;
   itemName?: string;
-  itemType?: string; // e.g. "branch", "resident", "agreement"
+  itemType?: string; // e.g. "branch", "resident", "room"
   message?: React.ReactNode;
   details?: DeleteDetailItem[];
   confirmLabel?: string;

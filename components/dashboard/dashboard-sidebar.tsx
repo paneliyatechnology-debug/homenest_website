@@ -116,10 +116,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      children: [
-        { label: 'Residents List', href: '/dashboard/residents' },
-        { label: 'Agreement Records', href: '/dashboard/residents/agreements' },
-      ],
     },
     {
       label: 'Rooms',
@@ -199,7 +195,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
 
   // Determine which menu is automatically open based on the current pathname
   const getActiveParentMenu = (path: string): string | null => {
-    if (path.startsWith('/dashboard/residents')) return 'Residents';
     if (path.startsWith('/dashboard/rooms')) return 'Rooms';
     if (path.startsWith('/dashboard/payments')) return 'Payments';
     if (path.startsWith('/dashboard/settings')) return 'Settings';
@@ -301,8 +296,10 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
             const hasChildren = !!item.children && item.children.length > 0;
             const isMenuOpen = activeExpandedMenu === item.label;
 
-            // Direct parent route match
-            const isDirectActive = !hasChildren && pathname === item.href;
+            // Direct parent route match (exact match or direct sub-path for direct links)
+            const isDirectActive =
+              !hasChildren &&
+              (pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`)));
 
             // Check if any child of this parent is currently the active route
             const hasActiveChild =
