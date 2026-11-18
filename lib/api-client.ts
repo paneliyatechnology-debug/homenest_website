@@ -53,18 +53,70 @@ export interface RequestOptions extends RequestInit {
 }
 
 /**
- * Standardized backend error message extractor across all HTTP status codes
+ * Standardized backend error message extractor across all HTTP status codes.
+ * Prioritizes the first specific validation/field error from an `errors` or `error` array/object,
+ * before falling back to the generic top-level message (e.g. "Validation failed"),
+ * and finally to HTTP status code descriptions.
  */
 export function extractErrorMessage(data: unknown, status: number): string {
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>;
 
-    // 1. Direct message field from API
+    // 1. Validation errors array or object: [{ field, message }] or ['error message'] or { field: '...' }
+    // Prioritize specific validation errors over top-level generic messages (e.g., "Validation failed")
+    const rawErrors = obj.errors ?? (Array.isArray(obj.error) ? obj.error : undefined);
+
+    if (Array.isArray(rawErrors) && rawErrors.length > 0) {
+      const msgs = rawErrors
+        .map((e) => {
+          if (typeof e === 'string' && e.trim()) return e.trim();
+          if (e && typeof e === 'object') {
+            const eo = e as Record<string, unknown>;
+            if (typeof eo.message === 'string' && eo.message.trim()) return eo.message.trim();
+            if (typeof eo.msg === 'string' && eo.msg.trim()) return eo.msg.trim();
+            if (typeof eo.error === 'string' && eo.error.trim()) return eo.error.trim();
+            if (typeof eo.detail === 'string' && eo.detail.trim()) return eo.detail.trim();
+          }
+          return null;
+        })
+        .filter((v): v is string => Boolean(v));
+
+      if (msgs.length > 0) {
+        // Display the first specific error
+        return msgs[0];
+      }
+    } else if (rawErrors && typeof rawErrors === 'object') {
+      const msgs = Object.values(rawErrors)
+        .flatMap((v) => {
+          if (typeof v === 'string' && v.trim()) return [v.trim()];
+          if (Array.isArray(v)) {
+            return v
+              .map((item) => {
+                if (typeof item === 'string' && item.trim()) return item.trim();
+                if (item && typeof item === 'object') {
+                  const itemObj = item as Record<string, unknown>;
+                  if (typeof itemObj.message === 'string' && itemObj.message.trim()) return itemObj.message.trim();
+                  if (typeof itemObj.msg === 'string' && itemObj.msg.trim()) return itemObj.msg.trim();
+                }
+                return null;
+              })
+              .filter((item): item is string => Boolean(item));
+          }
+          return [];
+        });
+
+      if (msgs.length > 0) {
+        // Display the first specific error
+        return msgs[0];
+      }
+    }
+
+    // 2. Direct message field from API
     if (typeof obj.message === 'string' && obj.message.trim()) {
       return obj.message.trim();
     }
 
-    // 2. Direct error field (string or object with message)
+    // 3. Direct error field (string or object with message)
     if (typeof obj.error === 'string' && obj.error.trim()) {
       return obj.error.trim();
     }
@@ -73,33 +125,8 @@ export function extractErrorMessage(data: unknown, status: number): string {
       if (typeof errObj.message === 'string' && errObj.message.trim()) {
         return errObj.message.trim();
       }
-    }
-
-    // 3. Validation errors array: [{ field, message }] or ['error message']
-    if (Array.isArray(obj.errors) && obj.errors.length > 0) {
-      const msgs = obj.errors
-        .map((e) => {
-          if (typeof e === 'string') return e;
-          if (e && typeof e === 'object') {
-            const eo = e as Record<string, unknown>;
-            return typeof eo.message === 'string'
-              ? eo.message
-              : typeof eo.msg === 'string'
-                ? eo.msg
-                : null;
-          }
-          return null;
-        })
-        .filter((v): v is string => Boolean(v));
-      if (msgs.length > 0) {
-        return msgs.join(', ');
-      }
-    } else if (obj.errors && typeof obj.errors === 'object') {
-      const msgs = Object.values(obj.errors)
-        .flat()
-        .filter((v): v is string => typeof v === 'string');
-      if (msgs.length > 0) {
-        return msgs.join(', ');
+      if (typeof errObj.msg === 'string' && errObj.msg.trim()) {
+        return errObj.msg.trim();
       }
     }
 

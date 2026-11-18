@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState, useTransition, useCallback } from 'react';
+import React, { useEffect, useState, useTransition, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Room, RoomStats, RoomMeta } from '@/types/room';
+import { Room, RoomStats, RoomMeta, RoomBuilding } from '@/types/room';
 import { Branch } from '@/types/branch';
 import { roomService, INITIAL_ROOM_STATS } from '@/services/room.service';
 import { branchService } from '@/services/branch.service';
@@ -43,6 +43,9 @@ export default function RoomInventoryPage() {
   // Filter States
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
+  const [buildings, setBuildings] = useState<RoomBuilding[]>([]);
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string>('all');
+  const [selectedFloorId, setSelectedFloorId] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedRoomType, setSelectedRoomType] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -69,6 +72,8 @@ export default function RoomInventoryPage() {
   // Table & Modal Reset callback for page transitions / navigation
   const resetTableState = useCallback(() => {
     setSelectedBranchId('all');
+    setSelectedBuildingId('all');
+    setSelectedFloorId('all');
     setSelectedStatus('all');
     setSelectedRoomType('all');
     setSearchTerm('');
@@ -105,6 +110,61 @@ export default function RoomInventoryPage() {
     };
   }, []);
 
+  // Fetch Buildings when branch changes
+  useEffect(() => {
+    let isMounted = true;
+    const branchParam = selectedBranchId !== 'all' ? selectedBranchId : undefined;
+
+    roomService
+      .getRoomBuildings(branchParam)
+      .then((bData) => {
+        if (!isMounted) return;
+        setBuildings(bData);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setBuildings([]);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedBranchId]);
+
+  // Dynamic Building Options
+  const buildingOptions = useMemo(() => {
+    return [
+      { label: 'All Buildings', value: 'all' },
+      ...buildings.map((b) => {
+        const showBranch = selectedBranchId === 'all' && b.branch_name;
+        const label = showBranch ? `${b.building_name} (${b.branch_name})` : b.building_name;
+        return {
+          label,
+          value: String(b.building_id),
+        };
+      }),
+    ];
+  }, [buildings, selectedBranchId]);
+
+  // Dynamic Floor Options (dependent on selected building)
+  const floorOptions = useMemo(() => {
+    if (selectedBuildingId === 'all') {
+      return [{ label: 'Select building first', value: 'all' }];
+    }
+    const building = buildings.find((b) => String(b.building_id) === String(selectedBuildingId));
+    const floors = building?.floor_details || [];
+    if (floors.length === 0) {
+      return [{ label: 'No floors available', value: 'all' }];
+    }
+    return [
+      { label: 'All Floors', value: 'all' },
+      ...floors.map((f) => ({
+        label: f.name || `Floor ${f.floor_number}`,
+        value: String(f.floor_id || f.id),
+      })),
+    ];
+  }, [buildings, selectedBuildingId]);
+
   // Fetch Room Stats
   useEffect(() => {
     let isMounted = true;
@@ -130,6 +190,8 @@ export default function RoomInventoryPage() {
         page: currentPage,
         limit: 10,
         branch_id: selectedBranchId !== 'all' ? selectedBranchId : undefined,
+        building_id: selectedBuildingId !== 'all' ? selectedBuildingId : undefined,
+        floor_id: selectedFloorId !== 'all' ? selectedFloorId : undefined,
         status: selectedStatus !== 'all' ? selectedStatus : undefined,
         room_type: selectedRoomType !== 'all' ? selectedRoomType : undefined,
         search: debouncedSearch.trim() || undefined,
@@ -152,6 +214,8 @@ export default function RoomInventoryPage() {
   }, [
     currentPage,
     selectedBranchId,
+    selectedBuildingId,
+    selectedFloorId,
     selectedStatus,
     selectedRoomType,
     debouncedSearch,
@@ -199,6 +263,12 @@ export default function RoomInventoryPage() {
 
       {/* Navigation Tabs Bar */}
       <div className="flex items-center gap-6 border-b border-gray-200/80 pb-3">
+        <Link
+          href="/dashboard/rooms/buildings"
+          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
+        >
+          Buildings & Floors
+        </Link>
         <button
           type="button"
           className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
@@ -211,16 +281,10 @@ export default function RoomInventoryPage() {
         >
           Room Details & Allocation
         </Link>
-        <Link
-          href="/dashboard/rooms/buildings"
-          className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-        >
-          Buildings & Floors
-        </Link>
       </div>
 
-      {/* Filter Controls Row matching Figma: Branch, Status, Room Type, Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+      {/* Filter Controls Row: Branch, Building, Floor, Status, Room Type, Search */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 items-end">
         {/* Branch Filter */}
         <Dropdown
           label="Branch"
@@ -229,6 +293,8 @@ export default function RoomInventoryPage() {
             const val = e.target.value;
             startTransition(() => {
               setSelectedBranchId(val);
+              setSelectedBuildingId('all');
+              setSelectedFloorId('all');
               setCurrentPage(1);
             });
           }}
@@ -236,6 +302,36 @@ export default function RoomInventoryPage() {
             { label: 'All Branches', value: 'all' },
             ...branches.map((b) => ({ label: b.name, value: String(b.id) })),
           ]}
+        />
+
+        {/* Building Filter */}
+        <Dropdown
+          label="Building"
+          value={selectedBuildingId}
+          onChange={(e) => {
+            const val = e.target.value;
+            startTransition(() => {
+              setSelectedBuildingId(val);
+              setSelectedFloorId('all');
+              setCurrentPage(1);
+            });
+          }}
+          options={buildingOptions}
+        />
+
+        {/* Floor Filter */}
+        <Dropdown
+          label="Floor"
+          value={selectedFloorId}
+          disabled={selectedBuildingId === 'all'}
+          onChange={(e) => {
+            const val = e.target.value;
+            startTransition(() => {
+              setSelectedFloorId(val);
+              setCurrentPage(1);
+            });
+          }}
+          options={floorOptions}
         />
 
         {/* Status Filter */}
@@ -267,8 +363,8 @@ export default function RoomInventoryPage() {
         />
 
         {/* Search Room Number */}
-        <div className="space-y-1">
-          <label className="text-xs font-normal text-gray-500 block opacity-0 pointer-events-none select-none">
+        <div className="space-y-1.5">
+          <label className="text-xs sm:text-sm font-semibold text-gray-800 block opacity-0 pointer-events-none select-none">
             Search
           </label>
           <SearchInput
@@ -315,7 +411,23 @@ export default function RoomInventoryPage() {
             header: 'Branch',
             cell: (room) => (
               <span className="text-gray-700 font-medium whitespace-nowrap">
-                {room.branch_name || room.building_name || 'Main Building'}
+                {room.branch_name || '-'}
+              </span>
+            ),
+          },
+          {
+            header: 'Building',
+            cell: (room) => (
+              <span className="text-gray-700 font-medium whitespace-nowrap">
+                {room.building_name || '-'}
+              </span>
+            ),
+          },
+          {
+            header: 'Floor',
+            cell: (room) => (
+              <span className="text-gray-700 font-medium whitespace-nowrap">
+                {room.floor_name || (room.floor_number !== undefined && room.floor_number !== null ? `Floor ${room.floor_number}` : '-')}
               </span>
             ),
           },
@@ -328,14 +440,6 @@ export default function RoomInventoryPage() {
             cell: (room) => (
               <span className="text-gray-700 font-medium whitespace-nowrap">
                 {room.current_occupant_name || '-'}
-              </span>
-            ),
-          },
-          {
-            header: 'Maintenance',
-            cell: (room) => (
-              <span className="text-gray-700 font-medium whitespace-nowrap">
-                {room.status === 'maintenance' ? 'Yes' : 'No'}
               </span>
             ),
           },

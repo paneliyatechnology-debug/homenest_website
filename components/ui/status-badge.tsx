@@ -4,8 +4,11 @@ import React from 'react';
 
 export type StatusVariant =
   | 'active'
+  | 'occupied'
+  | 'vacant'
   | 'maintenance'
   | 'under_maintenance'
+  | 'out_of_service'
   | 'upcoming'
   | 'pending'
   | 'pending_sign'
@@ -57,15 +60,16 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       normalized === 'under maintenance'
     ) {
       badgeStyle = 'bg-[#FEF7E0] text-[#D97706]';
-      displayLabel = label || 'Under maintenance';
+      displayLabel = label || (normalized === 'maintenance' ? 'Maintenance' : 'Under maintenance');
     } else if (normalized === 'upcoming') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || 'Upcoming';
     }
   } else {
-    // Resident / Agreement / Payment / General palette matching Figma
+    // Resident / Agreement / Payment / Room / General palette matching Figma
     if (
       normalized === 'active' ||
+      normalized === 'occupied' ||
       normalized === 'signed' ||
       normalized === 'paid' ||
       normalized === 'completed' ||
@@ -79,7 +83,9 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       badgeStyle = 'bg-[#E8F8F0] text-[#175C46]';
       displayLabel =
         label ||
-        (normalized === 'in_office' || normalized === 'in office'
+        (normalized === 'occupied'
+          ? 'Occupied'
+          : normalized === 'in_office' || normalized === 'in office'
           ? 'In Office'
           : normalized === 'approved'
           ? 'Approved'
@@ -95,11 +101,12 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           ? 'Sent'
           : 'Active');
     } else if (
+      normalized === 'vacant' ||
       normalized === 'in_progress' ||
       normalized === 'in progress'
     ) {
       badgeStyle = 'bg-[#E8F1FD] text-[#2563EB]';
-      displayLabel = label || 'In Progress';
+      displayLabel = label || (normalized === 'vacant' ? 'Vacant' : 'In Progress');
     } else if (
       normalized === 'pending' ||
       normalized === 'pending_sign' ||
@@ -118,12 +125,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
           ? 'Pending'
           : 'Pending');
     } else if (
+      normalized === 'out_of_service' ||
+      normalized === 'out of service' ||
       normalized === 'cancelled' ||
       normalized === 'canceled' ||
       normalized === 'rejected'
     ) {
-      badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
-      displayLabel = label || (normalized === 'rejected' ? 'Rejected' : 'Cancelled');
+      badgeStyle = 'bg-[#FFF1F2] text-[#E11D48]';
+      displayLabel =
+        label ||
+        (normalized === 'out_of_service' || normalized === 'out of service'
+          ? 'Out of service'
+          : normalized === 'rejected'
+          ? 'Rejected'
+          : 'Cancelled');
     } else if (normalized === 'left') {
       badgeStyle = 'bg-[#FDF2F2] text-[#DC2626]';
       displayLabel = label || 'Left';

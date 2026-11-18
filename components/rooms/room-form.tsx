@@ -23,10 +23,6 @@ export interface RoomFormData {
   building_id: string;
   floor_id: string;
   status: RoomStatus | '';
-  is_maintenance: 'yes' | 'no' | '';
-  current_occupant_name: string;
-  capacity: string;
-  size: string;
   pg_id: string;
   photoFile: File | null;
   photoPreview: string | null;
@@ -38,12 +34,8 @@ export const initialRoomFormData: RoomFormData = {
   branch_id: '',
   building_id: '',
   floor_id: '',
-  status: '',
-  is_maintenance: '',
-  current_occupant_name: '',
-  capacity: '',
-  size: '',
-  pg_id: '1',
+  status: 'vacant',
+  pg_id: '',
   photoFile: null,
   photoPreview: null,
 };
@@ -54,12 +46,8 @@ export const buildRoomFormData = (data?: Room | null): RoomFormData => ({
   branch_id: data?.branch_id !== undefined && data?.branch_id !== null ? String(data.branch_id) : '',
   building_id: data?.building_id !== undefined && data?.building_id !== null ? String(data.building_id) : '',
   floor_id: data?.floor_id !== undefined && data?.floor_id !== null ? String(data.floor_id) : '',
-  status: (data?.status as RoomStatus) || '',
-  is_maintenance: data?.status === 'maintenance' ? 'yes' : data ? 'no' : '',
-  current_occupant_name: data?.current_occupant_name || '',
-  capacity: data?.capacity !== undefined && data?.capacity !== null ? String(data.capacity) : '',
-  size: data?.size || '',
-  pg_id: data?.pg_id !== undefined && data?.pg_id !== null ? String(data.pg_id) : '1',
+  status: (data?.status as RoomStatus) || 'vacant',
+  pg_id: data?.pg_id !== undefined && data?.pg_id !== null ? String(data.pg_id) : '',
   photoFile: null,
   photoPreview: data?.image_url || data?.image || null,
 });
@@ -74,11 +62,6 @@ const ROOM_TYPE_OPTIONS = [
   { label: 'Double Sharing', value: 'double' },
   { label: 'Triple Sharing', value: 'triple' },
   { label: 'Four Sharing', value: 'four' },
-];
-
-const MAINTENANCE_OPTIONS = [
-  { label: 'Yes', value: 'yes' },
-  { label: 'No', value: 'no' },
 ];
 
 const STATUS_RADIO_OPTIONS = [
@@ -128,10 +111,12 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
   // Cascading Handler: Branch Selection Change
   const handleBranchChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const branchId = e.target.value;
+    const selectedBranch = branches.find((b) => String(b.id) === String(branchId));
 
     setFormData((prev) => ({
       ...prev,
       branch_id: branchId,
+      pg_id: selectedBranch?.pg_id ? String(selectedBranch.pg_id) : prev.pg_id,
       building_id: '',
       floor_id: '',
     }));
@@ -212,24 +197,10 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
     field: K,
     value: RoomFormData[K]
   ) => {
-    setFormData((prev) => {
-      const next = { ...prev, [field]: value };
-      // Sync maintenance radio with status
-      if (field === 'is_maintenance') {
-        if (value === 'yes') {
-          next.status = 'maintenance';
-        } else if (prev.status === 'maintenance') {
-          next.status = '';
-        }
-      } else if (field === 'status') {
-        if (value === 'maintenance') {
-          next.is_maintenance = 'yes';
-        } else if (value) {
-          next.is_maintenance = 'no';
-        }
-      }
-      return next;
-    });
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
     if (errors[field as string]) {
       setErrors((prev) => ({
@@ -271,15 +242,9 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
   useEffect(() => {
     let isMounted = true;
 
-    // 1. Fetch Branches via API: /branches?pg_id=1&status=all&limit=50&sort_by=created_at&order=desc
+    // 1. Fetch Branches via API
     branchService
-      .getBranches({
-        pg_id: 1,
-        status: 'all',
-        limit: 50,
-        sort_by: 'created_at',
-        order: 'desc',
-      })
+      .getBranches({ limit: 100 })
       .then((res) => {
         if (!isMounted) return;
         setBranches(res.data);
@@ -287,6 +252,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
       })
       .catch(() => {
         if (!isMounted) return;
+        setBranches([]);
         setLoadingBranches(false);
       });
 
@@ -335,16 +301,20 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
         if (!value) return 'Please select a branch';
         return '';
       }
+      case 'building_id': {
+        if (!value) return 'Please select a building';
+        return '';
+      }
+      case 'floor_id': {
+        if (!value) return 'Please select a floor';
+        return '';
+      }
       case 'room_type': {
         if (!value) return 'Please select room type';
         return '';
       }
       case 'status': {
         if (!value) return 'Please select a status';
-        return '';
-      }
-      case 'is_maintenance': {
-        if (!value) return 'Please select maintenance option';
         return '';
       }
       default:
@@ -361,14 +331,17 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
     const branchErr = validateField('branch_id', formData.branch_id);
     if (branchErr) errs.branch_id = branchErr;
 
+    const buildingErr = validateField('building_id', formData.building_id);
+    if (buildingErr) errs.building_id = buildingErr;
+
+    const floorErr = validateField('floor_id', formData.floor_id);
+    if (floorErr) errs.floor_id = floorErr;
+
     const typeErr = validateField('room_type', formData.room_type);
     if (typeErr) errs.room_type = typeErr;
 
     const statusErr = validateField('status', formData.status);
     if (statusErr) errs.status = statusErr;
-
-    const maintenanceErr = validateField('is_maintenance', formData.is_maintenance);
-    if (maintenanceErr) errs.is_maintenance = maintenanceErr;
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -390,28 +363,11 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
       payload.append('room_no', formData.room_no.trim());
       payload.append('room_type', formData.room_type);
       payload.append('branch_id', formData.branch_id);
-
-      if (formData.building_id) {
-        payload.append('building_id', formData.building_id);
-      } else {
-        payload.append('building_id', '1');
-      }
-
-      if (formData.floor_id) {
-        payload.append('floor_id', formData.floor_id);
-      } else {
-        payload.append('floor_id', '1');
-      }
-
+      payload.append('building_id', formData.building_id);
+      payload.append('floor_id', formData.floor_id);
       payload.append('status', formData.status || 'vacant');
-      payload.append('capacity', formData.capacity || '1');
-      if (formData.size.trim()) {
-        payload.append('size', formData.size.trim());
-      }
-      payload.append('pg_id', formData.pg_id || '1');
-
-      if (formData.current_occupant_name.trim()) {
-        payload.append('current_occupant_name', formData.current_occupant_name.trim());
+      if (formData.pg_id) {
+        payload.append('pg_id', formData.pg_id);
       }
 
       if (formData.photoFile) {
@@ -478,16 +434,8 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
       {/* Main Form Content Container matching Figma */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-2xl p-5 sm:p-7 border border-gray-100 shadow-2xs space-y-6">
-          {/* Row 1: Current occupant name & Branch * */}
+          {/* Row 1: Branch * & Room no. * */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <TextInput
-              label="Current occupant name"
-              name="current_occupant_name"
-              value={formData.current_occupant_name}
-              onChange={handleChange}
-              placeholder="Enter name"
-            />
-
             <Dropdown
               label="Branch"
               name="branch_id"
@@ -502,10 +450,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
               }))}
               error={errors.branch_id}
             />
-          </div>
 
-          {/* Row 2: Room no. * & Room type * */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <TextInput
               label="Room no."
               name="room_no"
@@ -515,24 +460,14 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
               placeholder="Enter room no."
               error={errors.room_no}
             />
-
-            <Dropdown
-              label="Room type"
-              name="room_type"
-              required
-              value={formData.room_type}
-              onChange={handleChange}
-              placeholder="Select room type"
-              options={ROOM_TYPE_OPTIONS}
-              error={errors.room_type}
-            />
           </div>
 
-          {/* Row 3: Building & Floor Cascading Dependent Select */}
+          {/* Row 2: Building & Floor Cascading Dependent Select */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Dropdown
               label="Building"
               name="building_id"
+              required
               value={formData.building_id}
               onChange={handleBuildingChange}
               disabled={!formData.branch_id || loadingBuildings}
@@ -547,6 +482,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
             <Dropdown
               label="Floor"
               name="floor_id"
+              required
               value={formData.floor_id}
               onChange={handleFloorChange}
               disabled={!formData.building_id || loadingFloors}
@@ -559,51 +495,31 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
             />
           </div>
 
-          {/* Row 4: Maintenance * (Yes / No) & Capacity / Room Size */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-end">
+          {/* Row 3: Room type * & Status * in one row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-start">
+            <Dropdown
+              label="Room type"
+              name="room_type"
+              required
+              value={formData.room_type}
+              onChange={handleChange}
+              placeholder="Select room type"
+              options={ROOM_TYPE_OPTIONS}
+              error={errors.room_type}
+            />
+
             <div>
               <RadioGroup
-                label="Maintenance"
-                name="is_maintenance"
+                label="Status"
+                name="status"
                 required
-                value={formData.is_maintenance}
-                onChange={(val) => handleFieldChange('is_maintenance', val as 'yes' | 'no')}
-                options={MAINTENANCE_OPTIONS}
-                error={errors.is_maintenance}
+                value={formData.status}
+                onChange={(val) => handleFieldChange('status', val as RoomStatus)}
+                options={STATUS_RADIO_OPTIONS}
+                error={errors.status}
+                className="!pt-0"
               />
             </div>
-
-            <TextInput
-              label="Capacity"
-              name="capacity"
-              type="number"
-              min="1"
-              max="10"
-              value={formData.capacity}
-              onChange={handleChange}
-              placeholder="Enter capacity"
-            />
-
-            <TextInput
-              label="Room Size"
-              name="size"
-              value={formData.size}
-              onChange={handleChange}
-              placeholder="Enter room size (e.g. 14 m*2)"
-            />
-          </div>
-
-          {/* Row 5: Status Radios matching Figma (Occupies, Vacant, Maintenance, Out of service) */}
-          <div>
-            <RadioGroup
-              label="Status"
-              name="status"
-              required
-              value={formData.status}
-              onChange={(val) => handleFieldChange('status', val as RoomStatus)}
-              options={STATUS_RADIO_OPTIONS}
-              error={errors.status}
-            />
           </div>
 
           {/* Optional Room Photo Upload */}

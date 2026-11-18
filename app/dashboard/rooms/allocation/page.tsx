@@ -216,8 +216,14 @@ export default function RoomDetailsAllocationPage() {
 
       {/* Tab Bar & Filters Row matching Figma */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-gray-200/80 pb-3">
-        {/* Left Tabs: Room Inventory, Room Details & Allocation (active), Buildings & Floors */}
+        {/* Left Tabs: Buildings & Floors, Room Inventory, Room Details & Allocation (active) */}
         <div className="flex items-center gap-6">
+          <Link
+            href="/dashboard/rooms/buildings"
+            className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
+          >
+            Buildings & Floors
+          </Link>
           <Link
             href="/dashboard/rooms"
             className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
@@ -230,12 +236,6 @@ export default function RoomDetailsAllocationPage() {
           >
             Room Details & Allocation
           </button>
-          <Link
-            href="/dashboard/rooms/buildings"
-            className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
-          >
-            Buildings & Floors
-          </Link>
         </div>
 
         {/* Right Filters & Status Legend matching Figma */}
@@ -314,7 +314,7 @@ export default function RoomDetailsAllocationPage() {
             />
           </div>
 
-          {/* Status Legend matching Figma: Occupied, Vacant, Maintenance */}
+          {/* Status Legend matching Figma: Occupied, Vacant, Maintenance, Out of service */}
           <div className="flex items-center gap-4 text-xs font-medium text-gray-600 pl-1">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
@@ -327,6 +327,10 @@ export default function RoomDetailsAllocationPage() {
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
               <span>Maintenance</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+              <span>Out of service</span>
             </div>
           </div>
         </div>
@@ -395,6 +399,11 @@ export default function RoomDetailsAllocationPage() {
             ) : (
               filteredSidebarBuildings.map((building) => {
                 const isCollapsed = collapsedBuildingIds.has(building.building_id);
+                const branchName =
+                  building.branch_name ||
+                  branches.find((b) => b.id === building.branch_id)?.name ||
+                  (selectedBranchId !== 'all' ? branches.find((b) => String(b.id) === selectedBranchId)?.name : '') ||
+                  '';
 
                 return (
                   <div key={building.building_id} className="space-y-1.5">
@@ -408,12 +417,17 @@ export default function RoomDetailsAllocationPage() {
                         {building.building_name}
                       </span>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <span className="text-[10px] text-gray-400 font-medium">
-                          {building.floor_details?.length ?? 0} floors
-                        </span>
+                      <div className="flex items-center gap-1.5 shrink-0 max-w-[50%]">
+                        {branchName && (
+                          <span
+                            className="text-[10px] text-gray-400 font-medium truncate"
+                            title={branchName}
+                          >
+                            {branchName}
+                          </span>
+                        )}
                         <svg
-                          className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${
+                          className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 shrink-0 ${
                             isCollapsed ? '-rotate-90' : 'rotate-0'
                           }`}
                           fill="none"

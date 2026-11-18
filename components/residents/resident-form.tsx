@@ -453,6 +453,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         monthly_rent: selectedRoom.monthly_rent || selectedRoom.rent || prev.monthly_rent,
         security_deposit: selectedRoom.security_deposit || prev.security_deposit,
       }));
+      if (selectedRoom.monthly_rent || selectedRoom.rent) {
+        clearError('monthly_rent');
+      }
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -620,6 +623,23 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       newErrors.email = 'Please enter a valid email address.';
     }
 
+    // 15. Bed Number
+    if (!formData.bed_number.trim()) {
+      newErrors.bed_number = 'Bed number is required.';
+    }
+
+    // 16. Monthly Rent
+    if (
+      formData.monthly_rent === '' ||
+      formData.monthly_rent === undefined ||
+      formData.monthly_rent === null ||
+      String(formData.monthly_rent).trim() === ''
+    ) {
+      newErrors.monthly_rent = 'Monthly rent is required.';
+    } else if (isNaN(Number(formData.monthly_rent)) || Number(formData.monthly_rent) < 0) {
+      newErrors.monthly_rent = 'Monthly rent must be a valid non-negative amount.';
+    }
+
     // Address pincode check (if provided)
     if (formData.pincode && formData.pincode.trim()) {
       const cleanPin = formData.pincode.replace(/\D/g, '');
@@ -686,8 +706,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (formData.room_id) fd.append('room_id', String(formData.room_id));
       if (formData.room_no) fd.append('room_no', formData.room_no);
       if (formData.room_type) fd.append('room_type', formData.room_type);
-      fd.append('bed_number', formData.bed_number || 'Bed-1');
-      fd.append('monthly_rent', String(formData.monthly_rent || 9000));
+      fd.append('bed_number', formData.bed_number.trim());
+      fd.append('monthly_rent', String(formData.monthly_rent).trim());
       fd.append('security_deposit', String(formData.security_deposit || 9000));
 
       // Address Fields
@@ -1340,7 +1360,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">Bed Number</label>
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
+                Bed Number <span className="text-[#175C46] font-bold">*</span>
+              </label>
               <input
                 type="text"
                 name="bed_number"
@@ -1353,10 +1375,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             </div>
 
             <div>
-              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">Monthly Rent (₹)</label>
+              <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
+                Monthly Rent (₹) <span className="text-[#175C46] font-bold">*</span>
+              </label>
               <input
                 type="number"
                 name="monthly_rent"
+                min="0"
                 value={formData.monthly_rent}
                 onChange={handleChange}
                 placeholder="Enter monthly rent"

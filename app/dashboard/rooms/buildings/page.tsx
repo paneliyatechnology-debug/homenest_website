@@ -176,6 +176,12 @@ export default function BuildingsPage() {
 
       {/* Navigation Tabs Bar */}
       <div className="flex items-center gap-6 border-b border-gray-200/80 pb-3">
+        <button
+          type="button"
+          className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
+        >
+          Buildings & Floors
+        </button>
         <Link
           href="/dashboard/rooms"
           className="text-sm font-medium text-gray-500 hover:text-gray-900 pb-3 -mb-3 transition-colors cursor-pointer"
@@ -188,12 +194,6 @@ export default function BuildingsPage() {
         >
           Room Details & Allocation
         </Link>
-        <button
-          type="button"
-          className="text-sm font-semibold text-[#175C46] border-b-2 border-[#175C46] pb-3 -mb-3 cursor-pointer"
-        >
-          Buildings & Floors
-        </button>
       </div>
 
       {/* Filter Row: Branch & Search */}

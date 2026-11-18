@@ -42,6 +42,8 @@ export interface RoomFloorDetail {
 export interface RoomBuilding {
   building_id: number;
   building_name: string;
+  branch_id?: number | null;
+  branch_name?: string | null;
   floors: number[];
   floor_details: RoomFloorDetail[];
   total_floors: number;

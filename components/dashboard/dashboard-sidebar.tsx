@@ -130,9 +130,9 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         </svg>
       ),
       children: [
+        { label: 'Buildings & Floors', href: '/dashboard/rooms/buildings' },
         { label: 'Room Inventory', href: '/dashboard/rooms' },
         { label: 'Room Details & Allocation', href: '/dashboard/rooms/allocation' },
-        { label: 'Buildings & Floors', href: '/dashboard/rooms/buildings' },
       ],
     },
     {
