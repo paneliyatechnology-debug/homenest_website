@@ -25,10 +25,10 @@ const RoomShiftStatusForm: React.FC<RoomShiftStatusFormProps> = ({
   onHide,
   onSuccess,
 }) => {
-  const initialStatus =
-    (shift.status as 'approved' | 'pending' | 'rejected') || 'pending';
+  const initialStatus: 'approved' | 'rejected' =
+    shift.status === 'rejected' ? 'rejected' : 'approved';
 
-  const [status, setStatus] = useState<'approved' | 'pending' | 'rejected'>(initialStatus);
+  const [status, setStatus] = useState<'approved' | 'rejected'>(initialStatus);
   const [assignedRoomId, setAssignedRoomId] = useState<number | ''>(
     shift.requested_room?.id || ''
   );
@@ -125,7 +125,7 @@ const RoomShiftStatusForm: React.FC<RoomShiftStatusFormProps> = ({
         <label className="text-xs font-semibold text-gray-700 block mb-2">
           Decision Status <span className="text-red-500">*</span>
         </label>
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => setStatus('approved')}
@@ -137,18 +137,6 @@ const RoomShiftStatusForm: React.FC<RoomShiftStatusFormProps> = ({
           >
             <span className="w-2 h-2 rounded-full bg-emerald-600" />
             Approved
-          </button>
-          <button
-            type="button"
-            onClick={() => setStatus('pending')}
-            className={`py-2 px-3 rounded-xl text-xs font-semibold border flex items-center justify-center gap-1.5 transition-all ${
-              status === 'pending'
-                ? 'bg-[#FFF7E8] border-[#D97706] text-[#D97706] shadow-xs'
-                : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            Pending
           </button>
           <button
             type="button"
