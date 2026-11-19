@@ -11,6 +11,7 @@ import { checkoutService } from '@/services/checkout.service';
 import { branchService } from '@/services/branch.service';
 import { Branch } from '@/types/branch';
 import { config } from '@/lib/config';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import {
   DataTable,
   ColumnDef,
@@ -86,6 +87,15 @@ export default function CheckoutAndRefundApprovalsPage() {
   const [itemToDelete, setItemToDelete] = useState<CheckoutListItem | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Real-time WebSocket updates for Stay Clearance & Checkouts
+  useSocketEvent(SOCKET_EVENTS.CHECKOUT_NEW, () => {
+    setRefreshKey((k) => k + 1);
+  });
+
+  useSocketEvent(SOCKET_EVENTS.CHECKOUT_STATUS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+  });
 
   // Search Debouncing
   useEffect(() => {

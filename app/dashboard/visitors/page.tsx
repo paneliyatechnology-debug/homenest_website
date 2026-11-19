@@ -23,6 +23,7 @@ import {
   DeleteConfirmationModal,
   ClearFilterButton,
 } from '@/components/ui';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 export default function VisitorsPage() {
   // Data states
@@ -106,6 +107,27 @@ export default function VisitorsPage() {
   }, []);
 
   const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  // Real-time WebSocket updates for Visitors module
+  useSocketEvent(SOCKET_EVENTS.VISITOR_STATUS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+    visitorService.getVisitorStats().then(setStats).catch(() => {});
+  });
+
+  useSocketEvent(SOCKET_EVENTS.VISITOR_ENTRY, () => {
+    setRefreshKey((k) => k + 1);
+    visitorService.getVisitorStats().then(setStats).catch(() => {});
+  });
+
+  useSocketEvent(SOCKET_EVENTS.VISITOR_NEW, () => {
+    setRefreshKey((k) => k + 1);
+    visitorService.getVisitorStats().then(setStats).catch(() => {});
+  });
+
+  useSocketEvent(SOCKET_EVENTS.VISITOR_STATS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+    visitorService.getVisitorStats().then(setStats).catch(() => {});
+  });
 
   // Fetch visitors list when filters, page, or refreshKey change
   useEffect(() => {

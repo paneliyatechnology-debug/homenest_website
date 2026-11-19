@@ -7,6 +7,7 @@ import { User } from '@/types/auth';
 import { config } from '@/lib/config';
 import { DashboardSidebar } from '@/components/dashboard/dashboard-sidebar';
 import { DashboardTopbar } from '@/components/dashboard/dashboard-topbar';
+import { SocketProvider } from '@/components/providers/socket-provider';
 
 const emptySubscribe = () => () => {};
 
@@ -149,9 +150,11 @@ export default function DashboardLayout({
 
         {/* Page Body Viewport */}
         <div className="flex-1 flex flex-col bg-[#F7F7F5]">
-          <React.Suspense fallback={null}>
-            {children}
-          </React.Suspense>
+          <SocketProvider>
+            <React.Suspense fallback={null}>
+              {children}
+            </React.Suspense>
+          </SocketProvider>
         </div>
       </div>
     </div>

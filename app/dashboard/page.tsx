@@ -8,37 +8,44 @@ import { MetricCard } from '@/components/dashboard/metric-card';
 import { OccupancyChart } from '@/components/dashboard/occupancy-chart';
 import { RoomDistributionChart } from '@/components/dashboard/room-distribution-chart';
 import { RecentActivityList } from '@/components/dashboard/recent-activity-list';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 export default function DashboardPage() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    // Fetch live dashboard metrics from GET /dashboard
+  const fetchDashboardData = React.useCallback(() => {
     dashboardService
       .getDashboardData()
       .then((data) => {
-        if (isMounted) {
-          setDashboardData(data);
-          setLoading(false);
-        }
+        setDashboardData(data);
+        setLoading(false);
       })
       .catch((err) => {
-        if (isMounted) {
-          setErrorMessage(
-            err instanceof Error ? err.message : 'Failed to retrieve operations data'
-          );
-          setLoading(false);
-        }
+        setErrorMessage(
+          err instanceof Error ? err.message : 'Failed to retrieve operations data'
+        );
+        setLoading(false);
       });
-
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Real-time WebSocket updates for Dashboard KPIs
+  useSocketEvent(SOCKET_EVENTS.DASHBOARD_STATS_UPDATED, () => {
+    fetchDashboardData();
+  });
+
+  useSocketEvent(SOCKET_EVENTS.COMPLAINT_NEW, () => {
+    fetchDashboardData();
+  });
+
+  useSocketEvent(SOCKET_EVENTS.VISITOR_ENTRY, () => {
+    fetchDashboardData();
+  });
 
   // Loading state using PrimeReact ProgressSpinner
   if (loading) {

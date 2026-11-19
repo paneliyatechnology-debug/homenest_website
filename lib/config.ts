@@ -17,10 +17,14 @@ const backendUrl = rawBackendUrl
   ? rawBackendUrl.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '')
   : '';
 
+// Root WebSocket URL for real-time Socket.IO connection
+const socketUrl = (process.env.NEXT_PUBLIC_SOCKET_URL || backendUrl || 'http://localhost:5000').replace(/\/+$/, '');
+
 const appName = process.env.NEXT_PUBLIC_APP_NAME;
 
 export const config = {
   backendUrl,
+  socketUrl,
   api: {
     baseUrl: apiBaseUrl,
   },

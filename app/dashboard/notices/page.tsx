@@ -12,7 +12,7 @@ import {
 } from '@/types/notice';
 import { noticeService } from '@/services/notice.service';
 import { NoticeStatsCards, NoticeDetailsModal } from '@/components/notices';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import {
   DataTable,
   ColumnDef,
@@ -57,6 +57,14 @@ export default function NoticesPage() {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [sendingNoticeId, setSendingNoticeId] = useState<number | null>(null);
+
+  // Real-time WebSocket updates for Notices module
+  useSocketEvent(SOCKET_EVENTS.NOTICE_NEW, () => {
+    setRefreshKey((k) => k + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.NOTICE_STATS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+  });
 
   // Navigation state reset
   const resetState = useCallback(() => {

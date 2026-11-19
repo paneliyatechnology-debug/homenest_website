@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Branch, BranchStats, BranchMeta } from '@/types/branch';
 import { branchService, INITIAL_BRANCH_STATS } from '@/services/branch.service';
 import { BranchStatsCards } from '@/components/branches/branch-stats-cards';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import { BranchDetailsModal } from '@/components/branches/branch-details-modal';
 import { DeleteConfirmationModal, DataTable, StatusBadge, IconButton, TableActions } from '@/components/ui';
 
@@ -28,6 +28,11 @@ export default function BranchManagementPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Branch Stats & List
+  useSocketEvent(SOCKET_EVENTS.BRANCH_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Modals
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);

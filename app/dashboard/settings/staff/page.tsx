@@ -9,7 +9,7 @@ import { branchService } from '@/services/branch.service';
 import { StaffStatsCards } from '@/components/staff/staff-stats-cards';
 import { StaffDetailsModal } from '@/components/staff/staff-details-modal';
 import { StaffStatusModal } from '@/components/staff/staff-status-modal';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import {
   DataTable,
   StatusBadge,
@@ -93,6 +93,11 @@ export default function StaffManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Staff Stats & List
+  useSocketEvent(SOCKET_EVENTS.STAFF_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Modals
   const [viewingStaff, setViewingStaff] = useState<StaffMember | null>(null);

@@ -9,7 +9,7 @@ import { roomService, INITIAL_ROOM_STATS } from '@/services/room.service';
 import { branchService } from '@/services/branch.service';
 import { RoomStatsCards } from '@/components/rooms/room-stats-cards';
 import { RoomDetailsModal } from '@/components/rooms/room-details-modal';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import {
   DataTable,
   StatusBadge,
@@ -64,6 +64,20 @@ export default function RoomInventoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Room Stats & Inventory
+  useSocketEvent(SOCKET_EVENTS.ROOM_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.ROOM_NEW, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.ROOM_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.ROOM_DELETED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Modals
   const [viewingRoomId, setViewingRoomId] = useState<number | null>(null);

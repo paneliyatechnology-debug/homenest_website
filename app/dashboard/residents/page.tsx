@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput, ClearFilterButton } from '@/components/ui';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
@@ -49,6 +49,17 @@ export default function ResidentsListPage() {
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Resident Stats & List
+  useSocketEvent(SOCKET_EVENTS.RESIDENT_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.USER_NEW, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.USER_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Active Filters State
   const hasActiveFilters = useMemo(() => {

@@ -24,6 +24,7 @@ import {
   getFileExtension,
 } from '@/components/complaints/attachment-preview-modal';
 import { toast } from '@/lib/toast';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 const STATUS_OPTIONS: {
   value: ComplaintStatus;
@@ -218,6 +219,19 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       console.warn('Failed to load complaint detail:', err);
     }
   };
+
+  // Real-time WebSocket updates for this specific complaint
+  useSocketEvent<{ id: number | string }>(SOCKET_EVENTS.COMPLAINT_STATUS_UPDATED, (data) => {
+    if (String(data?.id) === String(complaintId)) {
+      fetchComplaintData();
+    }
+  });
+
+  useSocketEvent<{ id: number | string }>(SOCKET_EVENTS.COMPLAINT_ACTIVITY, (data) => {
+    if (String(data?.id) === String(complaintId)) {
+      fetchComplaintData();
+    }
+  });
 
   useEffect(() => {
     let isMounted = true;

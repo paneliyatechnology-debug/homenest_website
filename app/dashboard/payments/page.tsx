@@ -17,7 +17,7 @@ import {
   PaymentFormModal,
   PaymentCollectModal,
 } from '@/components/payments';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import { config } from '@/lib/config';
 import {
   DataTable,
@@ -87,6 +87,17 @@ export default function PaymentOverviewPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Payment Stats & Billings
+  useSocketEvent(SOCKET_EVENTS.PAYMENT_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.PAYMENT_NEW, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
+  useSocketEvent(SOCKET_EVENTS.PAYMENT_STATUS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Handle Delete Payment
   const handleConfirmDeletePayment = async () => {

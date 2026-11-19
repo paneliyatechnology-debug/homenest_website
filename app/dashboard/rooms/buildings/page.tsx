@@ -9,7 +9,7 @@ import { buildingService, INITIAL_BUILDING_STATS } from '@/services/building.ser
 import { branchService } from '@/services/branch.service';
 import { BuildingStatsCards } from '@/components/buildings/building-stats-cards';
 import { BuildingDetailsModal } from '@/components/buildings/building-details-modal';
-import { useResetOnNavigation } from '@/hooks';
+import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import {
   DataTable,
   IconButton,
@@ -42,6 +42,11 @@ export default function BuildingsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Real-time WebSocket updates for Building Stats & List
+  useSocketEvent(SOCKET_EVENTS.BUILDING_STATS_UPDATED, () => {
+    setRefreshTrigger((prev) => prev + 1);
+  });
 
   // Modal States
   const [viewingBuildingId, setViewingBuildingId] = useState<number | null>(null);

@@ -22,6 +22,7 @@ import {
   RoomShiftMeta,
 } from '@/types/room-shift';
 import { roomShiftService, INITIAL_ROOM_SHIFT_STATS } from '@/services/room-shift.service';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 export default function RoomShiftRequestPage() {
   const router = useRouter();
@@ -50,6 +51,19 @@ export default function RoomShiftRequestPage() {
   const [shiftToDelete, setShiftToDelete] = useState<RoomShiftRequest | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Real-time WebSocket updates for Room Shifts
+  useSocketEvent(SOCKET_EVENTS.ROOM_SHIFT_NEW, () => {
+    setRefreshKey((k) => k + 1);
+  });
+
+  useSocketEvent(SOCKET_EVENTS.ROOM_SHIFT_STATUS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+  });
+
+  useSocketEvent(SOCKET_EVENTS.ROOM_STATS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+  });
 
   // Fetch KPI Stats
   useEffect(() => {

@@ -20,6 +20,7 @@ import {
   IconButton,
   ClearFilterButton,
 } from '@/components/ui';
+import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
 function formatComplaintDate(dateStr?: string | null): string {
   if (!dateStr || !dateStr.trim()) return '—';
@@ -69,6 +70,23 @@ export default function ComplaintsPage() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  // Real-time WebSocket updates for Complaints module
+  useSocketEvent(SOCKET_EVENTS.COMPLAINT_NEW, () => {
+    setRefreshKey((k) => k + 1);
+    complaintService.getStats().then(setStats).catch(() => {});
+  });
+
+  useSocketEvent(SOCKET_EVENTS.COMPLAINT_STATUS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+    complaintService.getStats().then(setStats).catch(() => {});
+  });
+
+  useSocketEvent(SOCKET_EVENTS.COMPLAINT_STATS_UPDATED, () => {
+    setRefreshKey((k) => k + 1);
+    complaintService.getStats().then(setStats).catch(() => {});
+  });
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
@@ -146,7 +164,7 @@ export default function ComplaintsPage() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, selectedCategory, selectedStatus, searchTerm]);
+  }, [currentPage, selectedCategory, selectedStatus, searchTerm, refreshKey]);
 
   // Dropdown options
   const categoryOptions = useMemo(() => {
