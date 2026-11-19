@@ -2,8 +2,6 @@
 
 import React, { Suspense, use, useEffect, useState, useRef } from 'react';
 import { Dialog } from 'primereact/dialog';
-import { Menu } from 'primereact/menu';
-import { MenuItem } from 'primereact/menuitem';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import {
   Complaint,
@@ -13,7 +11,7 @@ import {
 import { StaffMember } from '@/types/staff';
 import { complaintService } from '@/services/complaint.service';
 import { staffService } from '@/services/staff.service';
-import { StatusBadge, BackButton, Button, AppDatePicker, Dropdown } from '@/components/ui';
+import { StatusBadge, BackButton, Button, AppDatePicker } from '@/components/ui';
 import { ComplaintCategoryIcon } from '@/components/complaints/complaint-category-icon';
 import { StaffAssignmentDropdown } from '@/components/complaints/staff-assignment-dropdown';
 import {
@@ -25,6 +23,40 @@ import {
   getFileExtension,
 } from '@/components/complaints/attachment-preview-modal';
 import { toast } from '@/lib/toast';
+
+const STATUS_OPTIONS: {
+  value: ComplaintStatus;
+  label: string;
+  description: string;
+  activeBorder: string;
+  activeBg: string;
+  icon: string;
+}[] = [
+  {
+    value: 'PENDING',
+    label: 'Pending',
+    description: 'Awaiting initial review or staff assignment',
+    activeBorder: 'border-amber-500',
+    activeBg: 'bg-amber-50/50',
+    icon: 'pi pi-clock text-amber-600',
+  },
+  {
+    value: 'IN_PROGRESS',
+    label: 'In Progress',
+    description: 'Staff assigned and issue is actively being addressed',
+    activeBorder: 'border-blue-500',
+    activeBg: 'bg-blue-50/50',
+    icon: 'pi pi-spinner text-blue-600',
+  },
+  {
+    value: 'RESOLVED',
+    label: 'Resolved',
+    description: 'Issue has been inspected, fixed, and completed',
+    activeBorder: 'border-[#175C46]',
+    activeBg: 'bg-[#E8F8F0]/50',
+    icon: 'pi pi-check-circle text-emerald-600',
+  },
+];
 
 interface ComplaintDetailPageProps {
   params: Promise<{ id: string }>;
@@ -130,8 +162,14 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
     setPreviewModalVisible(true);
   };
 
-  // Status Action Menu
-  const statusMenuRef = useRef<Menu>(null);
+  // Open Status Dialog
+  const handleOpenStatusDialog = () => {
+    if (complaint?.status) {
+      setTargetStatus(complaint.status as ComplaintStatus);
+    }
+    setResolutionNotes('');
+    setIsStatusDialogOpen(true);
+  };
 
   // Fetch Complaint details and Staff members
   const fetchComplaintData = async () => {
@@ -230,13 +268,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
 
   // Handle Bottom Notes submission
   const handlePostNotes = async () => {
-    if (!complaintId) return;
-    if (!bottomNotes.trim()) {
-      // If no notes, trigger status dialog
-      setTargetStatus((complaint?.status as ComplaintStatus) === 'PENDING' ? 'IN_PROGRESS' : 'RESOLVED');
-      setIsStatusDialogOpen(true);
-      return;
-    }
+    if (!complaintId || !bottomNotes.trim()) return;
 
     try {
       setIsSubmittingNotes(true);
@@ -278,34 +310,6 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       }
     }
   };
-
-  // PrimeReact Status Menu Items
-  const statusMenuItems: MenuItem[] = [
-    {
-      label: 'Mark as Pending',
-      icon: 'pi pi-clock text-amber-600',
-      command: () => {
-        setTargetStatus('PENDING');
-        setIsStatusDialogOpen(true);
-      },
-    },
-    {
-      label: 'Mark as In Progress',
-      icon: 'pi pi-spinner text-amber-600',
-      command: () => {
-        setTargetStatus('IN_PROGRESS');
-        setIsStatusDialogOpen(true);
-      },
-    },
-    {
-      label: 'Mark as Resolved',
-      icon: 'pi pi-check-circle text-emerald-600',
-      command: () => {
-        setTargetStatus('RESOLVED');
-        setIsStatusDialogOpen(true);
-      },
-    },
-  ];
 
   if (loading) {
     return (
@@ -364,16 +368,14 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           <StatusBadge status={complaint.status} />
         </div>
 
-        {/* Top Right "Update status" Dropdown Action Button */}
+        {/* Top Right "Update status" Action Button */}
         <div>
-          <Menu model={statusMenuItems} popup ref={statusMenuRef} id="status_action_menu" />
           <button
             type="button"
-            onClick={(e) => statusMenuRef.current?.toggle(e)}
+            onClick={handleOpenStatusDialog}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer"
           >
             <span>Update status</span>
-            <i className="pi pi-chevron-down text-xs ml-0.5 opacity-80" />
           </button>
         </div>
       </div>
@@ -880,8 +882,8 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
         <button
           type="button"
           onClick={handlePostNotes}
-          disabled={isSubmittingNotes}
-          className="px-5 sm:px-6 h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-60 flex items-center gap-2"
+          disabled={isSubmittingNotes || !bottomNotes.trim()}
+          className="px-5 sm:px-6 h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
           {isSubmittingNotes ? (
             <>
@@ -889,7 +891,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               <span>Saving...</span>
             </>
           ) : (
-            <span>{bottomNotes.trim() ? 'Add Update' : 'Update status'}</span>
+            <span>Add Update</span>
           )}
         </button>
       </div>
@@ -898,44 +900,111 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       <Dialog
         visible={isStatusDialogOpen}
         onHide={() => setIsStatusDialogOpen(false)}
-        header={`Update Complaint Status: ${targetStatus.replace('_', ' ')}`}
-        className="w-full max-w-md"
-        headerClassName="text-sm font-bold text-gray-900 border-b border-gray-100 pb-3"
+        modal
+        draggable={false}
+        resizable={false}
+        className="w-full max-w-[480px] mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
+        header={
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
+                Update Complaint Status
+              </h2>
+              <p className="text-xs text-gray-500 font-normal mt-0.5 truncate">
+                {complaint.complaint_number || `CMP-${complaint.id}`}
+                {residentName ? ` • ${residentName}` : ''}
+              </p>
+            </div>
+          </div>
+        }
+        contentClassName="p-5 sm:p-6 bg-white space-y-4"
       >
-        <div className="space-y-4 pt-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-700">
-              New Status
-            </label>
-            <Dropdown
-              value={targetStatus}
-              options={[
-                { label: 'PENDING', value: 'PENDING' },
-                { label: 'IN PROGRESS', value: 'IN_PROGRESS' },
-                { label: 'RESOLVED', value: 'RESOLVED' },
-              ]}
-              onChange={(e) => setTargetStatus(e.target.value as ComplaintStatus)}
-            />
+        <div className="space-y-4 pt-1">
+          {/* Current Status banner */}
+          <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100 text-xs">
+            <span className="text-gray-500 font-medium">Current Status:</span>
+            <StatusBadge status={complaint.status} />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-700">
-              Resolution / Action Notes
+          {/* New Status Choice Cards */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+              Select New Status <span className="text-red-500">*</span>
+            </label>
+            <div className="space-y-2">
+              {STATUS_OPTIONS.map((opt) => {
+                const isSelected = targetStatus === opt.value;
+                return (
+                  <label
+                    key={opt.value}
+                    onClick={() => setTargetStatus(opt.value)}
+                    className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all select-none ${
+                      isSelected
+                        ? `${opt.activeBorder} ${opt.activeBg} ring-1 ring-current shadow-2xs`
+                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="complaint_status"
+                      value={opt.value}
+                      checked={isSelected}
+                      onChange={() => setTargetStatus(opt.value)}
+                      className="mt-0.5 text-[#175C46] focus:ring-[#175C46]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <i className={`${opt.icon} text-xs`} />
+                        <span className="text-xs font-bold text-gray-900">{opt.label}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 mt-0.5 leading-normal">
+                        {opt.description}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Resolution / Action Notes */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Resolution / Action Notes{' '}
+              {targetStatus === 'RESOLVED' ? (
+                <span className="text-gray-400 font-normal lowercase">(recommended)</span>
+              ) : (
+                <span className="text-gray-400 font-normal lowercase">(optional)</span>
+              )}
             </label>
             <textarea
-              rows={4}
-              placeholder="Enter resolution notes, technician findings, or inspection details..."
+              rows={3}
+              placeholder={
+                targetStatus === 'RESOLVED'
+                  ? 'Enter resolution notes, actions taken, or inspection details...'
+                  : 'Enter update notes, technician findings, or progress details...'
+              }
               value={resolutionNotes}
               onChange={(e) => setResolutionNotes(e.target.value)}
-              className="w-full p-3 text-xs bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#175C46] focus:bg-white text-gray-800 resize-none font-normal"
+              className="w-full p-3 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] transition-all resize-none font-normal"
             />
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-100">
+          {/* Dialog Action Buttons */}
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
             <button
               type="button"
               onClick={() => setIsStatusDialogOpen(false)}
-              className="px-4 py-2 text-xs font-semibold text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+              className="h-10 px-4 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
             >
               Cancel
             </button>
@@ -943,10 +1012,10 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               type="button"
               onClick={handleUpdateStatus}
               disabled={isUpdatingStatus}
-              className="px-5 py-2 text-xs font-semibold text-white bg-[#175C46] hover:bg-[#124b38] rounded-xl transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+              className="h-10 px-5 text-xs font-semibold text-white bg-[#175C46] hover:bg-[#124b38] rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isUpdatingStatus && <i className="pi pi-spin pi-spinner text-xs" />}
-              <span>Save Status</span>
+              <span>Update Status</span>
             </button>
           </div>
         </div>
