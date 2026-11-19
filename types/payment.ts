@@ -199,6 +199,7 @@ export interface PaymentExportResult {
 export interface PaymentCreatePayload {
   resident_id: number;
   pg_id?: number;
+  branch_id?: number;
   stay_id?: number;
   room_id?: number;
   title: string;
@@ -218,12 +219,24 @@ export interface PaymentCreatePayload {
 export interface PaymentUpdatePayload {
   title?: string;
   payment_type?: PaymentType | string;
-  status?: PaymentStatus | string;
-  amount?: number;
-  paid_amount?: number;
+  billing_period_start?: string;
+  billing_period_end?: string;
   due_date?: string;
+  rent_amount?: number;
+  deposit_amount?: number;
+  maintenance_amount?: number;
+  electricity_amount?: number;
+  other_amount?: number;
+  amount?: number;
+  notes?: string;
+  status?: PaymentStatus | string;
+  paid_amount?: number;
   paid_at?: string | null;
   payment_method?: PaymentMethod | string | null;
-  notes?: string;
   breakdown?: PaymentBreakdown;
+}
+
+export interface PaymentCollectPayload {
+  payment_method: PaymentMethod | string;
+  payment_method_details?: string;
 }

@@ -8,6 +8,7 @@ import {
   PaymentExportResult,
   PaymentCreatePayload,
   PaymentUpdatePayload,
+  PaymentCollectPayload,
 } from '@/types/payment';
 
 export const INITIAL_PAYMENT_STATS: PaymentStats = {
@@ -181,6 +182,22 @@ class PaymentService {
   }
 
   /**
+   * POST /payments/:id/pay
+   * Collect payment / record collection
+   */
+  async collectPayment(id: number | string, data: PaymentCollectPayload): Promise<PaymentRecord> {
+    const res = await apiClient<{
+      success?: boolean;
+      message?: string;
+      data: PaymentRecord;
+    }>(`/payments/${id}/pay`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res.data;
+  }
+
+  /**
    * GET /payments/export?format=xlsx&...
    */
   async exportPayments(params: PaymentExportParams = {}): Promise<PaymentExportResult> {
@@ -216,7 +233,9 @@ class PaymentService {
       success?: boolean;
       message?: string;
       data: PaymentExportResult;
-    }>(`/payments/export?${query.toString()}`);
+    }>(`/payments/export?${query.toString()}`, {
+      showSuccessToast: true,
+    });
 
     return res.data;
   }

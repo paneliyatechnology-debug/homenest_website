@@ -68,6 +68,15 @@ export const ComplaintCategoryIcon: React.FC<ComplaintCategoryIconProps> = ({
           <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
       );
+    case 'washing_machine':
+    case 'washing-machine':
+      return (
+        <svg className={`${sizeClass} ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <rect x="4" y="2" width="16" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="12" cy="13" r="5" strokeLinecap="round" strokeLinejoin="round" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 6h.01M12 6h.01" />
+        </svg>
+      );
     default:
       return (
         <svg className={`${sizeClass} ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">

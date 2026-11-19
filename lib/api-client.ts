@@ -169,6 +169,9 @@ export function extractSuccessMessage(data: unknown): string | null {
     if (typeof obj.message === 'string' && obj.message.trim()) {
       return obj.message.trim();
     }
+    if (typeof obj.msg === 'string' && obj.msg.trim()) {
+      return obj.msg.trim();
+    }
   }
   return null;
 }

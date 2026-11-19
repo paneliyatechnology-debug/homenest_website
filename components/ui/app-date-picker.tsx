@@ -120,6 +120,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
   hasError = false,
   appendTo,
 }) => {
+  const calendarRef = React.useRef<Calendar>(null);
   const dateObj = parseDateString(value);
   const resolvedAppendTo =
     appendTo !== undefined
@@ -143,9 +144,15 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
     }
   };
 
+  const handleOpen = () => {
+    if (disabled) return;
+    calendarRef.current?.show();
+  };
+
   return (
-    <div className={`relative w-full ${className}`}>
+    <div className={`relative w-full ${className}`} onClick={handleOpen}>
       <Calendar
+        ref={calendarRef}
         id={id}
         name={name}
         value={dateObj}
@@ -157,6 +164,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         className="w-full"
         appendTo={resolvedAppendTo}
         touchUI={false}
+        showOnFocus={true}
         baseZIndex={100000}
         panelStyle={{ zIndex: 100000 }}
         inputClassName={`w-full h-11 px-4 pr-10 py-2.5 bg-white border ${
@@ -166,19 +174,32 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans`}
         panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans !z-[100000]"
       />
-      <svg
-        className="w-4 h-4 text-gray-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth="2"
+      <button
+        type="button"
+        tabIndex={-1}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleOpen();
+        }}
+        disabled={disabled}
+        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#175C46] absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+        title="Open calendar"
+        aria-label="Open calendar"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-        />
-      </svg>
+        <svg
+          className="w-4 h-4 stroke-current pointer-events-none"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="2"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      </button>
     </div>
   );
 };

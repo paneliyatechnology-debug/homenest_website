@@ -11,10 +11,13 @@ import {
 } from '@/types/payment';
 import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.service';
 import { branchService } from '@/services/branch.service';
-import { PaymentOverviewStatsCards } from '@/components/payments/payment-overview-stats-cards';
-import { PaymentDetailsModal } from '@/components/payments/payment-details-modal';
+import {
+  PaymentOverviewStatsCards,
+  PaymentDetailsModal,
+  PaymentFormModal,
+  PaymentCollectModal,
+} from '@/components/payments';
 import { useResetOnNavigation } from '@/hooks';
-import { toast } from '@/lib/toast';
 import { config } from '@/lib/config';
 import {
   DataTable,
@@ -28,6 +31,7 @@ import {
   ExportDropdown,
   ExportFormat,
   ClearFilterButton,
+  DeleteConfirmationModal,
 } from '@/components/ui';
 
 type TabKey = 'all' | 'paid' | 'pending' | 'overdue' | 'refunded' | 'failed';
@@ -84,9 +88,35 @@ export default function PaymentOverviewPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
-  // Modal State
+  // Modal States
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
+
+  const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
+  const [collectingPayment, setCollectingPayment] = useState<PaymentRecord | null>(null);
+
+  const [deletingPayment, setDeletingPayment] = useState<PaymentRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Handle Delete Payment
+  const handleConfirmDeletePayment = async () => {
+    if (!deletingPayment) return;
+    setIsDeleting(true);
+    try {
+      await paymentService.deletePayment(deletingPayment.id);
+      setDeletingPayment(null);
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (err: unknown) {
+      console.error('Failed to delete payment:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
@@ -137,6 +167,11 @@ export default function PaymentOverviewPage() {
     setCurrentPage(1);
     setSelectedPayment(null);
     setIsModalOpen(false);
+    setEditingPayment(null);
+    setIsFormModalOpen(false);
+    setCollectingPayment(null);
+    setIsCollectModalOpen(false);
+    setDeletingPayment(null);
   }, []);
 
   useResetOnNavigation(resetTableState, { cleanQueryToast: true });
@@ -188,7 +223,7 @@ export default function PaymentOverviewPage() {
     return () => {
       isMounted = false;
     };
-  }, [startDate, endDate, selectedBranchId]);
+  }, [startDate, endDate, selectedBranchId, refreshTrigger]);
 
   // Fetch Payments List
   useEffect(() => {
@@ -238,6 +273,7 @@ export default function PaymentOverviewPage() {
     startDate,
     endDate,
     debouncedSearch,
+    refreshTrigger,
   ]);
 
   // Handle Export (Excel or PDF)
@@ -264,9 +300,6 @@ export default function PaymentOverviewPage() {
         document.body.appendChild(link);
         link.click();
         link.remove();
-        toast.success(`Payment report (${format.toUpperCase()}) exported successfully`);
-      } else {
-        toast.info('Export request completed');
       }
     } catch (err: unknown) {
       console.warn('Failed to export payment report:', err);
@@ -444,15 +477,56 @@ export default function PaymentOverviewPage() {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      cell: (item) => (
-        <TableActions>
-          <IconButton
-            variant="view"
-            title="View Details"
-            onClick={() => handleView(item)}
-          />
-        </TableActions>
-      ),
+      cell: (item) => {
+        const due = (item.amount || 0) - (item.paid_amount || 0);
+        const isPaid = (item.status || '').toLowerCase() === 'paid';
+        const isPendingOrOverdue =
+          item.status?.toLowerCase() === 'pending' ||
+          item.status?.toLowerCase() === 'overdue' ||
+          due > 0;
+
+        return (
+          <TableActions>
+            {isPendingOrOverdue && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCollectingPayment(item);
+                  setIsCollectModalOpen(true);
+                }}
+                className="px-2.5 py-1 bg-[#175C46] text-white rounded-lg text-xs font-semibold hover:bg-[#124B38] transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                title="Collect Payment"
+              >
+                Collect
+              </button>
+            )}
+            <IconButton
+              variant="view"
+              title="View Details"
+              onClick={() => handleView(item)}
+            />
+            <IconButton
+              variant="edit"
+              title={isPaid ? 'Cannot edit paid bill' : 'Edit Payment'}
+              disabled={isPaid}
+              onClick={() => {
+                if (isPaid) return;
+                setEditingPayment(item);
+                setIsFormModalOpen(true);
+              }}
+            />
+            <IconButton
+              variant="delete"
+              title={isPaid ? 'Cannot delete paid bill' : 'Delete Payment'}
+              disabled={isPaid}
+              onClick={() => {
+                if (isPaid) return;
+                setDeletingPayment(item);
+              }}
+            />
+          </TableActions>
+        );
+      },
     },
   ];
 
@@ -469,7 +543,7 @@ export default function PaymentOverviewPage() {
           </p>
         </div>
 
-        {/* Date Filter & Export Button */}
+        {/* Date Filter, Export Button & Record Payment Button */}
         <div className="flex items-center gap-3 flex-wrap">
           <DateRangeFilter
             startDate={startDate}
@@ -486,6 +560,20 @@ export default function PaymentOverviewPage() {
             isExporting={isExporting}
             exportingFormat={exportingFormat}
           />
+
+          <button
+            type="button"
+            onClick={() => {
+              setEditingPayment(null);
+              setIsFormModalOpen(true);
+            }}
+            className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>Record Payment</span>
+          </button>
         </div>
       </div>
 
@@ -603,6 +691,32 @@ export default function PaymentOverviewPage() {
         }}
       />
 
+      {/* Create / Edit Payment Modal */}
+      <PaymentFormModal
+        visible={isFormModalOpen}
+        onHide={() => {
+          setIsFormModalOpen(false);
+          setEditingPayment(null);
+        }}
+        onSuccess={() => {
+          setRefreshTrigger((prev) => prev + 1);
+        }}
+        initialPayment={editingPayment}
+      />
+
+      {/* Collect Payment Modal */}
+      <PaymentCollectModal
+        visible={isCollectModalOpen}
+        onHide={() => {
+          setIsCollectModalOpen(false);
+          setCollectingPayment(null);
+        }}
+        onSuccess={() => {
+          setRefreshTrigger((prev) => prev + 1);
+        }}
+        payment={collectingPayment}
+      />
+
       {/* Payment Details Modal */}
       <PaymentDetailsModal
         payment={selectedPayment}
@@ -612,6 +726,23 @@ export default function PaymentOverviewPage() {
           setSelectedPayment(null);
         }}
         onDownloadReceipt={handleDownloadReceipt}
+      />
+
+      {/* Delete Payment Confirmation Modal */}
+      <DeleteConfirmationModal
+        visible={Boolean(deletingPayment)}
+        onHide={() => setDeletingPayment(null)}
+        title="Delete Payment Record"
+        itemName={deletingPayment?.title}
+        itemType="payment record"
+        details={[
+          { label: 'Invoice Title', value: deletingPayment?.title || '—' },
+          { label: 'Resident', value: deletingPayment?.resident?.name || '—' },
+          { label: 'Total Amount', value: formatCurrency(deletingPayment?.amount) },
+          { label: 'Status', value: deletingPayment?.status || '—' },
+        ]}
+        loading={isDeleting}
+        onConfirm={handleConfirmDeletePayment}
       />
     </main>
   );

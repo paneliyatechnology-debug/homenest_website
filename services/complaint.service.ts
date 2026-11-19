@@ -47,7 +47,7 @@ class ComplaintService {
   }
 
   /**
-   * GET /complaints?status=all&category_id=&priority=all&search=&assigned_to_user_id=&page=1&limit=10
+   * GET /complaints?status=all&category_id=&search=&assigned_to_user_id=&page=1&limit=10
    */
   async getComplaints(params: ComplaintFilterParams = {}): Promise<{
     data: Complaint[];
@@ -65,9 +65,6 @@ class ComplaintService {
     }
     if (params.category_id && params.category_id !== 'all') {
       query.set('category_id', String(params.category_id));
-    }
-    if (params.priority && params.priority !== 'all') {
-      query.set('priority', params.priority);
     }
     if (params.search && params.search.trim()) {
       query.set('search', params.search.trim());

@@ -66,7 +66,6 @@ export default function ComplaintsPage() {
 
   // Filters
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedPriority, setSelectedPriority] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -75,16 +74,14 @@ export default function ComplaintsPage() {
   const hasActiveFilters = useMemo(() => {
     return (
       selectedCategory !== 'all' ||
-      selectedPriority !== 'all' ||
       selectedStatus !== 'all' ||
       Boolean(searchTerm.trim())
     );
-  }, [selectedCategory, selectedPriority, selectedStatus, searchTerm]);
+  }, [selectedCategory, selectedStatus, searchTerm]);
 
   // Clear all filters handler
   const handleClearAllFilters = () => {
     setSelectedCategory('all');
-    setSelectedPriority('all');
     setSelectedStatus('all');
     setSearchTerm('');
     setCurrentPage(1);
@@ -131,7 +128,6 @@ export default function ComplaintsPage() {
         limit: 10,
         status: selectedStatus !== 'all' ? selectedStatus : undefined,
         category_id: selectedCategory !== 'all' ? selectedCategory : undefined,
-        priority: selectedPriority !== 'all' ? selectedPriority : undefined,
         search: searchTerm.trim() || undefined,
       })
       .then((res) => {
@@ -150,7 +146,7 @@ export default function ComplaintsPage() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, selectedCategory, selectedPriority, selectedStatus, searchTerm]);
+  }, [currentPage, selectedCategory, selectedStatus, searchTerm]);
 
   // Dropdown options
   const categoryOptions = useMemo(() => {
@@ -160,13 +156,6 @@ export default function ComplaintsPage() {
     });
     return list;
   }, [categories]);
-
-  const priorityOptions = [
-    { label: 'All', value: 'all' },
-    { label: 'High', value: 'HIGH' },
-    { label: 'Medium', value: 'MEDIUM' },
-    { label: 'Low', value: 'LOW' },
-  ];
 
   const statusOptions = [
     { label: 'All', value: 'all' },
@@ -236,13 +225,6 @@ export default function ComplaintsPage() {
       ),
     },
     {
-      key: 'priority',
-      header: 'Priority',
-      cell: (item) => (
-        <StatusBadge status={item.priority} />
-      ),
-    },
-    {
       key: 'status',
       header: 'Status',
       cell: (item) => (
@@ -292,8 +274,8 @@ export default function ComplaintsPage() {
       {/* 5 Summary Stat Cards matching Figma */}
       <ComplaintStatsCards stats={stats} loading={statsLoading} />
 
-      {/* Filters Row: Categories, Priorities, Status, Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-center">
+      {/* Filters Row: Categories, Status, Search */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-center">
         {/* Categories Dropdown */}
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
@@ -304,21 +286,6 @@ export default function ComplaintsPage() {
             value={selectedCategory}
             onChange={(e) => {
               setSelectedCategory(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        {/* Priorities Dropdown */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
-            Priorities
-          </label>
-          <Dropdown
-            options={priorityOptions}
-            value={selectedPriority}
-            onChange={(e) => {
-              setSelectedPriority(e.target.value);
               setCurrentPage(1);
             }}
           />
@@ -340,7 +307,7 @@ export default function ComplaintsPage() {
         </div>
 
         {/* Search Input & Clear Filter Button */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight opacity-0 select-none">
             Search
           </label>

@@ -12,7 +12,6 @@ import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.servic
 import { PaymentHistoryStatsCards } from '@/components/payments/payment-history-stats-cards';
 import { PaymentDetailsModal } from '@/components/payments/payment-details-modal';
 import { useResetOnNavigation } from '@/hooks';
-import { toast } from '@/lib/toast';
 import { config } from '@/lib/config';
 import {
   DataTable,
@@ -210,9 +209,6 @@ export default function PaymentHistoryPage() {
         document.body.appendChild(link);
         link.click();
         link.remove();
-        toast.success(`Payments history (${format.toUpperCase()}) exported successfully`);
-      } else {
-        toast.info('Export request completed');
       }
     } catch (err: unknown) {
       console.warn('Failed to export payments history:', err);

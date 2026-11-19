@@ -1,11 +1,15 @@
 'use client';
 
-import React, { Suspense, use, useEffect, useState } from 'react';
+import React, { Suspense, use, useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { ResidentDetail } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_DETAIL } from '@/services/resident.service';
+import { PaymentRecord, formatCurrency } from '@/types/payment';
+import { paymentService } from '@/services/payment.service';
+import { PaymentFormModal, PaymentCollectModal, PaymentDetailsModal } from '@/components/payments';
+import { DeleteConfirmationModal, StatusBadge, IconButton } from '@/components/ui';
 
 interface ResidentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -63,6 +67,99 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
       isMounted = false;
     };
   }, [residentId]);
+
+  // Payment states for Payments Tab
+  const [residentPayments, setResidentPayments] = useState<PaymentRecord[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState<boolean>(true);
+  const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = useState<number>(0);
+
+  // Modals for Payments
+  const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
+  const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
+  const [collectingPayment, setCollectingPayment] = useState<PaymentRecord | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingPayment, setViewingPayment] = useState<PaymentRecord | null>(null);
+  const [deletingPayment, setDeletingPayment] = useState<PaymentRecord | null>(null);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+
+  // Fetch resident payments when Payments tab is active or refreshed
+  useEffect(() => {
+    if (!resident.id || activeTab !== 'Payments') return;
+    let isMounted = true;
+
+    paymentService
+      .getPayments({
+        resident_id: resident.id,
+        limit: 50,
+      })
+      .then((res) => {
+        if (!isMounted) return;
+        setResidentPayments(res.data || []);
+      })
+      .catch((err) => {
+        console.warn('Failed to load resident payments:', err);
+        if (!isMounted) return;
+        if (resident.payment_info) {
+          setResidentPayments([
+            {
+              id: resident.payment_info.payment_id || 1,
+              transaction_id: null,
+              receipt_no: null,
+              title: resident.payment_info.title || 'Monthly Rent & Utility Bill',
+              payment_type: 'rent',
+              status: resident.payment_info.status || 'pending',
+              amount: (resident.payment_info.paid_amount || 0) + (resident.payment_info.due_amount || 150),
+              paid_amount: resident.payment_info.paid_amount || 0,
+              due_date: resident.payment_info.due_date || '',
+              breakdown: {
+                other: resident.payment_info.due_amount || 150,
+              },
+            } as PaymentRecord,
+          ]);
+        } else {
+          setResidentPayments([]);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoadingPayments(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resident.id, activeTab, paymentsRefreshTrigger, resident.payment_info]);
+
+  // Handle Delete Payment
+  const handleConfirmDeletePayment = async () => {
+    if (!deletingPayment) return;
+    setIsDeleting(true);
+    try {
+      await paymentService.deletePayment(deletingPayment.id);
+      setDeletingPayment(null);
+      setLoadingPayments(true);
+      setPaymentsRefreshTrigger((prev) => prev + 1);
+    } catch (err: unknown) {
+      console.error('Failed to delete payment:', err);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Compute live total due amount from payments
+  const totalDueAmount = useMemo(() => {
+    if (residentPayments.length > 0) {
+      return residentPayments.reduce((acc, p) => {
+        const status = (p.status || '').toLowerCase();
+        if (status === 'pending' || status === 'overdue') {
+          const due = (p.amount || 0) - (p.paid_amount || 0);
+          return acc + (due > 0 ? due : 0);
+        }
+        return acc;
+      }, 0);
+    }
+    return resident.due_amount ?? resident.payment_info?.due_amount ?? 0;
+  }, [residentPayments, resident.due_amount, resident.payment_info]);
 
   // Loading state for active file download
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
@@ -140,20 +237,34 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
     return phone;
   };
 
-  // Format date helper e.g. "04-11-2026 00:00" -> "04 Nov 2026"
+  // Format date helper e.g. "04-11-2026 00:00" or "2026-11-04" -> "04 Nov 2026"
   const formatDate = (dateStr?: string | null): string => {
-    if (!dateStr) return '-';
+    if (!dateStr) return '—';
     try {
-      const parts = dateStr.split(' ')[0].split('-');
+      const clean = dateStr.trim().split(' ')[0];
+      const sep = clean.includes('/') ? '/' : '-';
+      const parts = clean.split(sep);
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       if (parts.length === 3) {
-        const [day, month, year] = parts;
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const mIdx = parseInt(month, 10) - 1;
-        if (mIdx >= 0 && mIdx < 12) {
-          return `${day} ${monthNames[mIdx]} ${year}`;
+        if (parts[0].length === 4) {
+          // YYYY-MM-DD
+          const year = parts[0];
+          const mIdx = parseInt(parts[1], 10) - 1;
+          const day = parts[2];
+          if (mIdx >= 0 && mIdx < 12) {
+            return `${day} ${monthNames[mIdx]} ${year}`;
+          }
+        } else if (parts[2].length === 4) {
+          // DD-MM-YYYY
+          const day = parts[0];
+          const mIdx = parseInt(parts[1], 10) - 1;
+          const year = parts[2];
+          if (mIdx >= 0 && mIdx < 12) {
+            return `${day} ${monthNames[mIdx]} ${year}`;
+          }
         }
       }
-      return dateStr.split(' ')[0];
+      return clean;
     } catch {
       return dateStr;
     }
@@ -281,7 +392,10 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                   <button
                     key={tab}
                     type="button"
-                    onClick={() => setActiveTab(tab)}
+                    onClick={() => {
+                      if (tab === 'Payments') setLoadingPayments(true);
+                      setActiveTab(tab);
+                    }}
                     className={`pb-3.5 text-sm transition-colors cursor-pointer relative ${
                       isActive
                         ? 'text-gray-900 font-bold border-b-2 border-[#175C46]'
@@ -741,7 +855,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                   <div>
                     <span className="text-xs font-medium text-gray-500 block">Total Due Amount</span>
                     <span className="text-2xl font-bold text-red-600 tracking-tight block mt-0.5">
-                      ₹{resident.due_amount ?? resident.payment_info?.due_amount ?? 150}
+                      ₹{totalDueAmount.toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>
@@ -773,17 +887,23 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
 
               {/* Outstanding Invoices & Bills Table */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+                <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-gray-900">Billing History & Dues</h3>
                     <p className="text-xs text-gray-500 mt-0.5">All pending charges and recorded receipts</p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => alert('Record Payment modal')}
-                    className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    onClick={() => {
+                      setEditingPayment(null);
+                      setIsPaymentFormOpen(true);
+                    }}
+                    className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
                   >
-                    + Record Payment
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>Record Payment</span>
                   </button>
                 </div>
 
@@ -801,49 +921,127 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                      {resident.payment_info ? (
-                        <tr className="hover:bg-gray-50/60 transition-colors">
-                          <td className="py-4 px-5 font-semibold text-gray-900">
-                            {resident.payment_info.title || 'Monthly Laundry Charges - April 2026'}
-                            <span className="block text-[11px] text-gray-400 font-normal">
-                              ID: #{resident.payment_info.payment_id || 26}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-gray-600">
-                            {formatDate(resident.payment_info.due_date) || '20 Apr 2026'}
-                          </td>
-                          <td className="py-4 px-4 text-gray-600">
-                            {resident.payment_info.breakdown ? (
-                              <span>Other charges: ₹{resident.payment_info.breakdown.other || 150}</span>
-                            ) : (
-                              <span>Laundry Charges</span>
-                            )}
-                          </td>
-                          <td className="py-4 px-4 font-bold text-red-600">
-                            ₹{resident.payment_info.due_amount ?? 150}
-                          </td>
-                          <td className="py-4 px-4 font-medium text-gray-700">
-                            ₹{resident.payment_info.paid_amount ?? 0}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEF7E0] text-[#B06000] capitalize">
-                              {resident.payment_info.status || 'Pending'}
-                            </span>
-                          </td>
-                          <td className="py-4 px-5 text-right">
-                            <button
-                              type="button"
-                              onClick={() => alert(`Collect payment for #${resident.payment_info?.payment_id}`)}
-                              className="px-3 py-1.5 bg-[#175C46] text-white rounded-md text-xs font-medium hover:bg-[#124B38] cursor-pointer"
-                            >
-                              Collect
-                            </button>
+                      {loadingPayments ? (
+                        <tr>
+                          <td colSpan={7} className="py-12 text-center text-gray-400">
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <ProgressSpinner style={{ width: '28px', height: '28px' }} strokeWidth="3" />
+                              <span className="text-xs text-gray-500">Loading payment records...</span>
+                            </div>
                           </td>
                         </tr>
+                      ) : residentPayments.length > 0 ? (
+                        residentPayments.map((item) => {
+                          const due = (item.amount || 0) - (item.paid_amount || 0);
+                          const isPaid = (item.status || '').toLowerCase() === 'paid';
+                          const isPendingOrOverdue =
+                            item.status?.toLowerCase() === 'pending' ||
+                            item.status?.toLowerCase() === 'overdue' ||
+                            due > 0;
+
+                          // Parse breakdown elements
+                          const b = item.breakdown;
+                          const breakdownChips: string[] = [];
+                          if (b?.rent) breakdownChips.push(`Rent: ₹${b.rent.toLocaleString('en-IN')}`);
+                          if (b?.electricity) breakdownChips.push(`Elec: ₹${b.electricity.toLocaleString('en-IN')}`);
+                          if (b?.maintenance) breakdownChips.push(`Maint: ₹${b.maintenance.toLocaleString('en-IN')}`);
+                          if (b?.deposit || b?.security_deposit) {
+                            breakdownChips.push(`Deposit: ₹${(b.deposit || b.security_deposit || 0).toLocaleString('en-IN')}`);
+                          }
+                          if (b?.other) breakdownChips.push(`Other: ₹${b.other.toLocaleString('en-IN')}`);
+                          if (b?.laundry) breakdownChips.push(`Laundry: ₹${b.laundry.toLocaleString('en-IN')}`);
+
+                          return (
+                            <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                              <td className="py-4 px-5">
+                                <span className="font-semibold text-gray-900 block">
+                                  {item.title}
+                                </span>
+                                <span className="text-[11px] text-gray-400 font-normal block mt-0.5">
+                                  ID: #{item.id}
+                                  {item.receipt_no ? ` • ${item.receipt_no}` : ''}
+                                </span>
+                              </td>
+                              <td className="py-4 px-4 text-gray-600 whitespace-nowrap">
+                                {formatDate(item.due_date)}
+                              </td>
+                              <td className="py-4 px-4 text-gray-600">
+                                {breakdownChips.length > 0 ? (
+                                  <div className="space-y-0.5 text-[11px]">
+                                    {breakdownChips.map((chip, idx) => (
+                                      <span key={idx} className="block text-gray-600 whitespace-nowrap">
+                                        {chip}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">—</span>
+                                )}
+                              </td>
+                              <td className="py-4 px-4 font-bold text-red-600 whitespace-nowrap">
+                                ₹{due > 0 ? due.toLocaleString('en-IN') : 0}
+                              </td>
+                              <td className="py-4 px-4 font-medium text-gray-700 whitespace-nowrap">
+                                ₹{(item.paid_amount || 0).toLocaleString('en-IN')}
+                              </td>
+                              <td className="py-4 px-4 whitespace-nowrap">
+                                <StatusBadge status={item.status} />
+                              </td>
+                              <td className="py-4 px-5 text-right whitespace-nowrap">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  {isPendingOrOverdue && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setCollectingPayment(item);
+                                        setIsCollectModalOpen(true);
+                                      }}
+                                      className="px-3 py-1.5 bg-[#175C46] text-white rounded-lg text-xs font-semibold hover:bg-[#124B38] transition-colors cursor-pointer shadow-2xs"
+                                    >
+                                      Collect
+                                    </button>
+                                  )}
+                                  <IconButton
+                                    variant="view"
+                                    title="View Payment Details"
+                                    onClick={() => {
+                                      setViewingPayment(item);
+                                      setIsViewModalOpen(true);
+                                    }}
+                                  />
+                                  <IconButton
+                                    variant="edit"
+                                    title={isPaid ? 'Cannot edit paid bill' : 'Edit Payment'}
+                                    disabled={isPaid}
+                                    onClick={() => {
+                                      if (isPaid) return;
+                                      setEditingPayment(item);
+                                      setIsPaymentFormOpen(true);
+                                    }}
+                                  />
+                                  <IconButton
+                                    variant="delete"
+                                    title={isPaid ? 'Cannot delete paid bill' : 'Delete Payment'}
+                                    disabled={isPaid}
+                                    onClick={() => {
+                                      if (isPaid) return;
+                                      setDeletingPayment(item);
+                                    }}
+                                  />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
-                          <td colSpan={7} className="py-8 text-center text-gray-400">
-                            No billing records found.
+                          <td colSpan={7} className="py-12 text-center text-gray-400">
+                            <div className="flex flex-col items-center justify-center gap-1.5">
+                              <span className="text-xs font-semibold text-gray-600">No Billing Records Found</span>
+                              <span className="text-[11px] text-gray-400">
+                                Click &quot;+ Record Payment&quot; above to create a bill or charge for this resident.
+                              </span>
+                            </div>
                           </td>
                         </tr>
                       )}
@@ -920,6 +1118,80 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
               </div>
             </div>
           )}
+
+          {/* Record / Edit Payment Modal */}
+          <PaymentFormModal
+            visible={isPaymentFormOpen}
+            onHide={() => {
+              setIsPaymentFormOpen(false);
+              setEditingPayment(null);
+            }}
+            onSuccess={() => {
+              setLoadingPayments(true);
+              setPaymentsRefreshTrigger((prev) => prev + 1);
+            }}
+            initialPayment={editingPayment}
+            residentContext={{
+              resident_id: resident.id,
+              resident_name: resident.name,
+              branch_id: resident.room_info?.branch_id,
+              pg_id: resident.room_info?.pg_id,
+              stay_id:
+                (resident as unknown as { stay_id?: number }).stay_id ??
+                resident.room_info?.stay_id ??
+                residentPayments.find((p) => p.stay_id)?.stay_id ??
+                undefined,
+              room_id:
+                resident.room_info?.room_id ??
+                residentPayments.find((p) => p.room_id)?.room_id ??
+                undefined,
+              room_no: resident.room_info?.room_no,
+              room_type: resident.room_info?.room_type,
+              monthly_rent: resident.room_info?.monthly_rent,
+              security_deposit: resident.room_info?.security_deposit,
+            }}
+          />
+
+          {/* Collect Payment Modal */}
+          <PaymentCollectModal
+            visible={isCollectModalOpen}
+            onHide={() => {
+              setIsCollectModalOpen(false);
+              setCollectingPayment(null);
+            }}
+            onSuccess={() => {
+              setLoadingPayments(true);
+              setPaymentsRefreshTrigger((prev) => prev + 1);
+            }}
+            payment={collectingPayment}
+          />
+
+          {/* Payment Details View Modal */}
+          <PaymentDetailsModal
+            visible={isViewModalOpen}
+            onHide={() => {
+              setIsViewModalOpen(false);
+              setViewingPayment(null);
+            }}
+            payment={viewingPayment}
+          />
+
+          {/* Delete Payment Confirmation Modal */}
+          <DeleteConfirmationModal
+            visible={Boolean(deletingPayment)}
+            onHide={() => setDeletingPayment(null)}
+            title="Delete Payment Record"
+            itemName={deletingPayment?.title}
+            itemType="payment record"
+            details={[
+              { label: 'Invoice Title', value: deletingPayment?.title || '—' },
+              { label: 'Total Amount', value: formatCurrency(deletingPayment?.amount) },
+              { label: 'Due Date', value: formatDate(deletingPayment?.due_date) },
+              { label: 'Status', value: deletingPayment?.status || '—' },
+            ]}
+            loading={isDeleting}
+            onConfirm={handleConfirmDeletePayment}
+          />
         </>
       )}
     </main>

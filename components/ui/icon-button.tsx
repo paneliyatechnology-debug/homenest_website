@@ -139,7 +139,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>(
         title={title}
         aria-label={title}
         disabled={disabled}
-        className={`inline-flex items-center justify-center transition-colors cursor-pointer select-none disabled:opacity-40 disabled:cursor-not-allowed ${sizeClasses} ${variantClasses} ${className}`}
+        className={`inline-flex items-center justify-center transition-colors cursor-pointer select-none disabled:opacity-35 disabled:cursor-not-allowed disabled:hover:text-gray-400 disabled:hover:bg-white disabled:hover:border-gray-200 ${sizeClasses} ${variantClasses} ${className}`}
         {...props}
       >
         {renderDefaultIcon()}

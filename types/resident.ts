@@ -129,6 +129,7 @@ export interface ResidentContactInfo {
 }
 
 export interface ResidentRoomInfo {
+  stay_id?: number;
   room_id?: number;
   room_no?: string;
   room_type?: string;

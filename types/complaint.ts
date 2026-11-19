@@ -1,4 +1,3 @@
-export type ComplaintPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
 
 export interface ComplaintCategory {
@@ -7,10 +6,6 @@ export interface ComplaintCategory {
   key: string;
   icon: string;
   description?: string;
-  wifi_options?: {
-    issue_types: string[];
-    device_types: string[];
-  };
 }
 
 export interface ComplaintLocation {
@@ -69,7 +64,6 @@ export interface Complaint {
   complaint_number: string;
   title: string;
   description: string;
-  priority: ComplaintPriority | string;
   status: ComplaintStatus | string;
   is_overdue?: boolean;
   due_date?: string | null;
@@ -77,13 +71,10 @@ export interface Complaint {
   location?: ComplaintLocation | null;
   resident?: ComplaintResident | null;
   assigned_to?: ComplaintAssignedTo | null;
-  issue_type?: string | null;
-  device_type?: string | null;
   attachments?: ComplaintAttachment[];
   timeline?: ComplaintTimelineItem[];
   resolution_notes?: string | null;
   resolved_at?: string | null;
-  notify_updates?: boolean;
   feedback?: unknown;
   created_at: string;
   updated_at?: string;
@@ -102,17 +93,11 @@ export interface ComplaintStats {
   resolved_complaints?: number;
   overdue: number;
   overdue_complaints?: number;
-  priorities?: {
-    LOW?: number;
-    MEDIUM?: number;
-    HIGH?: number;
-  };
 }
 
 export interface ComplaintFilterParams {
   status?: string;
   category_id?: number | string;
-  priority?: string;
   search?: string;
   assigned_to_user_id?: number | string;
   branch_id?: number | string;
@@ -148,9 +133,4 @@ export const INITIAL_COMPLAINT_STATS: ComplaintStats = {
   resolved_complaints: 0,
   overdue: 0,
   overdue_complaints: 0,
-  priorities: {
-    LOW: 0,
-    MEDIUM: 0,
-    HIGH: 0,
-  },
 };

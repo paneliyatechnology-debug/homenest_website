@@ -364,7 +364,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* LEFT COLUMN: (approx 7 of 12 cols = ~58%) */}
         <div className="lg:col-span-7 space-y-4">
-          {/* Card 1: Banner Header Card with Category Icon & Priority */}
+          {/* Card 1: Banner Header Card with Category Icon */}
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4">
             <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
               <ComplaintCategoryIcon categoryKey={categoryKey} size="lg" />
@@ -377,8 +377,6 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                 <span className="text-xs text-gray-500 font-medium">
                   {categoryName}
                 </span>
-                <span className="text-gray-300">•</span>
-                <StatusBadge status={complaint.priority} label={`${complaint.priority} Priority`} />
               </div>
             </div>
           </div>
@@ -418,24 +416,6 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               <span className="w-28 text-gray-500 font-medium shrink-0">Category</span>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-gray-900 font-medium">{categoryName}</span>
-                {complaint.issue_type && (
-                  <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
-                    Issue: {complaint.issue_type.replace('_', ' ')}
-                  </span>
-                )}
-                {complaint.device_type && (
-                  <span className="text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded">
-                    Device: {complaint.device_type.replace('_', ' ')}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Priority Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs">
-              <span className="w-28 text-gray-500 font-medium shrink-0">Priority</span>
-              <div>
-                <StatusBadge status={complaint.priority} />
               </div>
             </div>
 
