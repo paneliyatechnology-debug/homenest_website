@@ -159,7 +159,7 @@ export default function ComplaintsPage() {
 
   const statusOptions = [
     { label: 'All', value: 'all' },
-    { label: 'Open', value: 'OPEN' },
+    { label: 'Pending', value: 'PENDING' },
     { label: 'In Progress', value: 'IN_PROGRESS' },
     { label: 'Resolved', value: 'RESOLVED' },
   ];

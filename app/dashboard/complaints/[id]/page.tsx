@@ -215,7 +215,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
     if (!complaintId) return;
     if (!bottomNotes.trim()) {
       // If no notes, trigger status dialog
-      setTargetStatus((complaint?.status as ComplaintStatus) === 'OPEN' ? 'IN_PROGRESS' : 'RESOLVED');
+      setTargetStatus((complaint?.status as ComplaintStatus) === 'PENDING' ? 'IN_PROGRESS' : 'RESOLVED');
       setIsStatusDialogOpen(true);
       return;
     }
@@ -264,10 +264,10 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
   // PrimeReact Status Menu Items
   const statusMenuItems: MenuItem[] = [
     {
-      label: 'Mark as Open',
-      icon: 'pi pi-folder text-blue-600',
+      label: 'Mark as Pending',
+      icon: 'pi pi-clock text-amber-600',
       command: () => {
-        setTargetStatus('OPEN');
+        setTargetStatus('PENDING');
         setIsStatusDialogOpen(true);
       },
     },
@@ -710,7 +710,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
             <Dropdown
               value={targetStatus}
               options={[
-                { label: 'OPEN', value: 'OPEN' },
+                { label: 'PENDING', value: 'PENDING' },
                 { label: 'IN PROGRESS', value: 'IN_PROGRESS' },
                 { label: 'RESOLVED', value: 'RESOLVED' },
               ]}

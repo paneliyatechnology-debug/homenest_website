@@ -401,7 +401,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-800 mb-1.5">
+          <label htmlFor="payment-form-due-date" className="block text-xs font-semibold text-gray-800 mb-1.5 cursor-pointer">
             Due Date <span className="text-red-500">*</span>
           </label>
           <AppDatePicker
@@ -423,7 +423,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       {/* Row 3: Billing Period Start & End */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-gray-800 mb-1.5">
+          <label htmlFor="payment-form-billing-start" className="block text-xs font-semibold text-gray-800 mb-1.5 cursor-pointer">
             Billing Period Start
           </label>
           <AppDatePicker
@@ -437,7 +437,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-gray-800 mb-1.5">
+          <label htmlFor="payment-form-billing-end" className="block text-xs font-semibold text-gray-800 mb-1.5 cursor-pointer">
             Billing Period End
           </label>
           <AppDatePicker

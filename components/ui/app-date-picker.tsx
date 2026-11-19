@@ -121,6 +121,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
   appendTo,
 }) => {
   const calendarRef = React.useRef<Calendar>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
   const dateObj = parseDateString(value);
   const resolvedAppendTo =
     appendTo !== undefined
@@ -144,16 +145,50 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
     }
   };
 
-  const handleOpen = () => {
+  const handleContainerClick = (e: React.MouseEvent) => {
     if (disabled) return;
-    calendarRef.current?.show();
+
+    // Guard against React portal event bubbling from inside the datepicker panel
+    if (!containerRef.current?.contains(e.target as Node)) {
+      return;
+    }
+
+    const overlay = calendarRef.current?.getOverlay();
+    const isOpen = Boolean(
+      overlay &&
+      document.body.contains(overlay) &&
+      !overlay.classList.contains('p-connected-overlay-exit') &&
+      !overlay.classList.contains('p-connected-overlay-exit-active')
+    );
+
+    if (isOpen) {
+      calendarRef.current?.hide();
+    } else {
+      calendarRef.current?.show();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      calendarRef.current?.show();
+    } else if (e.key === 'Escape') {
+      calendarRef.current?.hide();
+    }
   };
 
   return (
-    <div className={`relative w-full ${className}`} onClick={handleOpen}>
+    <div
+      ref={containerRef}
+      className={`relative w-full group ${disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${className}`}
+      onClick={handleContainerClick}
+      onKeyDown={handleKeyDown}
+    >
       <Calendar
         ref={calendarRef}
-        id={id}
+        id={id ? `${id}-container` : undefined}
+        inputId={id}
         name={name}
         value={dateObj}
         onChange={handleChange}
@@ -161,34 +196,26 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         placeholder={placeholder}
         disabled={disabled}
         required={required}
+        readOnlyInput={true}
         className="w-full"
         appendTo={resolvedAppendTo}
         touchUI={false}
-        showOnFocus={true}
+        showOnFocus={false}
         baseZIndex={100000}
         panelStyle={{ zIndex: 100000 }}
         inputClassName={`w-full h-11 px-4 pr-10 py-2.5 bg-white border ${
           hasError
             ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
             : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
-        } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans`}
+        } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans select-none`}
         panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans !z-[100000]"
       />
-      <button
-        type="button"
-        tabIndex={-1}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          handleOpen();
-        }}
-        disabled={disabled}
-        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#175C46] absolute right-1.5 top-1/2 -translate-y-1/2 cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-40"
-        title="Open calendar"
-        aria-label="Open calendar"
+      <div
+        className="w-8 h-8 flex items-center justify-center text-gray-400 group-hover:text-[#175C46] absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none select-none transition-colors"
+        aria-hidden="true"
       >
         <svg
-          className="w-4 h-4 stroke-current pointer-events-none"
+          className="w-4 h-4 stroke-current"
           fill="none"
           viewBox="0 0 24 24"
           strokeWidth="2"
@@ -199,7 +226,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
           />
         </svg>
-      </button>
+      </div>
     </div>
   );
 };

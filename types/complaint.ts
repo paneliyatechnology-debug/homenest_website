@@ -1,4 +1,4 @@
-export type ComplaintStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED';
+export type ComplaintStatus = 'PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'OPEN';
 
 export interface ComplaintCategory {
   id: number;
@@ -85,7 +85,9 @@ export interface ComplaintStats {
   branch_name?: string | null;
   total: number;
   total_complaints?: number;
-  open: number;
+  pending?: number;
+  pending_complaints?: number;
+  open?: number;
   open_complaints?: number;
   in_progress: number;
   in_progress_complaints?: number;
@@ -125,6 +127,8 @@ export interface ComplaintMeta {
 export const INITIAL_COMPLAINT_STATS: ComplaintStats = {
   total: 0,
   total_complaints: 0,
+  pending: 0,
+  pending_complaints: 0,
   open: 0,
   open_complaints: 0,
   in_progress: 0,

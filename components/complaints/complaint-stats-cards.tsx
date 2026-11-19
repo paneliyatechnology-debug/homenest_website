@@ -13,7 +13,7 @@ export const ComplaintStatsCards: React.FC<ComplaintStatsCardsProps> = ({
   loading = false,
 }) => {
   const total = stats.total_complaints ?? stats.total ?? 0;
-  const open = stats.open_complaints ?? stats.open ?? 0;
+  const pending = stats.pending_complaints ?? stats.pending ?? stats.open_complaints ?? stats.open ?? 0;
   const inProgress = stats.in_progress_complaints ?? stats.in_progress ?? 0;
   const resolved = stats.resolved_complaints ?? stats.resolved ?? 0;
   const overdue = stats.overdue_complaints ?? stats.overdue ?? 0;
@@ -30,12 +30,12 @@ export const ComplaintStatsCards: React.FC<ComplaintStatsCardsProps> = ({
       ),
     },
     {
-      label: 'Open',
-      value: open,
-      iconBg: 'bg-[#E8F1FD] text-[#2563EB]',
+      label: 'Pending',
+      value: pending,
+      iconBg: 'bg-[#FEF7E6] text-[#B06000]',
       icon: (
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
     },
