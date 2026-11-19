@@ -75,6 +75,12 @@ class ComplaintService {
     if (params.branch_id && params.branch_id !== 'all') {
       query.set('branch_id', String(params.branch_id));
     }
+    if (params.resident_id && params.resident_id !== 'all') {
+      query.set('resident_id', String(params.resident_id));
+    }
+    if (params.user_id && params.user_id !== 'all') {
+      query.set('user_id', String(params.user_id));
+    }
 
     const qs = query.toString();
     const res = await apiClient<{

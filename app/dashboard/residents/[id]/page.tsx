@@ -3,13 +3,23 @@
 import React, { Suspense, use, useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { ResidentDetail } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_DETAIL } from '@/services/resident.service';
 import { PaymentRecord, formatCurrency } from '@/types/payment';
 import { paymentService } from '@/services/payment.service';
+import { Complaint, ComplaintAttachment } from '@/types/complaint';
+import { complaintService } from '@/services/complaint.service';
 import { PaymentFormModal, PaymentCollectModal, PaymentDetailsModal } from '@/components/payments';
 import { DeleteConfirmationModal, StatusBadge, IconButton } from '@/components/ui';
+import {
+  AttachmentPreviewModal,
+  resolveFileUrl,
+  isImageFile,
+  isPdfFile,
+  getFileExtension,
+} from '@/components/complaints/attachment-preview-modal';
 
 interface ResidentDetailPageProps {
   params: Promise<{ id: string }>;
@@ -35,14 +45,26 @@ export default function ResidentDetailPage({ params }: ResidentDetailPageProps) 
 function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const residentId = resolvedParams?.id;
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const validTab =
+    tabParam && ['Overview', 'Documents', 'Payments', 'Complaints', 'Activity'].includes(tabParam)
+      ? (tabParam as 'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity')
+      : null;
 
   const [resident, setResident] = useState<ResidentDetail>(DEFAULT_RESIDENT_DETAIL);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity'>('Overview');
+  const [selectedTab, setSelectedTab] = useState<'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity' | null>(null);
+
+  const activeTab = selectedTab ?? validTab ?? 'Overview';
+  const setActiveTab = (tab: 'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity') => {
+    setSelectedTab(tab);
+  };
+
   const [prevResidentId, setPrevResidentId] = useState(residentId);
   if (residentId !== prevResidentId) {
     setPrevResidentId(residentId);
-    setActiveTab('Overview');
+    setSelectedTab(null);
   }
 
   useEffect(() => {
@@ -72,6 +94,10 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
   const [residentPayments, setResidentPayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState<boolean>(true);
   const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = useState<number>(0);
+
+  // Complaint states for Complaints Tab
+  const [residentComplaints, setResidentComplaints] = useState<Complaint[]>([]);
+  const [loadingComplaints, setLoadingComplaints] = useState<boolean>(true);
 
   // Modals for Payments
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
@@ -130,6 +156,48 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
     };
   }, [resident.id, activeTab, paymentsRefreshTrigger, resident.payment_info]);
 
+  // Fetch resident complaints when Complaints tab is active
+  useEffect(() => {
+    if (!resident.id || activeTab !== 'Complaints') return;
+    let isMounted = true;
+
+    complaintService
+      .getComplaints({
+        resident_id: resident.id,
+        limit: 100,
+      })
+      .then((res) => {
+        if (!isMounted) return;
+        const all = res.data || [];
+        const filtered = all.filter((c) => {
+          const cResId = c.resident?.id ?? (c as unknown as { resident_id?: number })?.resident_id;
+          if (cResId !== undefined && cResId !== null) {
+            return String(cResId) === String(resident.id);
+          }
+          if (resident.email && c.resident?.email) {
+            return c.resident.email.toLowerCase() === resident.email.toLowerCase();
+          }
+          if (resident.phone && c.resident?.phone) {
+            return c.resident.phone.replace(/\D/g, '') === resident.phone.replace(/\D/g, '');
+          }
+          return true;
+        });
+        setResidentComplaints(filtered);
+      })
+      .catch((err) => {
+        console.warn('Failed to load resident complaints:', err);
+        if (!isMounted) return;
+        setResidentComplaints([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingComplaints(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resident.id, activeTab, resident.email, resident.phone]);
+
   // Handle Delete Payment
   const handleConfirmDeletePayment = async () => {
     if (!deletingPayment) return;
@@ -161,8 +229,78 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
     return resident.due_amount ?? resident.payment_info?.due_amount ?? 0;
   }, [residentPayments, resident.due_amount, resident.payment_info]);
 
+  // Document Attachment Preview modal state (same as complaints)
+  const [docPreviewVisible, setDocPreviewVisible] = useState(false);
+  const [docPreviewIndex, setDocPreviewIndex] = useState(0);
+
   // Loading state for active file download
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null);
+
+  // Document list for resident documents tab
+  const residentDocumentList = useMemo(() => {
+    return [
+      {
+        key: 'aadhar_card',
+        title: 'Aadhaar Card',
+        fileName: resident.documents?.aadhar_card,
+        url: resident.documents?.aadhar_card_url,
+        status: 'Verified',
+        defaultExt: 'PDF',
+      },
+      {
+        key: 'address_proof',
+        title: 'Address Proof',
+        fileName: resident.documents?.address_proof,
+        url: resident.documents?.address_proof_url,
+        status: 'Verified',
+        defaultExt: 'PNG',
+      },
+      {
+        key: 'education_certificate',
+        title: 'Education Certificate',
+        fileName: resident.documents?.education_certificate,
+        url: resident.documents?.education_certificate_url,
+        status: 'Verified',
+        defaultExt: 'JPG',
+      },
+      {
+        key: 'agreement_file',
+        title: 'Agreement File',
+        fileName: resident.documents?.agreement_file,
+        url: resident.documents?.agreement_file_url,
+        status: 'Uploaded',
+        defaultExt: 'PDF',
+      },
+      {
+        key: 'signature',
+        title: 'Resident Signature',
+        fileName: resident.documents?.signature,
+        url: resident.documents?.signature_url,
+        status: 'Signed',
+        defaultExt: 'PNG',
+      },
+    ];
+  }, [resident.documents]);
+
+  // Uploaded documents formatted as ComplaintAttachment for AttachmentPreviewModal
+  const uploadedDocumentAttachments: ComplaintAttachment[] = useMemo(() => {
+    return residentDocumentList
+      .filter((doc) => Boolean(doc.url && doc.url.trim() !== ''))
+      .map((doc, idx) => ({
+        id: doc.key || idx,
+        name: doc.fileName || `${doc.title}.${doc.defaultExt.toLowerCase()}`,
+        file_name: doc.fileName || `${doc.title}.${doc.defaultExt.toLowerCase()}`,
+        url: doc.url!,
+        file_url: doc.url!,
+      }));
+  }, [residentDocumentList]);
+
+  const handlePreviewDocument = (docKey: string) => {
+    const uploadedDocs = residentDocumentList.filter((doc) => Boolean(doc.url && doc.url.trim() !== ''));
+    const targetIdx = uploadedDocs.findIndex((d) => d.key === docKey);
+    setDocPreviewIndex(targetIdx >= 0 ? targetIdx : 0);
+    setDocPreviewVisible(true);
+  };
 
   // Cross-origin safe automatic file download helper
   const handleDownloadDocument = async (fileUrl: string, fileName?: string, docKey?: string) => {
@@ -197,26 +335,6 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
     } finally {
       if (docKey) setDownloadingKey(null);
     }
-  };
-
-  // Helper to determine document format (pdf, image, other)
-  const getDocFormat = (fileName?: string | null, url?: string | null): 'pdf' | 'image' | 'other' => {
-    const str = (fileName || url || '').toLowerCase();
-    if (str.endsWith('.pdf')) return 'pdf';
-    if (str.endsWith('.jpg') || str.endsWith('.jpeg') || str.endsWith('.png') || str.endsWith('.webp') || str.endsWith('.gif')) {
-      return 'image';
-    }
-    return 'other';
-  };
-
-  // Helper to get uppercase file extension
-  const getFileExtension = (fileName?: string | null, url?: string | null): string => {
-    const str = (fileName || url || '').split('?')[0];
-    const lastDot = str.lastIndexOf('.');
-    if (lastDot !== -1 && lastDot < str.length - 1) {
-      return str.substring(lastDot + 1).toUpperCase();
-    }
-    return 'FILE';
   };
 
   // Compute initials for avatar fallback (e.g. "John Doe" -> "JD")
@@ -332,13 +450,12 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                   {resident.name}
                 </h1>
                 <span
-                  className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                    isStatusActive
+                  className={`inline-flex items-center px-3 py-0.5 rounded-full text-xs font-semibold capitalize ${isStatusActive
                       ? 'bg-[#E6F4EA] text-[#137333]'
                       : isStatusPending
-                      ? 'bg-[#FEF7E0] text-[#B06000]'
-                      : 'bg-[#FCE8E6] text-[#C5221F]'
-                  }`}
+                        ? 'bg-[#FEF7E0] text-[#B06000]'
+                        : 'bg-[#FCE8E6] text-[#C5221F]'
+                    }`}
                 >
                   {resident.status}
                 </span>
@@ -394,13 +511,13 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     type="button"
                     onClick={() => {
                       if (tab === 'Payments') setLoadingPayments(true);
+                      if (tab === 'Complaints') setLoadingComplaints(true);
                       setActiveTab(tab);
                     }}
-                    className={`pb-3.5 text-sm transition-colors cursor-pointer relative ${
-                      isActive
+                    className={`pb-3.5 text-sm transition-colors cursor-pointer relative ${isActive
                         ? 'text-gray-900 font-bold border-b-2 border-[#175C46]'
                         : 'text-gray-500 font-medium hover:text-gray-800'
-                    }`}
+                      }`}
                   >
                     {tab}
                   </button>
@@ -689,151 +806,125 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
 
           {/* Tab 2: Documents Tab */}
           {activeTab === 'Documents' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                {[
-                  {
-                    key: 'aadhar_card',
-                    title: 'Aadhaar Card',
-                    fileName: resident.documents?.aadhar_card,
-                    url: resident.documents?.aadhar_card_url,
-                    status: 'Verified',
-                    defaultExt: 'PDF',
-                  },
-                  {
-                    key: 'address_proof',
-                    title: 'Address Proof',
-                    fileName: resident.documents?.address_proof,
-                    url: resident.documents?.address_proof_url,
-                    status: 'Verified',
-                    defaultExt: 'PNG',
-                  },
-                  {
-                    key: 'education_certificate',
-                    title: 'Education Certificate',
-                    fileName: resident.documents?.education_certificate,
-                    url: resident.documents?.education_certificate_url,
-                    status: 'Verified',
-                    defaultExt: 'JPG',
-                  },
-                  {
-                    key: 'agreement_file',
-                    title: 'Agreement File',
-                    fileName: resident.documents?.agreement_file,
-                    url: resident.documents?.agreement_file_url,
-                    status: 'Uploaded',
-                    defaultExt: 'PDF',
-                  },
-                  {
-                    key: 'signature',
-                    title: 'Resident Signature',
-                    fileName: resident.documents?.signature,
-                    url: resident.documents?.signature_url,
-                    status: 'Signed',
-                    defaultExt: 'PNG',
-                  },
-                ].map((doc) => {
-                  const format = getDocFormat(doc.fileName, doc.url);
-                  const ext = doc.fileName ? getFileExtension(doc.fileName, doc.url) : doc.defaultExt;
-                  const isPdf = format === 'pdf' || ext === 'PDF';
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gray-900 tracking-tight">
+                    Documents
+                  </span>
+                  <span className="text-[11px] font-bold text-[#175C46] bg-[#E8F8F0] px-2 py-0.5 rounded-full">
+                    {uploadedDocumentAttachments.length}
+                  </span>
+                </div>
+
+                {uploadedDocumentAttachments.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDocPreviewIndex(0);
+                      setDocPreviewVisible(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#175C46] hover:text-[#124b38] hover:bg-[#E8F8F0] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                    title="Preview all in full screen lightbox"
+                  >
+                    <i className="pi pi-eye text-[11px]" />
+                    <span>Preview all</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Grid of compact document media tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+                {residentDocumentList.map((doc) => {
+                  const rawUrl = doc.url || '';
+                  const fullUrl = resolveFileUrl(rawUrl);
                   const isUploaded = Boolean(doc.url && doc.url.trim() !== '');
+                  const ext = getFileExtension(doc.fileName || undefined, fullUrl || undefined) || doc.defaultExt;
+                  const isPdf = isPdfFile(doc.fileName || undefined, fullUrl || undefined) || ext === 'PDF';
+                  const isImage = isImageFile(doc.fileName || undefined, fullUrl || undefined);
+
+                  if (!isUploaded) {
+                    return (
+                      <div
+                        key={doc.key}
+                        className="relative aspect-[4/3] bg-gray-50/70 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-1.5 text-gray-400 p-3 text-center select-none"
+                        title={`${doc.title} (Not uploaded)`}
+                      >
+                        <i className="pi pi-cloud-upload text-xl text-gray-300" />
+                        <span className="text-[11px] font-semibold text-gray-500 truncate max-w-full">
+                          {doc.title}
+                        </span>
+                        <span className="text-[10px] text-gray-400">Not uploaded</span>
+                      </div>
+                    );
+                  }
 
                   return (
                     <div
                       key={doc.key}
-                      className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between space-y-4 hover:border-gray-200 transition-colors"
+                      onClick={() => handlePreviewDocument(doc.key)}
+                      className="group relative aspect-[4/3] bg-gray-100 rounded-xl border border-gray-200/90 hover:border-[#175C46]/50 shadow-2xs hover:shadow-md transition-all overflow-hidden flex items-center justify-center cursor-pointer"
+                      title={`${doc.title} - ${doc.fileName || ''}`}
                     >
-                      {/* Top: Icon + Title + Status */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div
-                            className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                              isPdf
-                                ? 'bg-red-50 text-red-600'
-                                : 'bg-[#EBF7F2] text-[#175C46]'
-                            }`}
-                          >
-                            {isPdf ? (
-                              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                              </svg>
-                            ) : (
-                              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="text-sm font-bold text-gray-900 truncate">{doc.title}</h3>
-                            <span
-                              className={`inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                isPdf
-                                  ? 'bg-red-50 text-red-700 border border-red-200/60'
-                                  : 'bg-emerald-50 text-[#175C46] border border-emerald-200/60'
-                              }`}
-                            >
-                              {ext} File
-                            </span>
-                          </div>
+                      {isImage && fullUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={fullUrl}
+                          alt={doc.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      ) : isPdf ? (
+                        <div className="w-full h-full bg-rose-50 flex flex-col items-center justify-center gap-1 text-rose-600">
+                          <i className="pi pi-file-pdf text-2xl" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">PDF</span>
                         </div>
+                      ) : (
+                        <div className="w-full h-full bg-[#E8F8F0] flex flex-col items-center justify-center gap-1 text-[#175C46]">
+                          <i className="pi pi-file text-2xl" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider">{ext}</span>
+                        </div>
+                      )}
 
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E6F4EA] text-[#137333] shrink-0">
-                          {doc.status}
+                      {/* Top File Extension Badge */}
+                      <div className="absolute top-2 left-2 pointer-events-none">
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-xs shadow-xs">
+                          {ext}
                         </span>
                       </div>
 
-                      {/* File Name Attachment Info Box */}
-                      <div className="bg-gray-50/70 rounded-xl p-3 border border-gray-100/80">
-                        <span className="text-[11px] text-gray-400 block font-medium">Attachment</span>
-                        <p className="text-xs text-gray-700 font-mono font-medium truncate mt-0.5 cursor-pointer" title={doc.fileName || undefined}>
-                          {doc.fileName || 'No file attached'}
-                        </p>
-                      </div>
-
-                      {/* Action Buttons: View in new tab & Download */}
-                      <div className="pt-1">
-                        {isUploaded ? (
-                          <div className="grid grid-cols-2 gap-2">
-                            {/* View button - opens in browser native viewer with zero iframe issues */}
-                            <a
-                              href={doc.url!}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="py-2.5 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-xs font-semibold text-gray-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                            >
-                              <svg className="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                              </svg>
-                              View
-                            </a>
-
-                            {/* Download button with automatic download */}
-                            <button
-                              type="button"
-                              disabled={downloadingKey === doc.key}
-                              onClick={() => handleDownloadDocument(doc.url!, doc.fileName || undefined, doc.key)}
-                              className="py-2.5 px-3 bg-[#175C46] hover:bg-[#124B38] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs disabled:opacity-70"
-                            >
-                              {downloadingKey === doc.key ? (
-                                <>
-                                  <ProgressSpinner style={{ width: '13px', height: '13px' }} strokeWidth="3" />
-                                  <span>Downloading...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                  </svg>
-                                  <span>Download</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 block text-center py-2.5 bg-gray-50 rounded-xl">
-                            Not uploaded
-                          </span>
+                      {/* Hover Action Overlay: Preview and Download icon buttons */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-[2px]">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlePreviewDocument(doc.key);
+                          }}
+                          className="w-8 h-8 rounded-full bg-white text-gray-800 hover:text-[#175C46] flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer"
+                          title="Preview"
+                          aria-label="Preview"
+                        >
+                          <i className="pi pi-eye text-xs" />
+                        </button>
+                        {doc.url && (
+                          <button
+                            type="button"
+                            disabled={downloadingKey === doc.key}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadDocument(doc.url!, doc.fileName || undefined, doc.key);
+                            }}
+                            className="w-8 h-8 rounded-full bg-white text-gray-800 hover:text-[#175C46] flex items-center justify-center shadow-md hover:scale-110 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                            title="Download"
+                            aria-label="Download"
+                          >
+                            {downloadingKey === doc.key ? (
+                              <ProgressSpinner style={{ width: '12px', height: '12px' }} strokeWidth="3" />
+                            ) : (
+                              <i className="pi pi-download text-xs" />
+                            )}
+                          </button>
                         )}
                       </div>
                     </div>
@@ -846,65 +937,39 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
           {/* Tab 3: Payments Tab */}
           {activeTab === 'Payments' && (
             <div className="space-y-6">
-              {/* Payment Summary Stats */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-full bg-red-50 text-red-600 flex items-center justify-center shrink-0 font-bold text-base">
-                    ₹
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 block">Total Due Amount</span>
-                    <span className="text-2xl font-bold text-red-600 tracking-tight block mt-0.5">
-                      ₹{totalDueAmount.toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-full bg-emerald-50 text-[#175C46] flex items-center justify-center shrink-0 font-bold text-base">
-                    ₹
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 block">Monthly Rent</span>
-                    <span className="text-2xl font-bold text-gray-900 tracking-tight block mt-0.5">
-                      ₹{(resident.room_info?.monthly_rent ?? 9000).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4">
-                  <div className="w-11 h-11 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold text-base">
-                    ₹
-                  </div>
-                  <div>
-                    <span className="text-xs font-medium text-gray-500 block">Security Deposit</span>
-                    <span className="text-2xl font-bold text-gray-900 tracking-tight block mt-0.5">
-                      ₹{(resident.room_info?.security_deposit ?? 9000).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
               {/* Outstanding Invoices & Bills Table */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-4">
+                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-gray-900">Billing History & Dues</h3>
                     <p className="text-xs text-gray-500 mt-0.5">All pending charges and recorded receipts</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingPayment(null);
-                      setIsPaymentFormOpen(true);
-                    }}
-                    className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                    <span>Record Payment</span>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                      <span className="text-xs font-medium text-gray-500">Due Amount:</span>
+                      <span
+                        className={`text-sm font-bold tracking-tight ${
+                          totalDueAmount > 0 ? 'text-red-600' : 'text-[#175C46]'
+                        }`}
+                      >
+                        ₹{totalDueAmount.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPayment(null);
+                        setIsPaymentFormOpen(true);
+                      }}
+                      className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                      </svg>
+                      <span>Record Payment</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -1052,149 +1117,238 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
             </div>
           )}
 
-          {/* Tab 4: Complaints Tab */}
-          {activeTab === 'Complaints' && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-8 shadow-[0_1px_3px_rgba(0,0,0,0.02)] text-center space-y-3">
-              <div className="w-14 h-14 rounded-full bg-[#EBF7F2] text-[#175C46] flex items-center justify-center mx-auto">
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-base font-bold text-gray-900">No Complaints Reported</h3>
-              <p className="text-xs text-gray-500 max-w-sm mx-auto">
-                This resident currently has no active or past maintenance and facility complaints.
-              </p>
-              <div className="pt-2">
-                <button
-                  type="button"
-                  onClick={() => alert('Log new complaint modal')}
-                  className="px-5 py-2.5 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
-                >
-                  + Log Resident Complaint
-                </button>
-              </div>
-            </div>
-          )}
+                    {/* Tab 4: Complaints Tab */}
+                    {activeTab === 'Complaints' && (
+                      <div className="space-y-4">
+                        {loadingComplaints ? (
+                          <div className="bg-white rounded-2xl border border-gray-100 p-16 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-3">
+                            <ProgressSpinner style={{ width: '36px', height: '36px' }} strokeWidth="3" />
+                            <span className="text-xs text-gray-500 font-medium">Loading complaints...</span>
+                          </div>
+                        ) : residentComplaints.length === 0 ? (
+                          <div className="bg-white rounded-2xl border border-gray-100 p-12 sm:p-16 shadow-[0_1px_3px_rgba(0,0,0,0.02)] text-center space-y-3">
+                            <div className="w-14 h-14 rounded-full bg-[#EBF7F2] text-[#175C46] flex items-center justify-center mx-auto">
+                              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <h3 className="text-base font-bold text-gray-900">No Complaints Reported</h3>
+                            <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                              This resident currently has no active or past maintenance and facility complaints.
+                            </p>
+                          </div>
+                        ) : (
+                          /* Complaints Table Card */
+                          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
+                            <div className="p-5 border-b border-gray-100">
+                              <h3 className="text-sm font-bold text-gray-900">Complaints & Requests</h3>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                All maintenance issues and service requests raised by {resident.name || 'this resident'}
+                              </p>
+                            </div>
 
-          {/* Tab 5: Activity Tab */}
-          {activeTab === 'Activity' && (
-            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-6">
-              <h3 className="text-base font-bold text-gray-900">Activity Timeline</h3>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                  <tr className="border-b border-gray-100 text-gray-500 font-semibold bg-gray-50/50">
+                                    <th className="py-3.5 px-5">Complaint ID</th>
+                                    <th className="py-3.5 px-4">Title / Issue</th>
+                                    <th className="py-3.5 px-4">Category</th>
+                                    <th className="py-3.5 px-4">Assigned To</th>
+                                    <th className="py-3.5 px-4">Created On</th>
+                                    <th className="py-3.5 px-4">Status</th>
+                                    <th className="py-3.5 px-5 text-right">Action</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 font-normal">
+                                  {residentComplaints.map((item) => {
+                                    const complaintNo = item.complaint_number || `CMP-${item.id}`;
+                                    const categoryName = item.category?.name || 'General';
+                                    const assignedName = item.assigned_to?.name || 'Unassigned';
 
-              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
-                {/* Timeline Item 1 */}
-                <div className="relative">
-                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                  <span className="text-xs text-gray-400 font-medium">04-11-2026 15:39</span>
-                  <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Profile Updated</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    User personal and room assignment details updated by admin.
-                  </p>
-                </div>
+                                    return (
+                                      <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
+                                        <td className="py-4 px-5">
+                                          <Link
+                                            href={`/dashboard/complaints/${item.id}?from=resident&residentId=${resident.id}`}
+                                            className="font-bold text-[#175C46] hover:underline whitespace-nowrap"
+                                          >
+                                            {complaintNo}
+                                          </Link>
+                                        </td>
+                                        <td className="py-4 px-4">
+                                          <span className="font-semibold text-gray-900 block max-w-[240px] truncate" title={item.title}>
+                                            {item.title}
+                                          </span>
+                                          {item.description && (
+                                            <span className="text-[11px] text-gray-400 block max-w-[240px] truncate mt-0.5" title={item.description}>
+                                              {item.description}
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="py-4 px-4 whitespace-nowrap">
+                                          <span className="px-2 py-0.5 rounded-md bg-gray-100 text-gray-700 text-[11px] font-medium">
+                                            {categoryName}
+                                          </span>
+                                        </td>
+                                        <td className="py-4 px-4 whitespace-nowrap text-gray-700">
+                                          {assignedName}
+                                        </td>
+                                        <td className="py-4 px-4 whitespace-nowrap text-gray-500">
+                                          {formatDate(item.created_at)}
+                                        </td>
+                                        <td className="py-4 px-4 whitespace-nowrap">
+                                          <StatusBadge status={item.status} />
+                                        </td>
+                                        <td className="py-4 px-5 text-right whitespace-nowrap">
+                                          <div className="flex items-center justify-end pr-1">
+                                            <Link href={`/dashboard/complaints/${item.id}?from=resident&residentId=${resident.id}`}>
+                                              <IconButton
+                                                variant="view"
+                                                title="View Complaint Details"
+                                                aria-label="View Complaint Details"
+                                              />
+                                            </Link>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
-                {/* Timeline Item 2 */}
-                <div className="relative">
-                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                  <span className="text-xs text-gray-400 font-medium">
-                    {resident.room_info?.check_in_date || '04-11-2026 00:00'}
-                  </span>
-                  <h4 className="text-sm font-semibold text-gray-900 mt-0.5">
-                    Room Allocated: {resident.room_info?.room_no || 'A-201'} ({resident.room_info?.bed_number || 'Bed-1'})
-                  </h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {resident.room_info?.stay_notes || 'Allocated via Admin User Update'} in {resident.room_info?.building_name || 'Main Building'}.
-                  </p>
-                </div>
+                    {/* Tab 5: Activity Tab */}
+                    {activeTab === 'Activity' && (
+                      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-6">
+                        <h3 className="text-base font-bold text-gray-900">Activity Timeline</h3>
 
-                {/* Timeline Item 3 */}
-                <div className="relative">
-                  <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                  <span className="text-xs text-gray-400 font-medium">{resident.created_at || '31-10-2026 16:10'}</span>
-                  <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Resident Registered</h4>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Resident registered into {resident.room_info?.pg_name || 'PG Facility'}.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+                        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
+                          {/* Timeline Item 1 */}
+                          <div className="relative">
+                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
+                            <span className="text-xs text-gray-400 font-medium">04-11-2026 15:39</span>
+                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Profile Updated</h4>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              User personal and room assignment details updated by admin.
+                            </p>
+                          </div>
 
-          {/* Record / Edit Payment Modal */}
-          <PaymentFormModal
-            visible={isPaymentFormOpen}
-            onHide={() => {
-              setIsPaymentFormOpen(false);
-              setEditingPayment(null);
-            }}
-            onSuccess={() => {
-              setLoadingPayments(true);
-              setPaymentsRefreshTrigger((prev) => prev + 1);
-            }}
-            initialPayment={editingPayment}
-            residentContext={{
-              resident_id: resident.id,
-              resident_name: resident.name,
-              branch_id: resident.room_info?.branch_id,
-              pg_id: resident.room_info?.pg_id,
-              stay_id:
-                (resident as unknown as { stay_id?: number }).stay_id ??
-                resident.room_info?.stay_id ??
-                residentPayments.find((p) => p.stay_id)?.stay_id ??
-                undefined,
-              room_id:
-                resident.room_info?.room_id ??
-                residentPayments.find((p) => p.room_id)?.room_id ??
-                undefined,
-              room_no: resident.room_info?.room_no,
-              room_type: resident.room_info?.room_type,
-              monthly_rent: resident.room_info?.monthly_rent,
-              security_deposit: resident.room_info?.security_deposit,
-            }}
-          />
+                          {/* Timeline Item 2 */}
+                          <div className="relative">
+                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
+                            <span className="text-xs text-gray-400 font-medium">
+                              {resident.room_info?.check_in_date || '04-11-2026 00:00'}
+                            </span>
+                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">
+                              Room Allocated: {resident.room_info?.room_no || 'A-201'} ({resident.room_info?.bed_number || 'Bed-1'})
+                            </h4>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {resident.room_info?.stay_notes || 'Allocated via Admin User Update'} in {resident.room_info?.building_name || 'Main Building'}.
+                            </p>
+                          </div>
 
-          {/* Collect Payment Modal */}
-          <PaymentCollectModal
-            visible={isCollectModalOpen}
-            onHide={() => {
-              setIsCollectModalOpen(false);
-              setCollectingPayment(null);
-            }}
-            onSuccess={() => {
-              setLoadingPayments(true);
-              setPaymentsRefreshTrigger((prev) => prev + 1);
-            }}
-            payment={collectingPayment}
-          />
+                          {/* Timeline Item 3 */}
+                          <div className="relative">
+                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
+                            <span className="text-xs text-gray-400 font-medium">{resident.created_at || '31-10-2026 16:10'}</span>
+                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Resident Registered</h4>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Resident registered into {resident.room_info?.pg_name || 'PG Facility'}.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
-          {/* Payment Details View Modal */}
-          <PaymentDetailsModal
-            visible={isViewModalOpen}
-            onHide={() => {
-              setIsViewModalOpen(false);
-              setViewingPayment(null);
-            }}
-            payment={viewingPayment}
-          />
+                    {/* Record / Edit Payment Modal */}
+                    <PaymentFormModal
+                      visible={isPaymentFormOpen}
+                      onHide={() => {
+                        setIsPaymentFormOpen(false);
+                        setEditingPayment(null);
+                      }}
+                      onSuccess={() => {
+                        setLoadingPayments(true);
+                        setPaymentsRefreshTrigger((prev) => prev + 1);
+                      }}
+                      initialPayment={editingPayment}
+                      residentContext={{
+                        resident_id: resident.id,
+                        resident_name: resident.name,
+                        branch_id: resident.room_info?.branch_id,
+                        pg_id: resident.room_info?.pg_id,
+                        stay_id:
+                          (resident as unknown as { stay_id?: number }).stay_id ??
+                          resident.room_info?.stay_id ??
+                          residentPayments.find((p) => p.stay_id)?.stay_id ??
+                          undefined,
+                        room_id:
+                          resident.room_info?.room_id ??
+                          residentPayments.find((p) => p.room_id)?.room_id ??
+                          undefined,
+                        room_no: resident.room_info?.room_no,
+                        room_type: resident.room_info?.room_type,
+                        monthly_rent: resident.room_info?.monthly_rent,
+                        security_deposit: resident.room_info?.security_deposit,
+                      }}
+                    />
 
-          {/* Delete Payment Confirmation Modal */}
-          <DeleteConfirmationModal
-            visible={Boolean(deletingPayment)}
-            onHide={() => setDeletingPayment(null)}
-            title="Delete Payment Record"
-            itemName={deletingPayment?.title}
-            itemType="payment record"
-            details={[
-              { label: 'Invoice Title', value: deletingPayment?.title || '—' },
-              { label: 'Total Amount', value: formatCurrency(deletingPayment?.amount) },
-              { label: 'Due Date', value: formatDate(deletingPayment?.due_date) },
-              { label: 'Status', value: deletingPayment?.status || '—' },
-            ]}
-            loading={isDeleting}
-            onConfirm={handleConfirmDeletePayment}
-          />
-        </>
-      )}
-    </main>
-  );
+                    {/* Collect Payment Modal */}
+                    <PaymentCollectModal
+                      visible={isCollectModalOpen}
+                      onHide={() => {
+                        setIsCollectModalOpen(false);
+                        setCollectingPayment(null);
+                      }}
+                      onSuccess={() => {
+                        setLoadingPayments(true);
+                        setPaymentsRefreshTrigger((prev) => prev + 1);
+                      }}
+                      payment={collectingPayment}
+                    />
+
+                    {/* Payment Details View Modal */}
+                    <PaymentDetailsModal
+                      visible={isViewModalOpen}
+                      onHide={() => {
+                        setIsViewModalOpen(false);
+                        setViewingPayment(null);
+                      }}
+                      payment={viewingPayment}
+                    />
+
+            {/* Delete Payment Confirmation Modal */}
+            <DeleteConfirmationModal
+              visible={Boolean(deletingPayment)}
+              onHide={() => setDeletingPayment(null)}
+              title="Delete Payment Record"
+              itemName={deletingPayment?.title}
+              itemType="payment record"
+              details={[
+                { label: 'Invoice Title', value: deletingPayment?.title || '—' },
+                { label: 'Total Amount', value: formatCurrency(deletingPayment?.amount) },
+                { label: 'Due Date', value: formatDate(deletingPayment?.due_date) },
+                { label: 'Status', value: deletingPayment?.status || '—' },
+              ]}
+              loading={isDeleting}
+              onConfirm={handleConfirmDeletePayment}
+            />
+
+            {/* Document Preview Lightbox Modal (same as complaints) */}
+            <AttachmentPreviewModal
+              visible={docPreviewVisible}
+              onHide={() => setDocPreviewVisible(false)}
+              attachments={uploadedDocumentAttachments}
+              initialIndex={docPreviewIndex}
+            />
+          </>
+        )}
+      </main>
+    );
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { Suspense, use, useEffect, useState, useRef } from 'react';
+import React, { Suspense, use, useEffect, useState, useRef, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Dialog } from 'primereact/dialog';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import {
@@ -127,11 +128,37 @@ export default function ComplaintDetailPage({ params }: ComplaintDetailPageProps
 function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const complaintId = resolvedParams?.id;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromParam = searchParams.get('from');
+  const returnToParam = searchParams.get('returnTo');
+  const residentIdParam = searchParams.get('residentId');
 
   // Main state
   const [complaint, setComplaint] = useState<Complaint | null>(null);
   const [staffList, setStaffList] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Compute back navigation destination dynamically
+  const backHref = useMemo(() => {
+    if (returnToParam) return returnToParam;
+    const targetResidentId = residentIdParam || (fromParam === 'resident' ? complaint?.resident?.id : null);
+    if ((fromParam === 'resident' || targetResidentId) && targetResidentId) {
+      return `/dashboard/residents/${targetResidentId}?tab=Complaints`;
+    }
+    return '/dashboard/complaints';
+  }, [returnToParam, fromParam, residentIdParam, complaint?.resident?.id]);
+
+  const handleBackNavigation = (e?: React.MouseEvent) => {
+    if (e) e.preventDefault();
+    if (fromParam === 'resident' || returnToParam) {
+      router.push(backHref);
+    } else if (typeof window !== 'undefined' && document.referrer && document.referrer.includes('/dashboard/residents/')) {
+      router.back();
+    } else {
+      router.push(backHref);
+    }
+  };
 
   // Assignment state
   const [assignedStaffId, setAssignedStaffId] = useState<string>('');
@@ -325,7 +352,11 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
   if (!complaint) {
     return (
       <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5]">
-        <BackButton href="/dashboard/complaints" title="Back to Complaints" />
+        <BackButton
+          href={backHref}
+          title={backHref.includes('/residents/') ? 'Back to Resident Details' : 'Back to Complaints'}
+          onClick={handleBackNavigation}
+        />
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <p className="text-sm font-medium text-gray-600">Complaint not found.</p>
         </div>
@@ -358,7 +389,11 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       {/* Top Header matching Figma pixel-for-pixel */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
-          <BackButton href="/dashboard/complaints" />
+          <BackButton
+            href={backHref}
+            title={backHref.includes('/residents/') ? 'Back to Resident Details' : 'Back to Complaints'}
+            onClick={handleBackNavigation}
+          />
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
             Complaint Details
           </h1>

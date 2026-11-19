@@ -103,6 +103,8 @@ export interface ComplaintFilterParams {
   search?: string;
   assigned_to_user_id?: number | string;
   branch_id?: number | string;
+  resident_id?: number | string;
+  user_id?: number | string;
   page?: number;
   limit?: number;
 }

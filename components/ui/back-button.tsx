@@ -6,7 +6,7 @@ import Link from 'next/link';
 export interface BackButtonProps {
   href: string;
   title?: string;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
   className?: string;
 }
 
