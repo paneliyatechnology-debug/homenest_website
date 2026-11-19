@@ -185,7 +185,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
           }
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isMounted = false;
@@ -218,7 +218,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
             role: detail.role || 'resident',
           });
         })
-        .catch(() => {});
+        .catch(() => { });
 
       return () => {
         isMounted = false;
@@ -281,6 +281,94 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     }
   };
 
+  // Phone Validation & Input Handlers
+  const validateVisitorPhone = (phone: string): string => {
+    const trimmed = phone.trim();
+    if (!trimmed) {
+      return 'Visitor phone no. is required';
+    }
+
+    const hasPlus = trimmed.startsWith('+');
+    const digits = trimmed.replace(/\D/g, '');
+
+    if (digits.length === 0) {
+      return 'Please enter a valid phone number';
+    }
+
+    if (hasPlus) {
+      if (digits.length < 10) {
+        return 'Phone number with country code must be at least 10 digits';
+      }
+      if (digits.length > 13) {
+        return 'Phone number cannot exceed 13 digits';
+      }
+    } else {
+      if (digits.length < 10) {
+        return 'Phone number must be at least 10 digits';
+      }
+      if (digits.length > 10) {
+        return 'Phone number cannot exceed 10 digits';
+      }
+    }
+
+    return '';
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const hasPlus = raw.startsWith('+');
+    const digitsOnly = raw.replace(/\D/g, '');
+
+    const maxDigits = hasPlus ? 13 : 10;
+    const limited = digitsOnly.slice(0, maxDigits);
+    const formatted = hasPlus ? `+${limited}` : limited;
+
+    setVisitorPhone(formatted);
+    if (errors.visitor_phone) {
+      const err = validateVisitorPhone(formatted);
+      setErrors((prev) => ({ ...prev, visitor_phone: err }));
+    }
+  };
+
+  const handlePhoneKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (
+      e.ctrlKey ||
+      e.metaKey ||
+      [
+        'Backspace',
+        'Tab',
+        'Enter',
+        'Escape',
+        'ArrowLeft',
+        'ArrowRight',
+        'ArrowUp',
+        'ArrowDown',
+        'Delete',
+        'Home',
+        'End',
+      ].includes(e.key)
+    ) {
+      return;
+    }
+
+    if (
+      e.key === '+' &&
+      e.currentTarget.selectionStart === 0 &&
+      !e.currentTarget.value.includes('+')
+    ) {
+      return;
+    }
+
+    if (!/^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+    }
+  };
+
+  const handlePhoneBlur = () => {
+    const err = validateVisitorPhone(visitorPhone);
+    setErrors((prev) => ({ ...prev, visitor_phone: err }));
+  };
+
   // Form submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -292,8 +380,9 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     if (!selectedResidentId && !residentName.trim()) {
       newErrors.resident_id = 'Please select a host resident';
     }
-    if (!visitorPhone.trim()) {
-      newErrors.visitor_phone = 'Visitor phone no. is required';
+    const phoneErr = validateVisitorPhone(visitorPhone);
+    if (phoneErr) {
+      newErrors.visitor_phone = phoneErr;
     }
     if (!purpose.trim()) {
       newErrors.purpose = 'Purpose is required';
@@ -480,17 +569,19 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
               <TextInput
                 label="Visitor phone no."
                 required
-                placeholder="Enter phone no."
+                type="tel"
+                inputMode="tel"
+                placeholder="Enter 10-digit phone no."
+                maxLength={visitorPhone.startsWith('+') ? 14 : 10}
                 value={visitorPhone}
-                onChange={(e) => {
-                  setVisitorPhone(e.target.value);
-                  if (errors.visitor_phone) setErrors((prev) => ({ ...prev, visitor_phone: '' }));
-                }}
+                onChange={handlePhoneChange}
+                onKeyDown={handlePhoneKeyDown}
+                onBlur={handlePhoneBlur}
                 error={errors.visitor_phone}
               />
 
               <Dropdown
-                label="Pupose"
+                label="Purpose"
                 required
                 placeholder="Select Purpose"
                 options={purposeOptions}
@@ -573,13 +664,12 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                     handlePhotoSelect(e.dataTransfer.files[0]);
                   }
                 }}
-                className={`w-full min-h-[175px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-5 text-center cursor-pointer transition-all bg-white ${
-                  isDragging
+                className={`w-full min-h-[175px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-5 text-center cursor-pointer transition-all bg-white ${isDragging
                     ? 'border-[#175C46] bg-[#175C46]/5'
                     : photoPreview
-                    ? 'border-gray-200'
-                    : 'border-gray-300 hover:border-[#175C46] hover:bg-gray-50/50'
-                }`}
+                      ? 'border-gray-200'
+                      : 'border-gray-300 hover:border-[#175C46] hover:bg-gray-50/50'
+                  }`}
               >
                 {photoPreview ? (
                   <div className="relative w-full flex flex-col items-center">
