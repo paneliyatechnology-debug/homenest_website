@@ -12,6 +12,7 @@ interface ResidentDropdownProps {
   placeholder?: string;
   onSelect: (resident: Resident | null) => void;
   hasError?: boolean;
+  allowClear?: boolean;
 }
 
 export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
@@ -20,6 +21,7 @@ export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
   placeholder = 'Select resident',
   onSelect,
   hasError,
+  allowClear = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [residents, setResidents] = useState<Resident[]>([]);
@@ -134,15 +136,33 @@ export const ResidentDropdown: React.FC<ResidentDropdownProps> = ({
         <span className={`truncate ${!selectedLabel ? 'text-gray-400' : ''}`}>
           {selectedLabel ?? placeholder}
         </span>
-        <svg
-          className={`w-4 h-4 text-gray-500 shrink-0 ml-2 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="flex items-center gap-1 shrink-0 ml-2">
+          {allowClear && selectedResidentId ? (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSelect(null);
+              }}
+              className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+              title="Clear selection"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </span>
+          ) : null}
+          <svg
+            className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </button>
 
       {/* Dropdown panel */}

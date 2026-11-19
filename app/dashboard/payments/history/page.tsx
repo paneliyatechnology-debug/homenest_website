@@ -27,19 +27,6 @@ import {
   ClearFilterButton,
 } from '@/components/ui';
 
-function getDefaultMonthRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const fmt = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-  return { start: fmt(start), end: fmt(end) };
-}
-
 function resolveFileUrl(fileUrl?: string): string {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) return fileUrl;
@@ -48,10 +35,8 @@ function resolveFileUrl(fileUrl?: string): string {
 }
 
 export default function PaymentHistoryPage() {
-  // Initialize date range to current month to match Figma design
-  const defaultDates = useMemo(() => getDefaultMonthRange(), []);
-  const [startDate, setStartDate] = useState<string>(defaultDates.start);
-  const [endDate, setEndDate] = useState<string>(defaultDates.end);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Filter States
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -85,10 +70,10 @@ export default function PaymentHistoryPage() {
       selectedType !== 'all' ||
       selectedStatus !== 'all' ||
       Boolean(searchTerm.trim()) ||
-      startDate !== defaultDates.start ||
-      endDate !== defaultDates.end
+      Boolean(startDate) ||
+      Boolean(endDate)
     );
-  }, [selectedType, selectedStatus, searchTerm, startDate, endDate, defaultDates]);
+  }, [selectedType, selectedStatus, searchTerm, startDate, endDate]);
 
   // Clear all filters handler
   const handleClearAllFilters = () => {
@@ -96,8 +81,8 @@ export default function PaymentHistoryPage() {
     setSelectedStatus('all');
     setSearchTerm('');
     setDebouncedSearch('');
-    setStartDate(defaultDates.start);
-    setEndDate(defaultDates.end);
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
   };
 
@@ -107,9 +92,8 @@ export default function PaymentHistoryPage() {
     setSelectedStatus('all');
     setSearchTerm('');
     setDebouncedSearch('');
-    const cur = getDefaultMonthRange();
-    setStartDate(cur.start);
-    setEndDate(cur.end);
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
     setSelectedPayment(null);
     setIsModalOpen(false);
@@ -134,6 +118,7 @@ export default function PaymentHistoryPage() {
       .getPaymentStats({
         start_date: startDate || undefined,
         end_date: endDate || undefined,
+        date_by: 'created_at',
       })
       .then((data) => {
         if (!isMounted) return;
@@ -197,6 +182,7 @@ export default function PaymentHistoryPage() {
         payment_type: selectedType !== 'all' ? selectedType : undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
+        date_by: 'created_at',
         search: debouncedSearch || undefined,
         format,
       });

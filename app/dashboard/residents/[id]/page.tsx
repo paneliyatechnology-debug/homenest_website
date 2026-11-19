@@ -962,9 +962,9 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         setEditingPayment(null);
                         setIsPaymentFormOpen(true);
                       }}
-                      className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                      className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all cursor-pointer shrink-0"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                       <span>Record Payment</span>
@@ -1281,6 +1281,11 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         resident_id: resident.id,
                         resident_name: resident.name,
                         branch_id: resident.room_info?.branch_id,
+                        branch_name: resident.room_info?.branch_name,
+                        building_name: resident.room_info?.building_name,
+                        floor_name:
+                          resident.room_info?.floor_name ||
+                          (resident.room_info?.floor_number ? `Floor ${resident.room_info.floor_number}` : undefined),
                         pg_id: resident.room_info?.pg_id,
                         stay_id:
                           (resident as unknown as { stay_id?: number }).stay_id ??

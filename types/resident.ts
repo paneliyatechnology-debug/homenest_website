@@ -25,6 +25,7 @@ export interface Resident {
   role: string;
   building_id?: number | null;
   branch_id?: number | null;
+  branch_name?: string | null;
   subscription_plan?: unknown | null;
 }
 

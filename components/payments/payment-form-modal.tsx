@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Dialog } from 'primereact/dialog';
 import {
   PaymentRecord,
@@ -10,13 +10,21 @@ import {
   formatCurrency,
 } from '@/types/payment';
 import { paymentService } from '@/services/payment.service';
+import { residentService } from '@/services/resident.service';
+import { branchService } from '@/services/branch.service';
+import { Resident } from '@/types/resident';
+import { Branch } from '@/types/branch';
 import { AppDatePicker, Dropdown } from '@/components/ui';
+import { ResidentDropdown } from '@/components/residents/resident-dropdown';
 
 interface ResidentContext {
   resident_id: number;
   resident_name?: string;
   pg_id?: number;
   branch_id?: number;
+  branch_name?: string;
+  building_name?: string;
+  floor_name?: string;
   stay_id?: number;
   room_id?: number;
   room_no?: string;
@@ -64,11 +72,22 @@ export const PaymentFormModal: React.FC<PaymentFormModalProps> = ({
   residentContext,
 }) => {
   const isEdit = Boolean(initialPayment);
+  const [formSessionKey, setFormSessionKey] = useState(0);
+
+  const handleClose = () => {
+    setFormSessionKey((k) => k + 1);
+    onHide();
+  };
+
+  const handleSuccess = () => {
+    setFormSessionKey((k) => k + 1);
+    onSuccess();
+  };
 
   return (
     <Dialog
       visible={visible}
-      onHide={onHide}
+      onHide={handleClose}
       header={
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-[#EBF7F2] text-[#175C46] flex items-center justify-center shrink-0">
@@ -100,11 +119,11 @@ export const PaymentFormModal: React.FC<PaymentFormModalProps> = ({
     >
       {visible && (
         <PaymentFormContent
-          key={initialPayment ? `edit-${initialPayment.id}` : `create-${residentContext?.resident_id || 'new'}`}
+          key={`session-${formSessionKey}-${initialPayment ? `edit-${initialPayment.id}` : `create-${residentContext?.resident_id || 'new'}`}`}
           initialPayment={initialPayment}
           residentContext={residentContext}
-          onHide={onHide}
-          onSuccess={onSuccess}
+          onHide={handleClose}
+          onSuccess={handleSuccess}
         />
       )}
     </Dialog>
@@ -130,12 +149,187 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
   const [residentId, setResidentId] = useState<number | string>(
     initialPayment?.resident?.id ?? residentContext?.resident_id ?? ''
   );
-  const [pgId, setPgId] = useState<number | string>(
-    initialPayment?.pg_id ?? residentContext?.pg_id ?? ''
+  const [selectedResident, setSelectedResident] = useState<Resident | null>(null);
+  const [loadingResidentDetail, setLoadingResidentDetail] = useState(false);
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  const [pgId, setPgId] = useState<number | string | undefined>(
+    initialPayment?.pg_id ?? residentContext?.pg_id ?? undefined
   );
-  const stayId = initialPayment?.stay_id ?? residentContext?.stay_id ?? undefined;
-  const roomId = initialPayment?.room_id ?? residentContext?.room_id ?? undefined;
-  const branchId = initialPayment?.branch_id ?? residentContext?.branch_id ?? undefined;
+  const [branchId, setBranchId] = useState<number | string | undefined>(
+    initialPayment?.branch_id ?? residentContext?.branch_id ?? undefined
+  );
+  const [stayId, setStayId] = useState<number | string | undefined>(
+    initialPayment?.stay_id ?? residentContext?.stay_id ?? undefined
+  );
+  const [roomId, setRoomId] = useState<number | string | undefined>(
+    initialPayment?.room_id ?? residentContext?.room_id ?? undefined
+  );
+
+  // Selected resident's location info for display
+  const [selectedLocation, setSelectedLocation] = useState<{
+    branchName?: string;
+    buildingName?: string;
+    floorName?: string;
+    roomNo?: string;
+    bedNumber?: string;
+  } | null>(() => {
+    if (residentContext) {
+      return {
+        branchName: residentContext.branch_name,
+        buildingName: residentContext.building_name,
+        floorName: residentContext.floor_name,
+        roomNo: residentContext.room_no,
+      };
+    }
+    if (initialPayment) {
+      return {
+        branchName: initialPayment.branch_name || undefined,
+        buildingName: initialPayment.building_name || undefined,
+        floorName:
+          initialPayment.floor_name ||
+          (initialPayment.floor_number ? `Floor ${initialPayment.floor_number}` : undefined),
+        roomNo: initialPayment.room_no || undefined,
+        bedNumber: initialPayment.bed_number || undefined,
+      };
+    }
+    return null;
+  });
+
+  // Load branches to resolve branch names by ID if needed
+  useEffect(() => {
+    let isMounted = true;
+    branchService
+      .getBranches({ limit: 100 })
+      .then((res) => {
+        if (isMounted && res?.data) {
+          setBranches(res.data);
+        }
+      })
+      .catch(() => { });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const displayBranchName = useMemo(() => {
+    if (selectedLocation?.branchName) return selectedLocation.branchName;
+    if (residentContext?.branch_name) return residentContext.branch_name;
+    if (initialPayment?.branch_name) return initialPayment.branch_name;
+    if (branchId) {
+      const b = branches.find((item) => String(item.id) === String(branchId));
+      if (b) return b.name;
+    }
+    return '';
+  }, [
+    selectedLocation?.branchName,
+    residentContext?.branch_name,
+    initialPayment?.branch_name,
+    branchId,
+    branches,
+  ]);
+
+  const handleResidentSelect = async (resident: Resident | null) => {
+    setSelectedResident(resident);
+    if (!resident) {
+      setResidentId('');
+      setSelectedLocation(null);
+      setBranchId(undefined);
+      setPgId(undefined);
+      setStayId(undefined);
+      setRoomId(undefined);
+      return;
+    }
+
+    setResidentId(resident.id);
+    if (errors.residentId) {
+      setErrors((prev) => ({ ...prev, residentId: '' }));
+    }
+
+    // Initial location info from Resident list item
+    const initialBranchName =
+      resident.branch_name ||
+      (resident.branch_id ? branches.find((b) => b.id === resident.branch_id)?.name : undefined) ||
+      '';
+
+    const floorDisplay =
+      resident.floor_name ||
+      (resident.floor_number ? `Floor ${resident.floor_number}` : '');
+
+    setSelectedLocation({
+      branchName: initialBranchName,
+      buildingName: resident.building_name || '',
+      floorName: floorDisplay,
+      roomNo: resident.room_no || '',
+      bedNumber: resident.bed_number || '',
+    });
+
+    if (resident.branch_id) setBranchId(resident.branch_id);
+    if (resident.room_id) setRoomId(resident.room_id);
+
+    // Fetch full resident detail for complete room_info (stay_id, pg_id, monthly_rent, etc.)
+    setLoadingResidentDetail(true);
+    try {
+      const detail = await residentService.getResidentById(resident.id);
+      if (detail?.room_info) {
+        const info = detail.room_info;
+        const resolvedBranchName =
+          info.branch_name ||
+          (info.branch_id ? branches.find((b) => b.id === info.branch_id)?.name : '') ||
+          initialBranchName;
+
+        const resolvedFloor =
+          info.floor_name ||
+          (info.floor_number ? `Floor ${info.floor_number}` : floorDisplay);
+
+        setSelectedLocation({
+          branchName: resolvedBranchName,
+          buildingName: info.building_name || resident.building_name || '',
+          floorName: resolvedFloor,
+          roomNo: info.room_no || resident.room_no || '',
+          bedNumber: info.bed_number || resident.bed_number || '',
+        });
+
+        if (info.branch_id) setBranchId(info.branch_id);
+        if (info.pg_id) setPgId(info.pg_id);
+        if (info.stay_id) setStayId(info.stay_id);
+        if (info.room_id) setRoomId(info.room_id);
+      }
+    } catch (err) {
+      console.warn('Failed to load resident details:', err);
+    } finally {
+      setLoadingResidentDetail(false);
+    }
+  };
+
+  const resetForm = () => {
+    setResidentId(initialPayment?.resident?.id ?? residentContext?.resident_id ?? '');
+    setSelectedResident(null);
+    setSelectedLocation(null);
+    setBranchId(initialPayment?.branch_id ?? residentContext?.branch_id ?? undefined);
+    setPgId(initialPayment?.pg_id ?? residentContext?.pg_id ?? undefined);
+    setStayId(initialPayment?.stay_id ?? residentContext?.stay_id ?? undefined);
+    setRoomId(initialPayment?.room_id ?? residentContext?.room_id ?? undefined);
+    setTitle(initialPayment?.title ?? '');
+    setPaymentType((initialPayment?.payment_type as PaymentType) || '');
+    setBillingStart(parseToYYYYMMDD(initialPayment?.billing_period?.start) || '');
+    setBillingEnd(parseToYYYYMMDD(initialPayment?.billing_period?.end) || '');
+    setDueDate(parseToYYYYMMDD(initialPayment?.due_date) || '');
+    setRentAmount('');
+    setDepositAmount('');
+    setMaintenanceAmount('');
+    setElectricityAmount('');
+    setOtherAmount('');
+    setCustomAmount('');
+    setManualOverride(false);
+    setNotes(initialPayment?.notes ?? '');
+    setErrors({});
+  };
+
+  const handleCancel = () => {
+    resetForm();
+    onHide();
+  };
 
   const [title, setTitle] = useState<string>(
     initialPayment?.title ?? ''
@@ -162,8 +356,8 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
     breakdown?.deposit !== undefined
       ? String(breakdown.deposit)
       : breakdown?.security_deposit !== undefined
-      ? String(breakdown.security_deposit)
-      : ''
+        ? String(breakdown.security_deposit)
+        : ''
   );
   const [maintenanceAmount, setMaintenanceAmount] = useState<string>(
     breakdown?.maintenance !== undefined ? String(breakdown.maintenance) : ''
@@ -215,7 +409,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       newErrors.dueDate = 'Due date is required';
     }
     if (!isEdit && !residentId) {
-      newErrors.residentId = 'Resident ID is required';
+      newErrors.residentId = 'Please select a resident';
     }
     if (effectiveAmount <= 0) {
       newErrors.amount = 'Total amount must be greater than 0';
@@ -278,6 +472,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
         await paymentService.createPayment(payload);
       }
 
+      resetForm();
       onSuccess();
       onHide();
     } catch (err: unknown) {
@@ -300,63 +495,132 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4 pt-1">
       {/* Resident Context Banner or Selector */}
       {residentContext || initialPayment?.resident ? (
-        <div className="p-3 bg-gradient-to-r from-emerald-50/70 to-teal-50/40 rounded-xl border border-emerald-100 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-[#175C46] text-white flex items-center justify-center font-bold text-xs shrink-0">
-              {(residentContext?.resident_name || initialPayment?.resident?.name)?.charAt(0) || 'R'}
+        <div className="p-3.5 bg-gradient-to-r from-emerald-50/70 to-teal-50/40 rounded-xl border border-emerald-100 space-y-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#175C46] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                {(residentContext?.resident_name || initialPayment?.resident?.name)?.charAt(0) || 'R'}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-gray-900 block leading-tight">
+                  {residentContext?.resident_name || initialPayment?.resident?.name || `Resident #${residentId}`}
+                </span>
+                <span className="text-[11px] text-gray-500 block">
+                  {(residentContext?.room_no || initialPayment?.room_no)
+                    ? `Room ${residentContext?.room_no || initialPayment?.room_no}`
+                    : 'Assigned Resident'}
+                  {(residentContext?.room_type || initialPayment?.room_type)
+                    ? ` • ${residentContext?.room_type || initialPayment?.room_type}`
+                    : ''}
+                </span>
+              </div>
             </div>
-            <div>
-              <span className="text-xs font-bold text-gray-900 block leading-tight">
-                {residentContext?.resident_name || initialPayment?.resident?.name || `Resident #${residentId}`}
+            <span className="text-[11px] font-semibold text-[#175C46] bg-white px-2.5 py-1 rounded-lg border border-emerald-200/60 shadow-2xs">
+              ID: #{residentId}
+            </span>
+          </div>
+
+          {/* Location Details: Branch, Building, Floor, Room */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 border-t border-emerald-100/60 text-xs">
+            <div className="bg-white/80 p-2 rounded-lg border border-emerald-100/50">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Branch</span>
+              <span className="font-semibold text-gray-800 text-xs truncate block mt-0.5" title={displayBranchName}>
+                {displayBranchName || '—'}
               </span>
-              <span className="text-[11px] text-gray-500 block">
-                {(residentContext?.room_no || initialPayment?.room_no)
-                  ? `Room ${residentContext?.room_no || initialPayment?.room_no}`
-                  : 'Assigned Resident'}
+            </div>
+            <div className="bg-white/80 p-2 rounded-lg border border-emerald-100/50">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Building</span>
+              <span className="font-semibold text-gray-800 text-xs truncate block mt-0.5" title={selectedLocation?.buildingName}>
+                {selectedLocation?.buildingName || '—'}
+              </span>
+            </div>
+            <div className="bg-white/80 p-2 rounded-lg border border-emerald-100/50">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Floor</span>
+              <span className="font-semibold text-gray-800 text-xs truncate block mt-0.5" title={selectedLocation?.floorName}>
+                {selectedLocation?.floorName || '—'}
+              </span>
+            </div>
+            <div className="bg-white/80 p-2 rounded-lg border border-emerald-100/50">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Room</span>
+              <span className="font-bold text-[#175C46] text-xs truncate block mt-0.5" title={selectedLocation?.roomNo}>
+                {(residentContext?.room_no || initialPayment?.room_no || selectedLocation?.roomNo)
+                  ? `Room ${residentContext?.room_no || initialPayment?.room_no || selectedLocation?.roomNo}`
+                  : '—'}
                 {(residentContext?.room_type || initialPayment?.room_type)
-                  ? ` • ${residentContext?.room_type || initialPayment?.room_type}`
+                  ? ` (${residentContext?.room_type || initialPayment?.room_type})`
                   : ''}
               </span>
             </div>
           </div>
-          <span className="text-[11px] font-semibold text-[#175C46] bg-white px-2.5 py-1 rounded-lg border border-emerald-200/60 shadow-2xs">
-            ID: #{residentId}
-          </span>
         </div>
       ) : !isEdit ? (
-        <div className="grid grid-cols-2 gap-3">
-          <div>
+        <div className="space-y-2.5">
+          <div className="relative z-20">
             <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-              Resident ID <span className="text-red-500">*</span>
+              Resident <span className="text-red-500">*</span>
             </label>
-            <input
-              type="number"
-              value={residentId}
-              onChange={(e) => {
-                setResidentId(e.target.value);
-                if (errors.residentId) setErrors((prev) => ({ ...prev, residentId: '' }));
-              }}
-              placeholder="e.g. 58"
-              className={`w-full h-11 px-4 bg-white border ${
-                errors.residentId
-                  ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 text-rose-900'
-                  : 'border-gray-200/90 focus:border-[#175C46] text-gray-800'
-              } rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs`}
+            <ResidentDropdown
+              selectedResidentId={residentId ? Number(residentId) : null}
+              selectedResidentName={selectedResident?.name}
+              placeholder="Search and select resident..."
+              onSelect={handleResidentSelect}
+              hasError={Boolean(errors.residentId)}
+              allowClear
             />
             {errors.residentId && <p className="text-[11px] text-red-500 mt-1">{errors.residentId}</p>}
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-              PG / Branch ID
-            </label>
-            <input
-              type="number"
-              value={pgId}
-              onChange={(e) => setPgId(e.target.value)}
-              placeholder="e.g. 1"
-              className="w-full h-11 px-4 bg-white border border-gray-200/90 focus:border-[#175C46] text-gray-800 rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs"
-            />
-          </div>
+
+          {/* Allocation Details: Branch Name, Building, Floor, Room */}
+          {residentId && (selectedLocation || loadingResidentDetail) && (
+            <div className="p-3 bg-gradient-to-r from-emerald-50/60 to-teal-50/40 rounded-xl border border-emerald-100/80 shadow-2xs space-y-2 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-gray-700 flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-[#175C46]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                  </svg>
+                  Resident Allocation Details
+                </span>
+                {loadingResidentDetail && (
+                  <span className="text-[11px] text-gray-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#175C46] animate-pulse" />
+                    Loading details...
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5 text-xs">
+                <div className="bg-white/90 p-2 rounded-lg border border-emerald-100/60">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Branch</span>
+                  <span className="font-bold text-gray-800 text-xs truncate block mt-0.5" title={displayBranchName}>
+                    {displayBranchName || '—'}
+                  </span>
+                </div>
+
+                <div className="bg-white/90 p-2 rounded-lg border border-emerald-100/60">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Building</span>
+                  <span className="font-bold text-gray-800 text-xs truncate block mt-0.5" title={selectedLocation?.buildingName}>
+                    {selectedLocation?.buildingName || '—'}
+                  </span>
+                </div>
+
+                <div className="bg-white/90 p-2 rounded-lg border border-emerald-100/60">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Floor</span>
+                  <span className="font-bold text-gray-800 text-xs truncate block mt-0.5" title={selectedLocation?.floorName}>
+                    {selectedLocation?.floorName || '—'}
+                  </span>
+                </div>
+
+                <div className="bg-white/90 p-2 rounded-lg border border-emerald-100/60">
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">Room</span>
+                  <span className="font-extrabold text-[#175C46] text-xs truncate block mt-0.5" title={selectedLocation?.roomNo}>
+                    {selectedLocation?.roomNo ? `Room ${selectedLocation.roomNo}` : '—'}
+                    {selectedLocation?.bedNumber ? ` (${selectedLocation.bedNumber})` : ''}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -373,11 +637,10 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
             if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
           }}
           placeholder="e.g. Monthly Rent & Utility Bill - October 2026"
-          className={`w-full h-11 px-4 bg-white border ${
-            errors.title
-              ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
-              : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
-          } rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs font-sans`}
+          className={`w-full h-11 px-4 bg-white border ${errors.title
+            ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
+            : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
+            } rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs font-sans`}
         />
         {errors.title && <p className="text-[11px] text-red-500 mt-1">{errors.title}</p>}
       </div>
@@ -391,7 +654,8 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
           <Dropdown
             value={paymentType}
             onChange={(e) => {
-              setPaymentType(e.target.value as PaymentType);
+              const newType = e.target.value as PaymentType;
+              setPaymentType(newType);
               if (errors.paymentType) setErrors((prev) => ({ ...prev, paymentType: '' }));
             }}
             options={paymentTypeOptions}
@@ -617,7 +881,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
         <button
           type="button"
-          onClick={onHide}
+          onClick={handleCancel}
           disabled={submitting}
           className="px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-colors cursor-pointer"
         >

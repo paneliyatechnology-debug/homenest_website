@@ -26,17 +26,19 @@ export const INITIAL_PAYMENT_STATS: PaymentStats = {
 
 class PaymentService {
   /**
-   * GET /payments/stats?start_date=&end_date=&branch_id=
+   * GET /payments/stats?start_date=&end_date=&branch_id=&date_by=
    */
   async getPaymentStats(params: {
     start_date?: string;
     end_date?: string;
     branch_id?: number | string | null;
+    date_by?: 'due_date' | 'created_at' | 'paid_at' | string;
   } = {}): Promise<PaymentStats> {
     try {
       const query = new URLSearchParams();
       if (params.start_date) query.set('start_date', params.start_date);
       if (params.end_date) query.set('end_date', params.end_date);
+      if (params.date_by) query.set('date_by', params.date_by);
       if (params.branch_id && params.branch_id !== 'all') {
         query.set('branch_id', String(params.branch_id));
       }
@@ -224,6 +226,9 @@ class PaymentService {
     }
     if (params.end_date) {
       query.set('end_date', params.end_date);
+    }
+    if (params.date_by) {
+      query.set('date_by', params.date_by);
     }
     if (params.search) {
       query.set('search', params.search);

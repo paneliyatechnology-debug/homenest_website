@@ -36,19 +36,6 @@ import {
 
 type TabKey = 'all' | 'paid' | 'pending' | 'overdue' | 'refunded' | 'failed';
 
-function getDefaultMonthRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  const fmt = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-  return { start: fmt(start), end: fmt(end) };
-}
-
 function resolveFileUrl(fileUrl?: string): string {
   if (!fileUrl) return '';
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) return fileUrl;
@@ -57,10 +44,8 @@ function resolveFileUrl(fileUrl?: string): string {
 }
 
 export default function PaymentOverviewPage() {
-  // Initialize date range to current month to match Figma design
-  const defaultDates = useMemo(() => getDefaultMonthRange(), []);
-  const [startDate, setStartDate] = useState<string>(defaultDates.start);
-  const [endDate, setEndDate] = useState<string>(defaultDates.end);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
 
   // Tab State
   const [activeTab, setActiveTab] = useState<TabKey>('all');
@@ -126,8 +111,8 @@ export default function PaymentOverviewPage() {
       selectedMethod !== 'all' ||
       activeTab !== 'all' ||
       Boolean(searchTerm.trim()) ||
-      startDate !== defaultDates.start ||
-      endDate !== defaultDates.end
+      Boolean(startDate) ||
+      Boolean(endDate)
     );
   }, [
     selectedBranchId,
@@ -137,7 +122,6 @@ export default function PaymentOverviewPage() {
     searchTerm,
     startDate,
     endDate,
-    defaultDates,
   ]);
 
   // Clear all filters handler
@@ -148,8 +132,8 @@ export default function PaymentOverviewPage() {
     setActiveTab('all');
     setSearchTerm('');
     setDebouncedSearch('');
-    setStartDate(defaultDates.start);
-    setEndDate(defaultDates.end);
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
   };
 
@@ -161,9 +145,8 @@ export default function PaymentOverviewPage() {
     setSelectedMethod('all');
     setSearchTerm('');
     setDebouncedSearch('');
-    const cur = getDefaultMonthRange();
-    setStartDate(cur.start);
-    setEndDate(cur.end);
+    setStartDate('');
+    setEndDate('');
     setCurrentPage(1);
     setSelectedPayment(null);
     setIsModalOpen(false);
@@ -210,6 +193,7 @@ export default function PaymentOverviewPage() {
         start_date: startDate || undefined,
         end_date: endDate || undefined,
         branch_id: selectedBranchId !== 'all' ? selectedBranchId : undefined,
+        date_by: 'due_date',
       })
       .then((data) => {
         if (!isMounted) return;
@@ -288,6 +272,7 @@ export default function PaymentOverviewPage() {
         payment_method: selectedMethod !== 'all' ? selectedMethod : undefined,
         start_date: startDate || undefined,
         end_date: endDate || undefined,
+        date_by: 'due_date',
         search: debouncedSearch || undefined,
         format,
       });
@@ -567,9 +552,9 @@ export default function PaymentOverviewPage() {
               setEditingPayment(null);
               setIsFormModalOpen(true);
             }}
-            className="px-4 py-2 bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all cursor-pointer shrink-0"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
             <span>Record Payment</span>
