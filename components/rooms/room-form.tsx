@@ -362,6 +362,13 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
       const payload = new FormData();
       payload.append('room_no', formData.room_no.trim());
       payload.append('room_type', formData.room_type);
+      const getCapacityFromType = (type: string) => {
+        if (type.includes('double')) return '2';
+        if (type.includes('triple')) return '3';
+        if (type.includes('four')) return '4';
+        return '1';
+      };
+      payload.append('capacity', getCapacityFromType(formData.room_type));
       payload.append('branch_id', formData.branch_id);
       payload.append('building_id', formData.building_id);
       payload.append('floor_id', formData.floor_id);

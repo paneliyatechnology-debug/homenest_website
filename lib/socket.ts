@@ -38,6 +38,7 @@ export const SOCKET_EVENTS = {
   ROOM_STATS_UPDATED: 'room:stats_updated',
   ROOM_SHIFT_NEW: 'room_shift:new',
   ROOM_SHIFT_STATUS_UPDATED: 'room_shift:status_updated',
+  ROOM_SHIFT_STATS_UPDATED: 'room_shift:stats_updated',
 
   // Payments & Finance
   PAYMENT_NEW: 'payment:new',
@@ -52,9 +53,15 @@ export const SOCKET_EVENTS = {
   STAFF_STATS_UPDATED: 'staff:stats_updated',
 
   // Branches
+  BRANCH_NEW: 'branch:new',
+  BRANCH_UPDATED: 'branch:updated',
+  BRANCH_DELETED: 'branch:deleted',
   BRANCH_STATS_UPDATED: 'branch:stats_updated',
 
   // Buildings & Floors
+  BUILDING_NEW: 'building:new',
+  BUILDING_UPDATED: 'building:updated',
+  BUILDING_DELETED: 'building:deleted',
   BUILDING_STATS_UPDATED: 'building:stats_updated',
 
   // Laundry
@@ -68,6 +75,7 @@ export const SOCKET_EVENTS = {
   // Stay Clearance & Checkout
   CHECKOUT_NEW: 'checkout:new',
   CHECKOUT_STATUS_UPDATED: 'checkout:status_updated',
+  CHECKOUT_STATS_UPDATED: 'checkout:stats_updated',
 
   // Dashboard & Metrics
   DASHBOARD_STATS_UPDATED: 'dashboard:stats_updated',
