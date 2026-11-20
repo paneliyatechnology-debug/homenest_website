@@ -148,24 +148,14 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
   const handleContainerClick = (e: React.MouseEvent) => {
     if (disabled) return;
 
-    // Guard against React portal event bubbling from inside the datepicker panel
-    if (!containerRef.current?.contains(e.target as Node)) {
+    // Guard against clicks that originate inside the calendar overlay panel
+    const overlay = calendarRef.current?.getOverlay();
+    if (overlay && overlay.contains(e.target as Node)) {
       return;
     }
 
-    const overlay = calendarRef.current?.getOverlay();
-    const isOpen = Boolean(
-      overlay &&
-      document.body.contains(overlay) &&
-      !overlay.classList.contains('p-connected-overlay-exit') &&
-      !overlay.classList.contains('p-connected-overlay-exit-active')
-    );
-
-    if (isOpen) {
-      calendarRef.current?.hide();
-    } else {
-      calendarRef.current?.show();
-    }
+    // Always ensure the calendar is shown on click; never prematurely toggle hide
+    calendarRef.current?.show();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -192,11 +182,6 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         name={name}
         value={dateObj}
         onChange={handleChange}
-        onFocus={() => {
-          if (!disabled) {
-            calendarRef.current?.show();
-          }
-        }}
         dateFormat={dateFormat}
         placeholder={placeholder}
         disabled={disabled}
@@ -205,7 +190,7 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         className="w-full"
         appendTo={resolvedAppendTo}
         touchUI={false}
-        showOnFocus={false}
+        showOnFocus={true}
         baseZIndex={100000}
         panelStyle={{ zIndex: 100000 }}
         inputClassName={`w-full h-11 px-4 pr-10 py-2.5 bg-white border ${

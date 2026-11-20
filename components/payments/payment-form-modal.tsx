@@ -114,7 +114,6 @@ export const PaymentFormModal: React.FC<PaymentFormModalProps> = ({
       style={{ width: '94vw', maxWidth: '640px' }}
       modal
       className="payment-form-modal font-sans"
-      dismissableMask
       baseZIndex={1000}
     >
       {visible && (
