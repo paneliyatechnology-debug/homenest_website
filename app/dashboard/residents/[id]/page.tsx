@@ -52,16 +52,16 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const validTab =
-    tabParam && ['Overview', 'Documents', 'Payments', 'Complaints', 'Activity'].includes(tabParam)
-      ? (tabParam as 'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity')
+    tabParam && ['Overview', 'Documents', 'Payments', 'Complaints'].includes(tabParam)
+      ? (tabParam as 'Overview' | 'Documents' | 'Payments' | 'Complaints')
       : null;
 
   const [resident, setResident] = useState<ResidentDetail>(DEFAULT_RESIDENT_DETAIL);
   const [loading, setLoading] = useState(true);
-  const [selectedTab, setSelectedTab] = useState<'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity' | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'Overview' | 'Documents' | 'Payments' | 'Complaints' | null>(null);
 
   const activeTab = selectedTab ?? validTab ?? 'Overview';
-  const setActiveTab = (tab: 'Overview' | 'Documents' | 'Payments' | 'Complaints' | 'Activity') => {
+  const setActiveTab = (tab: 'Overview' | 'Documents' | 'Payments' | 'Complaints') => {
     setSelectedTab(tab);
   };
 
@@ -509,7 +509,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
           {/* Navigation Tabs Bar matching Figma */}
           <div className="border-b border-gray-200">
             <nav className="flex items-center gap-8 -mb-[1px]">
-              {(['Overview', 'Documents', 'Payments', 'Complaints', 'Activity'] as const).map((tab) => {
+              {(['Overview', 'Documents', 'Payments', 'Complaints'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
@@ -1240,49 +1240,6 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                             </div>
                           </div>
                         )}
-                      </div>
-                    )}
-
-                    {/* Tab 5: Activity Tab */}
-                    {activeTab === 'Activity' && (
-                      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-6">
-                        <h3 className="text-base font-bold text-gray-900">Activity Timeline</h3>
-
-                        <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
-                          {/* Timeline Item 1 */}
-                          <div className="relative">
-                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                            <span className="text-xs text-gray-400 font-medium">04-11-2026 15:39</span>
-                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Profile Updated</h4>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              User personal and room assignment details updated by admin.
-                            </p>
-                          </div>
-
-                          {/* Timeline Item 2 */}
-                          <div className="relative">
-                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                            <span className="text-xs text-gray-400 font-medium">
-                              {resident.room_info?.check_in_date || '04-11-2026 00:00'}
-                            </span>
-                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">
-                              Room Allocated: {resident.room_info?.room_no || 'A-201'} ({resident.room_info?.bed_number || 'Bed-1'})
-                            </h4>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              {resident.room_info?.stay_notes || 'Allocated via Admin User Update'} in {resident.room_info?.building_name || 'Main Building'}.
-                            </p>
-                          </div>
-
-                          {/* Timeline Item 3 */}
-                          <div className="relative">
-                            <div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-[#175C46] ring-4 ring-[#EBF7F2]" />
-                            <span className="text-xs text-gray-400 font-medium">{resident.created_at || '31-10-2026 16:10'}</span>
-                            <h4 className="text-sm font-semibold text-gray-900 mt-0.5">Resident Registered</h4>
-                            <p className="text-xs text-gray-500 mt-0.5">
-                              Resident registered into {resident.room_info?.pg_name || 'PG Facility'}.
-                            </p>
-                          </div>
-                        </div>
                       </div>
                     )}
 
