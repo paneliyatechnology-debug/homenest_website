@@ -106,6 +106,106 @@ export function getAttachmentDisplayName(fileName?: string, index?: number): str
   return clean;
 }
 
+interface PdfPreviewViewerProps {
+  fileUrl: string;
+  fileName: string;
+}
+
+/**
+ * Isolated PDF Preview Viewer that loads the PDF as a same-origin Blob
+ * to avoid cross-origin / iframe sandbox blocking across ports (3000 -> 5000).
+ */
+const PdfPreviewViewer: React.FC<PdfPreviewViewerProps> = ({ fileUrl, fileName }) => {
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState<boolean>(true);
+  const [pdfError, setPdfError] = useState<boolean>(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let createdUrl: string | null = null;
+
+    fetch(fileUrl, { signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.blob();
+      })
+      .then((blob) => {
+        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+        createdUrl = URL.createObjectURL(pdfBlob);
+        setPdfBlobUrl(createdUrl);
+        setPdfLoading(false);
+      })
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        console.warn('PDF fetch for preview failed, falling back to direct URL:', err);
+        setPdfError(true);
+        setPdfLoading(false);
+      });
+
+    return () => {
+      controller.abort();
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [fileUrl]);
+
+  if (pdfError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-6 text-center text-white space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-rose-400">
+          <i className="pi pi-file-pdf text-3xl" />
+        </div>
+        <div>
+          <h4 className="text-sm sm:text-base font-bold text-white">{fileName}</h4>
+          <p className="text-xs text-gray-400 mt-1">Unable to display PDF preview inline in this browser.</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            <i className="pi pi-external-link text-xs" />
+            <span>Open in New Tab</span>
+          </a>
+          <a
+            href={fileUrl}
+            download={fileName}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#175C46] hover:bg-[#124b38] text-white rounded-xl text-xs font-semibold shadow-md transition-colors"
+          >
+            <i className="pi pi-download text-xs" />
+            <span>Download PDF</span>
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-[66vh] relative flex items-center justify-center bg-gray-900 rounded-xl overflow-hidden shadow-2xl">
+      {pdfLoading && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-gray-950/80 text-white gap-2 backdrop-blur-xs">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-gray-300 font-medium">Loading PDF document...</span>
+        </div>
+      )}
+      <object
+        data={pdfBlobUrl || fileUrl}
+        type="application/pdf"
+        className="w-full h-full rounded-xl bg-white"
+      >
+        <iframe
+          src={pdfBlobUrl || fileUrl}
+          title={fileName}
+          className="w-full h-full rounded-xl border-0 bg-white"
+        />
+      </object>
+    </div>
+  );
+};
+
 interface AttachmentPreviewContentProps {
   onHide: () => void;
   attachments: ComplaintAttachment[];
@@ -381,11 +481,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
               />
             </div>
           ) : isPdf ? (
-            <iframe
-              src={fileUrl}
-              title={fileName}
-              className="w-full h-[66vh] rounded-xl border-0 bg-white shadow-2xl"
-            />
+            <PdfPreviewViewer key={fileUrl} fileUrl={fileUrl} fileName={fileName} />
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center text-white space-y-4">
               <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center text-emerald-400">

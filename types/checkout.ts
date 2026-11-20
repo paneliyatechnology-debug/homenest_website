@@ -134,6 +134,13 @@ export interface CheckoutDetails {
   updated_at: string;
 }
 
+export interface CreateCheckoutPayload {
+  resident_id: number;
+  departure_date: string;
+  reason?: string;
+  additional_notes?: string;
+}
+
 export interface UpdateCheckoutStatusPayload {
   status: 'pending' | 'under_review' | 'in_progress' | 'approved' | 'rejected' | 'completed';
   clearance_room_inspected?: boolean;

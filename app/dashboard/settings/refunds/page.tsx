@@ -30,6 +30,7 @@ import {
 import {
   CheckoutDetailsModal,
   CheckoutStatusModal,
+  CheckoutFormModal,
 } from '@/components/checkout';
 
 export default function CheckoutAndRefundApprovalsPage() {
@@ -78,6 +79,7 @@ export default function CheckoutAndRefundApprovalsPage() {
   const [exportingFormat, setExportingFormat] = useState<ExportFormat | null>(null);
 
   // Modals States
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedDetails, setSelectedDetails] = useState<CheckoutDetails | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -391,7 +393,7 @@ export default function CheckoutAndRefundApprovalsPage() {
           </p>
         </div>
 
-        <div>
+        <div className="flex items-center gap-3">
           <ExportDropdown
             label="Export"
             formats={['xlsx', 'pdf']}
@@ -399,6 +401,16 @@ export default function CheckoutAndRefundApprovalsPage() {
             isExporting={isExporting}
             exportingFormat={exportingFormat}
           />
+          <button
+            type="button"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124937] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
+          >
+            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Create Checkout
+          </button>
         </div>
       </div>
 
@@ -531,6 +543,13 @@ export default function CheckoutAndRefundApprovalsPage() {
           setStatusModalItem(null);
         }}
         checkout={statusModalItem}
+        onSuccess={() => setRefreshKey((k) => k + 1)}
+      />
+
+      {/* Create Checkout Request Modal */}
+      <CheckoutFormModal
+        visible={isCreateModalOpen}
+        onHide={() => setIsCreateModalOpen(false)}
         onSuccess={() => setRefreshKey((k) => k + 1)}
       />
 

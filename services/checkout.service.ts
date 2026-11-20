@@ -4,6 +4,7 @@ import {
   CheckoutPaginationMeta,
   CheckoutQueryParams,
   CheckoutDetails,
+  CreateCheckoutPayload,
   UpdateCheckoutStatusPayload,
   CheckoutExportResult,
 } from '@/types/checkout';
@@ -76,6 +77,23 @@ class CheckoutService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * POST /stays/checkouts
+   * Creates a new checkout request
+   */
+  async createCheckout(payload: CreateCheckoutPayload): Promise<CheckoutListItem | CheckoutDetails> {
+    const response = await apiClient<{
+      success: boolean;
+      message?: string;
+      data: CheckoutListItem | CheckoutDetails;
+    }>('/stays/checkouts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      showSuccessToast: true,
+    });
+    return (response.data || response) as unknown as (CheckoutListItem | CheckoutDetails);
   }
 
   /**

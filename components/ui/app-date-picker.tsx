@@ -192,6 +192,11 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         name={name}
         value={dateObj}
         onChange={handleChange}
+        onFocus={() => {
+          if (!disabled) {
+            calendarRef.current?.show();
+          }
+        }}
         dateFormat={dateFormat}
         placeholder={placeholder}
         disabled={disabled}

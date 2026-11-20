@@ -72,17 +72,28 @@ interface FormState {
  */
 function toInputDate(val?: string | null): string {
   if (!val) return '';
-  const cleanVal = String(val).trim().split(' ')[0].split('T')[0];
-  const parts = cleanVal.split(/[-/]/);
-  if (parts.length === 3) {
-    if (parts[0].length <= 2 && parts[2].length === 4) {
-      return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-    }
-    if (parts[0].length === 4) {
-      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-    }
+  const str = String(val).trim();
+  // Check if DD-MM-YYYY or DD/MM/YYYY
+  const dmYMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (dmYMatch) {
+    const [, d, m, y] = dmYMatch;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   }
-  return cleanVal;
+  // Check if plain YYYY-MM-DD
+  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+  if (ymdMatch) {
+    const [, y, m, d] = ymdMatch;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  // ISO format or date with time (e.g. 2000-01-09T18:30:00.000Z)
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return str.split(' ')[0].split('T')[0];
 }
 
 interface FormInitialDataSource extends Partial<ResidentDetail> {
@@ -676,13 +687,8 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     // 7. Phone
     if (!formData.phone.trim()) {
       newErrors.phone = 'Resident phone number is required.';
-    } else {
-      const cleanPhone = formData.phone.replace(/\D/g, '');
-      if (cleanPhone.length < 10) {
-        newErrors.phone = 'Phone number must be at least 10 digits.';
-      } else if (cleanPhone.length > 13) {
-        newErrors.phone = 'Phone number cannot exceed 13 digits.';
-      }
+    } else if (!/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(formData.phone.trim())) {
+      newErrors.phone = 'Please provide a valid 10-digit mobile number starting with 6-9.';
     }
 
     // 8. Gender
@@ -741,19 +747,15 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
     // Address pincode check (if provided)
     if (formData.pincode && formData.pincode.trim()) {
-      const cleanPin = formData.pincode.replace(/\D/g, '');
-      if (cleanPin.length < 4) {
-        newErrors.pincode = 'Please enter a valid pincode.';
+      if (!/^[1-9][0-9]{5}$/.test(formData.pincode.trim())) {
+        newErrors.pincode = 'Please enter a valid 6-digit Indian PIN code.';
       }
     }
 
     // Emergency phone check (if provided)
     if (formData.emergency_contact_phone && formData.emergency_contact_phone.trim()) {
-      const cleanEmPhone = formData.emergency_contact_phone.replace(/\D/g, '');
-      if (cleanEmPhone.length < 10) {
-        newErrors.emergency_contact_phone = 'Phone number must be at least 10 digits.';
-      } else if (cleanEmPhone.length > 13) {
-        newErrors.emergency_contact_phone = 'Phone number cannot exceed 13 digits.';
+      if (!/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(formData.emergency_contact_phone.trim())) {
+        newErrors.emergency_contact_phone = 'Please provide a valid 10-digit emergency mobile number starting with 6-9.';
       }
     }
 
@@ -791,12 +793,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       fd.append('phone', formData.phone.trim());
       fd.append('gender', formData.gender);
       fd.append('status', formData.status);
-      if (formData.date_of_birth) {
-        fd.append('date_of_birth', formData.date_of_birth);
-      }
-      fd.append('nationality', formData.nationality);
-      fd.append('marital_status', formData.marital_status);
-      fd.append('occupation', formData.occupation.trim());
+      fd.append('date_of_birth', formData.date_of_birth ? formData.date_of_birth : '');
+      fd.append('nationality', formData.nationality || 'Indian');
+      fd.append('marital_status', formData.marital_status || 'single');
+      fd.append('occupation', formData.occupation ? formData.occupation.trim() : '');
 
       // Room & Hierarchy Allocation
       if (formData.branch_id) fd.append('branch_id', String(formData.branch_id));
@@ -817,48 +817,47 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (formData.check_in_date) {
         fd.append('check_in_date', formData.check_in_date);
       }
-      if (formData.check_out_date) {
-        fd.append('check_out_date', formData.check_out_date);
-      }
-      if (formData.maintenance_amount && String(formData.maintenance_amount).trim()) {
+      fd.append('check_out_date', formData.check_out_date ? formData.check_out_date : '');
+      if (formData.maintenance_amount !== undefined && formData.maintenance_amount !== null && String(formData.maintenance_amount).trim() !== '') {
         fd.append('maintenance_amount', String(formData.maintenance_amount).trim());
       }
 
       // Address Fields
-      if (formData.address_line_1) {
-        fd.append('address_line_1', formData.address_line_1.trim());
-        fd.append('address', formData.address_line_1.trim());
-      }
-      if (formData.city) {
-        fd.append('city', formData.city.trim());
-      }
-      if (formData.state) {
-        fd.append('state', formData.state.trim());
-      }
-      if (formData.pincode) {
-        fd.append('pincode', formData.pincode.trim());
-      }
+      fd.append('address_line_1', formData.address_line_1 ? formData.address_line_1.trim() : '');
+      fd.append('address', formData.address_line_1 ? formData.address_line_1.trim() : '');
+      fd.append('city', formData.city ? formData.city.trim() : '');
+      fd.append('state', formData.state ? formData.state.trim() : '');
+      fd.append('pincode', formData.pincode ? formData.pincode.trim() : '');
 
       // Emergency Contact Fields
-      if (formData.emergency_contact_name) {
-        fd.append('emergency_contact_name', formData.emergency_contact_name.trim());
+      fd.append('emergency_contact_name', formData.emergency_contact_name ? formData.emergency_contact_name.trim() : '');
+      fd.append('emergency_contact_relationship', formData.emergency_contact_relationship ? formData.emergency_contact_relationship.trim() : '');
+      fd.append('emergency_contact_phone', formData.emergency_contact_phone ? formData.emergency_contact_phone.trim() : '');
+
+      // Role, PG ID & Subscription Plan ID - in BOTH create and edit mode!
+      fd.append('role', 'resident');
+      const selectedBranch = branches.find((b) => String(b.id) === String(formData.branch_id));
+      const effectivePgId = selectedBranch?.pg_id || formData.pg_id || initialData?.room_info?.pg_id || (initialData as FormInitialDataSource)?.pg_id;
+      if (effectivePgId) {
+        fd.append('pg_id', String(effectivePgId));
       }
-      if (formData.emergency_contact_relationship) {
-        fd.append('emergency_contact_relationship', formData.emergency_contact_relationship.trim());
+      if (formData.subscription_plan_id) {
+        fd.append('subscription_plan_id', String(formData.subscription_plan_id));
       }
-      if (formData.emergency_contact_phone) {
-        fd.append('emergency_contact_phone', formData.emergency_contact_phone.trim());
+
+      // Terms accepted
+      const hasSignatureOrAgreement = Boolean(
+        signatureFile ||
+        existingSignature ||
+        agreementFile ||
+        existingAgreementFile
+      );
+      if (hasSignatureOrAgreement) {
+        fd.append('terms_accepted', 'true');
       }
 
       // Create-mode specifics
       if (mode === 'create') {
-        fd.append('role', 'resident');
-        const selectedBranch = branches.find((b) => String(b.id) === String(formData.branch_id));
-        const effectivePgId = selectedBranch?.pg_id || formData.pg_id;
-        if (effectivePgId) {
-          fd.append('pg_id', String(effectivePgId));
-        }
-        fd.append('subscription_plan_id', String(formData.subscription_plan_id || 1));
         if (formData.password?.trim()) {
           fd.append('password', formData.password.trim());
         } else {
@@ -905,15 +904,23 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
       if (mode === 'create') {
         await residentService.createResident(fd);
+        toast.success('Resident created successfully!');
         resetAllFields();
         router.push('/dashboard/residents');
       } else if (residentId) {
         await residentService.updateResident(residentId, fd);
+        toast.success('Resident updated successfully!');
         resetAllFields();
         router.push('/dashboard/residents');
       }
-    } catch {
-      // Backend error toast is handled automatically by apiClient; form state is preserved
+    } catch (err: unknown) {
+      console.error('Failed to save resident:', err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : (err as { message?: string })?.message || 'Failed to save resident details';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
