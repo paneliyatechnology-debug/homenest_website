@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Menu } from 'primereact/menu';
 import { MenuItem } from 'primereact/menuitem';
 import { Avatar } from 'primereact/avatar';
@@ -20,6 +21,7 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
   photoUrl = null,
   onLogout,
 }) => {
+  const router = useRouter();
   const menuRef = useRef<Menu>(null);
   const [imageError, setImageError] = useState(false);
 
@@ -60,10 +62,9 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
     {
       label: 'Admin Profile',
       icon: 'pi pi-user',
-    },
-    {
-      label: 'Settings',
-      icon: 'pi pi-cog',
+      command: () => {
+        router.push('/dashboard/profile');
+      },
     },
     {
       separator: true,
@@ -97,21 +98,8 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
         </button>
       </div>
 
-      {/* Right: Notifications & Profile Header matching reference image */}
+      {/* Right: Profile Header matching reference image */}
       <div className="flex items-center gap-2.5 sm:gap-4 md:gap-5 shrink-0 ml-3">
-        {/* Notification Bell with Red Badge Dot */}
-        <button
-          type="button"
-          aria-label="View notifications"
-          className="relative p-2 text-[#175C46] hover:bg-black/5 rounded-full transition-colors cursor-pointer shrink-0"
-        >
-          <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="1.8">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          {/* Active Red notification indicator dot matching image */}
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#ef4444] ring-2 ring-[#E8F3ED]" />
-        </button>
-
         {/* Admin Profile Dropdown Button */}
         <button
           type="button"
@@ -125,11 +113,10 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
             imageFallback="default"
             shape="circle"
             onImageError={() => setImageError(true)}
-            className={`w-8 h-8 rounded-full overflow-hidden shrink-0 transition-all ${
-              hasValidPhoto
-                ? 'border border-[#175C46] shadow-2xs'
-                : 'bg-[#175C46] text-white font-semibold text-xs border border-[#175C46] flex items-center justify-center shadow-xs'
-            }`}
+            className={`w-8 h-8 rounded-full overflow-hidden shrink-0 transition-all ${hasValidPhoto
+              ? 'border border-[#175C46] shadow-2xs'
+              : 'bg-[#175C46] text-white font-semibold text-xs border border-[#175C46] flex items-center justify-center shadow-xs'
+              }`}
           />
 
           <span className="text-xs sm:text-sm font-semibold text-gray-800 truncate max-w-[80px] xs:max-w-[110px] sm:max-w-[150px] md:max-w-[180px]">

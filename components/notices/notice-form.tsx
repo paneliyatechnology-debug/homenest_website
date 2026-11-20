@@ -374,7 +374,9 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           console.error('Cannot edit notice without valid ID');
           return;
         }
-        await noticeService.updateNotice(targetId, formData);
+        await noticeService.updateNotice(targetId, formData, {
+          showSuccessToast: intendedStatus !== 'sent',
+        });
         if (intendedStatus === 'sent') {
           try {
             await noticeService.sendNotice(targetId);
@@ -383,7 +385,9 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           }
         }
       } else {
-        const res = await noticeService.createNotice(formData);
+        const res = await noticeService.createNotice(formData, {
+          showSuccessToast: intendedStatus !== 'sent',
+        });
         if (intendedStatus === 'sent' && res?.data?.id) {
           try {
             await noticeService.sendNotice(res.data.id);
@@ -439,7 +443,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
       {/* Main Grid: Form Left, Sidebar Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Form Fields */}
-        <div className="lg:col-span-8 bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-xs space-y-5">
+        <div className="lg:col-span-8 space-y-5">
           {/* Notice Title */}
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
@@ -750,7 +754,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
         {/* Right Column: Schedule, Attachments, Preview & Actions */}
         <div className="lg:col-span-4 space-y-5">
           {/* Card 1: Scheduled (Optional) */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-2.5 text-gray-900 font-bold text-sm">
               <div className="w-8 h-8 rounded-lg bg-[#E8F8F0] text-[#175C46] flex items-center justify-center">
                 <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
@@ -811,7 +815,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           </div>
 
           {/* Card 2: Attach file (Optional) */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-3">
+          <div className="space-y-3">
             <h3 className="text-xs sm:text-sm font-bold text-gray-900">
               Attach file <span className="font-normal text-gray-400">(Optional)</span>
             </h3>
@@ -887,7 +891,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           </div>
 
           {/* Card 3: Preview */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-xs space-y-3">
+          <div className="space-y-3">
             <h3 className="text-xs sm:text-sm font-bold text-gray-900">Preview</h3>
 
             {title.trim() || content.trim() ? (

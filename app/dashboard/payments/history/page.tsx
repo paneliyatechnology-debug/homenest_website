@@ -9,8 +9,11 @@ import {
   formatCurrency,
 } from '@/types/payment';
 import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.service';
-import { PaymentHistoryStatsCards } from '@/components/payments/payment-history-stats-cards';
-import { PaymentDetailsModal } from '@/components/payments/payment-details-modal';
+import {
+  PaymentHistoryStatsCards,
+  PaymentDetailsModal,
+  PaymentStatusModal,
+} from '@/components/payments';
 import { useResetOnNavigation } from '@/hooks';
 import { config } from '@/lib/config';
 import {
@@ -63,6 +66,9 @@ export default function PaymentHistoryPage() {
   // Modal State
   const [selectedPayment, setSelectedPayment] = useState<PaymentRecord | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusPayment, setStatusPayment] = useState<PaymentRecord | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
@@ -97,6 +103,8 @@ export default function PaymentHistoryPage() {
     setCurrentPage(1);
     setSelectedPayment(null);
     setIsModalOpen(false);
+    setStatusPayment(null);
+    setIsStatusModalOpen(false);
     setDownloadingReceiptId(null);
   }, []);
 
@@ -132,7 +140,7 @@ export default function PaymentHistoryPage() {
     return () => {
       isMounted = false;
     };
-  }, [startDate, endDate]);
+  }, [startDate, endDate, refreshTrigger]);
 
   // Fetch Payments List
   useEffect(() => {
@@ -170,7 +178,7 @@ export default function PaymentHistoryPage() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, selectedType, selectedStatus, startDate, endDate, debouncedSearch]);
+  }, [currentPage, selectedType, selectedStatus, startDate, endDate, debouncedSearch, refreshTrigger]);
 
   // Handle Export (Excel or PDF)
   const handleExport = async (format: ExportFormat = 'xlsx') => {
@@ -380,30 +388,43 @@ export default function PaymentHistoryPage() {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      cell: (item) => (
-        <TableActions>
-          <IconButton
-            variant="view"
-            title="View Details"
-            onClick={() => handleView(item)}
-          />
-          <button
-            type="button"
-            title="Download Receipt"
-            disabled={downloadingReceiptId === item.id}
-            onClick={() => handleDownloadReceipt(item)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-[#175C46] hover:bg-emerald-50/80 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {downloadingReceiptId === item.id ? (
-              <div className="w-3.5 h-3.5 border-2 border-[#175C46] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-              </svg>
-            )}
-          </button>
-        </TableActions>
-      ),
+      cell: (item) => {
+        const isPaid = (item.status || '').toLowerCase() === 'paid';
+        return (
+          <TableActions>
+            <IconButton
+              variant="view"
+              title="View Details"
+              onClick={() => handleView(item)}
+            />
+            <IconButton
+              variant="status"
+              title={isPaid ? 'Cannot change status of paid transaction' : 'Update Status'}
+              disabled={isPaid}
+              onClick={() => {
+                if (isPaid) return;
+                setStatusPayment(item);
+                setIsStatusModalOpen(true);
+              }}
+            />
+            <button
+              type="button"
+              title="Download Receipt"
+              disabled={downloadingReceiptId === item.id}
+              onClick={() => handleDownloadReceipt(item)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:text-[#175C46] hover:bg-emerald-50/80 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              {downloadingReceiptId === item.id ? (
+                <div className="w-3.5 h-3.5 border-2 border-[#175C46] border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              )}
+            </button>
+          </TableActions>
+        );
+      },
     },
   ];
 
@@ -522,6 +543,17 @@ export default function PaymentHistoryPage() {
           setSelectedPayment(null);
         }}
         onDownloadReceipt={handleDownloadReceipt}
+      />
+
+      {/* Payment Status Modal */}
+      <PaymentStatusModal
+        visible={isStatusModalOpen}
+        onHide={() => {
+          setIsStatusModalOpen(false);
+          setStatusPayment(null);
+        }}
+        payment={statusPayment}
+        onSuccess={() => setRefreshTrigger((prev) => prev + 1)}
       />
     </main>
   );

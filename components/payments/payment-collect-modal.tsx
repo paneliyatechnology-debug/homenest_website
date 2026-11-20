@@ -5,12 +5,11 @@ import { Dialog } from 'primereact/dialog';
 import {
   PaymentRecord,
   PaymentMethod,
-  PaymentCollectPayload,
   PAYMENT_METHOD_LABELS,
   formatCurrency,
 } from '@/types/payment';
 import { paymentService } from '@/services/payment.service';
-import { Dropdown, ModalHeader } from '@/components/ui';
+import { Dropdown, ModalHeader, PhotoUpload } from '@/components/ui';
 
 interface PaymentCollectModalProps {
   visible: boolean;
@@ -56,7 +55,8 @@ export const PaymentCollectModal: React.FC<PaymentCollectModalProps> = ({
           }
         />
       }
-      style={{ width: '92vw', maxWidth: '480px' }}
+      style={{ width: '95vw', maxWidth: '520px' }}
+      contentClassName="max-h-[85vh] overflow-y-auto p-5 sm:p-6 bg-white"
       modal
       className="payment-collect-modal font-sans"
       dismissableMask
@@ -85,8 +85,14 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
   onHide,
   onSuccess,
 }) => {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    (payment.payment_method as PaymentMethod) || 'upi'
+  );
+  const [upiRefNo, setUpiRefNo] = useState<string>('');
+  const [note, setNote] = useState<string>('');
   const [details, setDetails] = useState<string>('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,12 +112,24 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
     setError(null);
 
     try {
-      const payload: PaymentCollectPayload = {
-        payment_method: paymentMethod,
-        payment_method_details: details.trim() || undefined,
-      };
+      const fd = new FormData();
+      fd.append('payment_method', paymentMethod);
 
-      await paymentService.collectPayment(payment.id, payload);
+      if (upiRefNo.trim()) {
+        fd.append('upi_ref_no', upiRefNo.trim());
+      }
+      if (note.trim()) {
+        fd.append('note', note.trim());
+        fd.append('notes', note.trim());
+      }
+      if (details.trim()) {
+        fd.append('payment_method_details', details.trim());
+      }
+      if (imageFile) {
+        fd.append('image', imageFile);
+      }
+
+      await paymentService.collectPayment(payment.id, fd);
       onSuccess();
     } catch (err: unknown) {
       console.error('Failed to collect payment:', err);
@@ -176,21 +194,81 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
         />
       </div>
 
-      {/* Payment Method Details */}
+      {/* UPI Reference Number (Visible when method is UPI) */}
+      {paymentMethod === 'upi' && (
+        <div>
+          <label className="block text-xs font-semibold text-gray-800 mb-1.5">
+            UPI Reference / UTR Number
+          </label>
+          <input
+            type="text"
+            value={upiRefNo}
+            onChange={(e) => {
+              setUpiRefNo(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder="e.g. 123456789012 (12-digit UTR/Ref)"
+            className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-mono"
+          />
+          <p className="text-[11px] text-gray-400 mt-1">
+            12-digit transaction reference number from Google Pay, PhonePe, Paytm, etc.
+          </p>
+        </div>
+      )}
+
+      {/* Payment Method Details (For non-UPI methods) */}
+      {paymentMethod !== 'upi' && (
+        <div>
+          <label className="block text-xs font-semibold text-gray-800 mb-1.5">
+            Payment Reference / Transaction Details <span className="text-gray-400 font-normal">(Optional)</span>
+          </label>
+          <input
+            type="text"
+            value={details}
+            onChange={(e) => {
+              setDetails(e.target.value);
+              if (error) setError(null);
+            }}
+            placeholder="e.g. Cheque #452188 or Cash handed over"
+            className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-sans"
+          />
+        </div>
+      )}
+
+      {/* Note / Remarks */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Payment Reference / Transaction Details
+          Payment Note / Remarks <span className="text-gray-400 font-normal">(Optional)</span>
         </label>
-        <input
-          type="text"
-          value={details}
-          onChange={(e) => setDetails(e.target.value)}
-          placeholder="e.g. GPay UPI Ref #123456789012 or Cash handed over"
-          className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-sans"
+        <textarea
+          rows={2}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="e.g. Paid via Google Pay UPI / Received on front desk"
+          className="w-full px-4 py-2.5 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-sans resize-none"
         />
-        <p className="text-[11px] text-gray-400 mt-1">
-          Provide transaction reference, UPI ID, or receiver details.
-        </p>
+      </div>
+
+      {/* Payment Proof / Receipt Image Upload */}
+      <div>
+        <PhotoUpload
+          label="Payment Proof / Receipt Screenshot"
+          optional
+          shape="rounded"
+          previewUrl={imagePreview}
+          file={imageFile}
+          onSelectFile={(f) => {
+            setImageFile(f);
+            setImagePreview(URL.createObjectURL(f));
+            if (error) setError(null);
+          }}
+          onRemove={() => {
+            setImageFile(null);
+            setImagePreview(null);
+          }}
+          onError={(msg) => setError(msg)}
+          helperText="Upload receipt screenshot or bank transfer confirmation (PNG, JPG, up to 5MB)"
+        />
       </div>
 
       {/* Modal Action Buttons */}

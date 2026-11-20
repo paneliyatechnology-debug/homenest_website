@@ -9,6 +9,7 @@ import {
   PaymentCreatePayload,
   PaymentUpdatePayload,
   PaymentCollectPayload,
+  UpdatePaymentStatusPayload,
 } from '@/types/payment';
 
 export const INITIAL_PAYMENT_STATS: PaymentStats = {
@@ -185,16 +186,36 @@ class PaymentService {
 
   /**
    * POST /payments/:id/pay
-   * Collect payment / record collection
+   * Collect payment / record collection (supports JSON or multipart/form-data with image proof)
    */
-  async collectPayment(id: number | string, data: PaymentCollectPayload): Promise<PaymentRecord> {
+  async collectPayment(id: number | string, data: FormData | PaymentCollectPayload): Promise<PaymentRecord> {
+    const isFormData = typeof FormData !== 'undefined' && data instanceof FormData;
     const res = await apiClient<{
       success?: boolean;
       message?: string;
       data: PaymentRecord;
     }>(`/payments/${id}/pay`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
+    });
+    return res.data;
+  }
+
+  /**
+   * PATCH /payments/:id/status
+   * Update payment status (e.g. 'paid', 'pending', 'overdue', 'failed', 'refunded')
+   */
+  async updatePaymentStatus(
+    id: number | string,
+    payload: UpdatePaymentStatusPayload
+  ): Promise<PaymentRecord> {
+    const res = await apiClient<{
+      success?: boolean;
+      message?: string;
+      data: PaymentRecord;
+    }>(`/payments/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
     });
     return res.data;
   }

@@ -103,11 +103,10 @@ export const LaundryStatusModal: React.FC<LaundryStatusModalProps> = ({
             {statusOptions.map((opt) => (
               <label
                 key={opt.value}
-                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                  status === opt.value
-                    ? 'border-[#175C46] bg-emerald-50/40 ring-1 ring-[#175C46]'
-                    : opt.color
-                }`}
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${status === opt.value
+                  ? 'border-[#175C46] bg-emerald-50/40 ring-1 ring-[#175C46]'
+                  : opt.color
+                  }`}
               >
                 <input
                   type="radio"

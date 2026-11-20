@@ -876,12 +876,10 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
       if (mode === 'create') {
         await residentService.createResident(fd);
-        toast.success('Resident created successfully!');
         resetAllFields();
         router.push('/dashboard/residents');
       } else if (residentId) {
         await residentService.updateResident(residentId, fd);
-        toast.success('Resident updated successfully!');
         resetAllFields();
         router.push('/dashboard/residents');
       }
@@ -892,7 +890,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           ? err.message
           : (err as { message?: string })?.message || 'Failed to save resident details';
       setErrorMessage(message);
-      toast.error(message);
     } finally {
       setSubmitting(false);
     }

@@ -102,3 +102,34 @@ export interface ResetPasswordRequest {
 
 export type ResetPasswordResponse = ApiResponse<null>;
 
+export interface UpdatePgProfilePayload {
+  name?: string;
+  email?: string;
+  phone?: string;
+  gender?: string;
+  address?: string;
+  profile_photo?: File | string | null;
+
+  pg_name?: string;
+  pg_type?: string;
+  pg_phone?: string;
+  pg_email?: string;
+  pg_address?: string;
+  pg_city?: string;
+  pg_state?: string;
+  pg_pincode?: string;
+  total_rooms?: number | string;
+  total_beds?: number | string;
+  amenities?: string[] | string;
+  rules?: string;
+  status?: string;
+  logo?: File | string | null;
+
+  pg_upi_id?: string;
+  pg_bank_name?: string;
+  pg_account_number?: string;
+  pg_ifsc_code?: string;
+  pg_account_holder_name?: string;
+}
+
+

@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -35,7 +35,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/images/homenest-icon.png" />
       </head>
-      <body className="h-full w-full flex flex-col font-sans bg-[#edf5f1] text-gray-900 antialiased">
+      <body
+        suppressHydrationWarning
+        className="h-full w-full flex flex-col font-sans bg-[#edf5f1] text-gray-900 antialiased"
+      >
         <PrimeProvider>{children}</PrimeProvider>
       </body>
     </html>

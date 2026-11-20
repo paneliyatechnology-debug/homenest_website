@@ -72,8 +72,8 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
   const titleName = displayRoom?.room_no
     ? `Room ${displayRoom.room_no}`
     : room?.room_no
-    ? `Room ${room.room_no}`
-    : 'Room Details';
+      ? `Room ${room.room_no}`
+      : 'Room Details';
 
   const roomTypeLabel =
     displayRoom?.sharing_label ||

@@ -20,25 +20,25 @@ const STATUS_CHOICES: {
   description: string;
   badgeStyle: string;
 }[] = [
-  {
-    value: 'active',
-    label: 'Active',
-    description: 'Staff member is on duty and available for assignments.',
-    badgeStyle: 'bg-[#E8F8F0] text-[#175C46]',
-  },
-  {
-    value: 'on_leave',
-    label: 'On Leave',
-    description: 'Staff member is temporarily away or on scheduled leave.',
-    badgeStyle: 'bg-[#FEF7E6] text-[#B06000]',
-  },
-  {
-    value: 'inactive',
-    label: 'Inactive',
-    description: 'Staff member is currently inactive or off-duty.',
-    badgeStyle: 'bg-[#FDF2F2] text-[#DC2626]',
-  },
-];
+    {
+      value: 'active',
+      label: 'Active',
+      description: 'Staff member is on duty and available for assignments.',
+      badgeStyle: 'bg-[#E8F8F0] text-[#175C46]',
+    },
+    {
+      value: 'on_leave',
+      label: 'On Leave',
+      description: 'Staff member is temporarily away or on scheduled leave.',
+      badgeStyle: 'bg-[#FEF7E6] text-[#B06000]',
+    },
+    {
+      value: 'inactive',
+      label: 'Inactive',
+      description: 'Staff member is currently inactive or off-duty.',
+      badgeStyle: 'bg-[#FDF2F2] text-[#DC2626]',
+    },
+  ];
 
 export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
   visible,
@@ -133,19 +133,17 @@ export const StaffStatusModal: React.FC<StaffStatusModalProps> = ({
               <div
                 key={choice.value}
                 onClick={() => setSelectedStatus(choice.value)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
-                  isSelected
-                    ? 'border-[#175C46] bg-[#E8F8F0]/30 shadow-2xs'
-                    : 'border-gray-200/90 hover:border-gray-300 hover:bg-gray-50/50'
-                }`}
+                className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 select-none ${isSelected
+                  ? 'border-[#175C46] bg-[#E8F8F0]/30 shadow-2xs'
+                  : 'border-gray-200/90 hover:border-gray-300 hover:bg-gray-50/50'
+                  }`}
               >
                 {/* Radio Circle */}
                 <div
-                  className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                    isSelected
-                      ? 'border-[#175C46] bg-[#175C46]'
-                      : 'border-gray-300 bg-white'
-                  }`}
+                  className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${isSelected
+                    ? 'border-[#175C46] bg-[#175C46]'
+                    : 'border-gray-300 bg-white'
+                    }`}
                 >
                   {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                 </div>

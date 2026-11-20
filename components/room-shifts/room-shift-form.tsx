@@ -422,8 +422,8 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
         </div>
       </div>
 
-      {/* Main Form Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-xs">
+      {/* Main Form */}
+      <div>
         <form onSubmit={handleSubmit} className="space-y-6">
           {errorMessage && (
             <div className="p-3.5 text-xs bg-red-50 text-red-700 rounded-xl border border-red-200">

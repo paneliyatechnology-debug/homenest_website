@@ -440,7 +440,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
 
       {/* Main Form Content Container matching Figma */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-2xl p-5 sm:p-7 border border-gray-100 shadow-2xs space-y-6">
+        <div className="space-y-6">
           {/* Row 1: Branch * & Room no. * */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Dropdown

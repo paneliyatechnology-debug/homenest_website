@@ -9,6 +9,8 @@ import {
   ResetPasswordRequest,
   ResetPasswordResponse,
   User,
+  PGDetails,
+  UpdatePgProfilePayload,
 } from '@/types/auth';
 import {
   setAuthCookies,
@@ -108,6 +110,8 @@ export const authService = {
         headers: {
           Accept: 'application/json',
         },
+        showSuccessToast: false,
+        showErrorToast: false,
       });
     } catch (err) {
       console.warn('Backend logout API request failed or unreachable:', err);
@@ -149,5 +153,22 @@ export const authService = {
    */
   isAuthenticated(): boolean {
     return !!getAccessToken();
+  },
+
+  /**
+   * PUT /auth/update-pg
+   * Update Owner and PG Facility Profile (multipart/form-data or JSON)
+   */
+  async updatePgProfile(payload: FormData | UpdatePgProfilePayload): Promise<PGDetails> {
+    const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+    const response = await apiClient<{
+      success: boolean;
+      message: string;
+      data: PGDetails;
+    }>('/auth/update-pg', {
+      method: 'PUT',
+      body: isFormData ? payload : JSON.stringify(payload),
+    });
+    return response.data;
   },
 };

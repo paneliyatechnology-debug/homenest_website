@@ -3,7 +3,7 @@
 import React, { useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Avatar } from 'primereact/avatar';
 import { Menu } from 'primereact/menu';
 import { MenuItem } from 'primereact/menuitem';
@@ -72,6 +72,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
   photoUrl = null,
   onLogout,
 }) => {
+  const router = useRouter();
   const pathname = usePathname();
   const sidebarMenuRef = useRef<Menu>(null);
   const [imageError, setImageError] = useState(false);
@@ -191,6 +192,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         </svg>
       ),
       children: [
+        { label: 'Admin & PG Profile', href: '/dashboard/profile' },
         { label: 'Staff Management', href: '/dashboard/settings/staff' },
         { label: 'Branch Management', href: '/dashboard/settings/branches' },
         { label: 'Administrative Activity Log', href: '/dashboard/settings/activity-log' },
@@ -243,10 +245,16 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     {
       label: 'Admin Profile',
       icon: 'pi pi-user',
+      command: () => {
+        router.push('/dashboard/profile');
+      },
     },
     {
       label: 'Settings',
       icon: 'pi pi-cog',
+      command: () => {
+        router.push('/dashboard/settings/staff');
+      },
     },
     {
       separator: true,

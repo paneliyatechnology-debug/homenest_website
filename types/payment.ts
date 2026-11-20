@@ -124,6 +124,11 @@ export interface PaymentRecord {
   paid_at?: string | null;
   payment_method?: PaymentMethod | string | null;
   payment_method_details?: unknown;
+  image?: string | null;
+  image_url?: string | null;
+  upi_id?: string | null;
+  upi_ref_no?: string | null;
+  refund?: unknown | null;
   resident?: PaymentResident;
   stay_id?: number | null;
   bed_number?: string | null;
@@ -239,4 +244,13 @@ export interface PaymentUpdatePayload {
 export interface PaymentCollectPayload {
   payment_method: PaymentMethod | string;
   payment_method_details?: string;
+  upi_ref_no?: string;
+  note?: string;
+  notes?: string;
+  image?: File | null | string;
+}
+
+export interface UpdatePaymentStatusPayload {
+  status: PaymentStatus | string;
+  paid_amount?: number;
 }

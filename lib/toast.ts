@@ -13,9 +13,8 @@ type ToastListener = (message: ToastMessage) => void;
 
 class ToastManager {
   private listeners: Set<ToastListener> = new Set();
-  private lastMessage: string = '';
-  private lastTime: number = 0;
-  private readonly DEDUP_INTERVAL_MS = 400;
+  private recentMessages: Map<string, number> = new Map();
+  private readonly DEDUP_INTERVAL_MS = 1000;
 
   /**
    * Register a toast listener (called by GlobalToastContainer)
@@ -28,7 +27,7 @@ class ToastManager {
   }
 
   /**
-   * Display a toast notification with deduplication
+   * Display a toast notification with centralized deduplication
    */
   show(message: ToastMessage): void {
     if (!message || !message.detail) return;
@@ -36,20 +35,32 @@ class ToastManager {
     const trimmedDetail = message.detail.trim();
     if (!trimmedDetail) return;
 
+    const severity = message.severity || 'info';
+    const key = `${severity}:${trimmedDetail}`;
     const now = Date.now();
+    const lastTime = this.recentMessages.get(key) || 0;
+
     // Prevent duplicate toasts within deduplication window
-    if (this.lastMessage === trimmedDetail && now - this.lastTime < this.DEDUP_INTERVAL_MS) {
+    if (now - lastTime < this.DEDUP_INTERVAL_MS) {
       return;
     }
 
-    this.lastMessage = trimmedDetail;
-    this.lastTime = now;
+    this.recentMessages.set(key, now);
+
+    // Garbage-collect old keys
+    if (this.recentMessages.size > 50) {
+      this.recentMessages.forEach((time, k) => {
+        if (now - time > 5000) {
+          this.recentMessages.delete(k);
+        }
+      });
+    }
 
     const payload: ToastMessage = {
-      severity: message.severity || 'info',
+      severity,
       summary: message.summary,
       detail: trimmedDetail,
-      life: message.life ?? 3500,
+      life: message.life ?? (severity === 'error' ? 4500 : 3500),
     };
 
     // If no active listeners (e.g. before mount or during page transition), save flash message

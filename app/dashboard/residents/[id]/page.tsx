@@ -11,7 +11,7 @@ import { PaymentRecord, formatCurrency } from '@/types/payment';
 import { paymentService } from '@/services/payment.service';
 import { Complaint, ComplaintAttachment } from '@/types/complaint';
 import { complaintService } from '@/services/complaint.service';
-import { PaymentFormModal, PaymentCollectModal, PaymentDetailsModal } from '@/components/payments';
+import { PaymentFormModal, PaymentCollectModal, PaymentDetailsModal, PaymentStatusModal } from '@/components/payments';
 import {
   DeleteConfirmationModal,
   StatusBadge,
@@ -108,6 +108,8 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
   const [editingPayment, setEditingPayment] = useState<PaymentRecord | null>(null);
   const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
   const [collectingPayment, setCollectingPayment] = useState<PaymentRecord | null>(null);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusPayment, setStatusPayment] = useState<PaymentRecord | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [viewingPayment, setViewingPayment] = useState<PaymentRecord | null>(null);
   const [deletingPayment, setDeletingPayment] = useState<PaymentRecord | null>(null);
@@ -1007,6 +1009,11 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                             item.status?.toLowerCase() === 'pending' ||
                             item.status?.toLowerCase() === 'overdue' ||
                             due > 0;
+                          const hasPaymentMethod =
+                            Boolean(item.payment_method && item.payment_method.toLowerCase() !== 'unpaid') ||
+                            Boolean(item.paid_at) ||
+                            isPaid;
+                          const showCollectButton = !isPaid && !hasPaymentMethod && isPendingOrOverdue;
 
                           // Parse breakdown elements
                           const b = item.breakdown;
@@ -1058,7 +1065,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                               </td>
                               <td className="py-4 px-5 text-right whitespace-nowrap">
                                 <div className="flex items-center justify-end gap-1.5">
-                                  {isPendingOrOverdue && (
+                                  {showCollectButton && (
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -1076,6 +1083,16 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                                     onClick={() => {
                                       setViewingPayment(item);
                                       setIsViewModalOpen(true);
+                                    }}
+                                  />
+                                  <IconButton
+                                    variant="status"
+                                    title={isPaid ? 'Cannot change status of paid transaction' : 'Update Status'}
+                                    disabled={isPaid}
+                                    onClick={() => {
+                                      if (isPaid) return;
+                                      setStatusPayment(item);
+                                      setIsStatusModalOpen(true);
                                     }}
                                   />
                                   <IconButton
@@ -1329,6 +1346,20 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         setViewingPayment(null);
                       }}
                       payment={viewingPayment}
+                    />
+
+                    {/* Payment Status Update Modal */}
+                    <PaymentStatusModal
+                      visible={isStatusModalOpen}
+                      onHide={() => {
+                        setIsStatusModalOpen(false);
+                        setStatusPayment(null);
+                      }}
+                      payment={statusPayment}
+                      onSuccess={() => {
+                        setLoadingPayments(true);
+                        setPaymentsRefreshTrigger((prev) => prev + 1);
+                      }}
                     />
 
             {/* Delete Payment Confirmation Modal */}

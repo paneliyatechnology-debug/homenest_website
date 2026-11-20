@@ -16,6 +16,7 @@ import {
   PaymentDetailsModal,
   PaymentFormModal,
   PaymentCollectModal,
+  PaymentStatusModal,
 } from '@/components/payments';
 import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 import { config } from '@/lib/config';
@@ -82,6 +83,9 @@ export default function PaymentOverviewPage() {
 
   const [isCollectModalOpen, setIsCollectModalOpen] = useState(false);
   const [collectingPayment, setCollectingPayment] = useState<PaymentRecord | null>(null);
+
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [statusPayment, setStatusPayment] = useState<PaymentRecord | null>(null);
 
   const [deletingPayment, setDeletingPayment] = useState<PaymentRecord | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -165,6 +169,8 @@ export default function PaymentOverviewPage() {
     setIsFormModalOpen(false);
     setCollectingPayment(null);
     setIsCollectModalOpen(false);
+    setStatusPayment(null);
+    setIsStatusModalOpen(false);
     setDeletingPayment(null);
   }, []);
 
@@ -480,10 +486,15 @@ export default function PaymentOverviewPage() {
           item.status?.toLowerCase() === 'pending' ||
           item.status?.toLowerCase() === 'overdue' ||
           due > 0;
+        const hasPaymentMethod =
+          Boolean(item.payment_method && item.payment_method.toLowerCase() !== 'unpaid') ||
+          Boolean(item.paid_at) ||
+          isPaid;
+        const showCollectButton = !isPaid && !hasPaymentMethod && isPendingOrOverdue;
 
         return (
           <TableActions>
-            {isPendingOrOverdue && (
+            {showCollectButton && (
               <button
                 type="button"
                 onClick={() => {
@@ -500,6 +511,16 @@ export default function PaymentOverviewPage() {
               variant="view"
               title="View Details"
               onClick={() => handleView(item)}
+            />
+            <IconButton
+              variant="status"
+              title={isPaid ? 'Cannot change status of paid transaction' : 'Update Status'}
+              disabled={isPaid}
+              onClick={() => {
+                if (isPaid) return;
+                setStatusPayment(item);
+                setIsStatusModalOpen(true);
+              }}
             />
             <IconButton
               variant="edit"
@@ -722,6 +743,17 @@ export default function PaymentOverviewPage() {
           setSelectedPayment(null);
         }}
         onDownloadReceipt={handleDownloadReceipt}
+      />
+
+      {/* Payment Status Modal */}
+      <PaymentStatusModal
+        visible={isStatusModalOpen}
+        onHide={() => {
+          setIsStatusModalOpen(false);
+          setStatusPayment(null);
+        }}
+        payment={statusPayment}
+        onSuccess={() => setRefreshTrigger((prev) => prev + 1)}
       />
 
       {/* Delete Payment Confirmation Modal */}

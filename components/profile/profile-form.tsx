@@ -1,0 +1,798 @@
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { authService } from '@/services/auth.service';
+import { User, PGDetails } from '@/types/auth';
+import {
+  PageHeader,
+  TextInput,
+  RadioGroup,
+  PhotoUpload,
+  Dropdown,
+  BrandLoader,
+} from '@/components/ui';
+import { resolveFileUrl } from '@/lib/file-utils';
+
+export interface ProfileFormData {
+  // Owner Personal Details
+  name: string;
+  email: string;
+  phone: string;
+  gender: 'male' | 'female' | 'other' | '';
+  address: string;
+  profilePhotoFile: File | null;
+  profilePhotoPreview: string | null;
+
+  // PG Facility Details
+  pg_name: string;
+  pg_type: 'boys' | 'girls' | 'coed' | 'other' | '';
+  pg_phone: string;
+  pg_address: string;
+  pg_city: string;
+  pg_state: string;
+  pg_pincode: string;
+  total_rooms: string | number;
+  total_beds: string | number;
+  amenities: string[];
+  rules: string;
+  status: 'active' | 'inactive';
+  logoFile: File | null;
+  logoPreview: string | null;
+
+  // Bank & UPI Settlement Details
+  pg_upi_id: string;
+  pg_bank_name: string;
+  pg_account_number: string;
+  pg_ifsc_code: string;
+  pg_account_holder_name: string;
+}
+
+const DEFAULT_PROFILE_FORM_DATA: ProfileFormData = {
+  name: '',
+  email: '',
+  phone: '',
+  gender: 'female',
+  address: '',
+  profilePhotoFile: null,
+  profilePhotoPreview: null,
+
+  pg_name: '',
+  pg_type: 'girls',
+  pg_phone: '',
+  pg_address: '',
+  pg_city: '',
+  pg_state: '',
+  pg_pincode: '',
+  total_rooms: '',
+  total_beds: '',
+  amenities: ['Wi-Fi', 'AC', 'Meals', 'Laundry'],
+  rules: '',
+  status: 'active',
+  logoFile: null,
+  logoPreview: null,
+
+  pg_upi_id: '',
+  pg_bank_name: '',
+  pg_account_number: '',
+  pg_ifsc_code: '',
+  pg_account_holder_name: '',
+};
+
+const COMMON_AMENITIES = [
+  'Wi-Fi',
+  'AC',
+  'Meals',
+  'Laundry',
+  'Housekeeping',
+  'CCTV',
+  'Power Backup',
+  'Geyser',
+  'Gym',
+  'RO Water',
+  'Security Guard',
+  'Attached Washroom',
+  'Refrigerator',
+  'TV',
+  'Parking',
+];
+
+const GENDER_OPTIONS = [
+  { label: 'Female', value: 'female' },
+  { label: 'Male', value: 'male' },
+  { label: 'Other', value: 'other' },
+];
+
+const PG_TYPE_OPTIONS = [
+  { label: 'Girls PG', value: 'girls' },
+  { label: 'Boys PG', value: 'boys' },
+  { label: 'Co-Ed / Unisex', value: 'coed' },
+  { label: 'Other', value: 'other' },
+];
+
+const PG_STATUS_OPTIONS = [
+  { label: 'Active', value: 'active' },
+  { label: 'Inactive', value: 'inactive' },
+];
+
+export const ProfileForm: React.FC = () => {
+  const [formData, setFormData] = useState<ProfileFormData>(DEFAULT_PROFILE_FORM_DATA);
+  const [initialData, setInitialData] = useState<ProfileFormData | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [customAmenity, setCustomAmenity] = useState<string>('');
+
+  const populateFromUser = useCallback((user: User) => {
+    setCurrentUser(user);
+    const pg = user.pg as PGDetails | undefined;
+
+    // Resolve initial owner profile photo
+    const rawPhoto = user.profile_photo_url || user.profile_photo;
+    const resolvedPhoto = rawPhoto ? resolveFileUrl(rawPhoto) : null;
+
+    // Resolve initial PG logo
+    const rawLogo = pg?.logo_url || pg?.logo;
+    const resolvedLogo = rawLogo ? resolveFileUrl(rawLogo) : null;
+
+    const data: ProfileFormData = {
+      name: user.name || '',
+      email: user.email || '',
+      phone: user.phone || '',
+      gender: (user.gender?.toLowerCase() as ProfileFormData['gender']) || 'female',
+      address: user.address || '',
+      profilePhotoFile: null,
+      profilePhotoPreview: resolvedPhoto,
+
+      pg_name: pg?.name || '',
+      pg_type: (pg?.type?.toLowerCase() as ProfileFormData['pg_type']) || 'girls',
+      pg_phone: pg?.phone || '',
+      pg_address: pg?.address || '',
+      pg_city: pg?.city || '',
+      pg_state: pg?.state || '',
+      pg_pincode: pg?.pincode || '',
+      total_rooms: pg?.total_rooms !== undefined && pg?.total_rooms !== null ? pg.total_rooms : '',
+      total_beds: pg?.total_beds !== undefined && pg?.total_beds !== null ? pg.total_beds : '',
+      amenities: Array.isArray(pg?.amenities) ? pg.amenities : ['Wi-Fi', 'AC', 'Meals', 'Laundry'],
+      rules: pg?.rules || '',
+      status: (pg?.status?.toLowerCase() as ProfileFormData['status']) || 'active',
+      logoFile: null,
+      logoPreview: resolvedLogo,
+
+      pg_upi_id: pg?.pg_upi_id || pg?.bank_details?.pg_upi_id || '',
+      pg_bank_name: pg?.pg_bank_name || pg?.bank_details?.pg_bank_name || '',
+      pg_account_number: pg?.pg_account_number || pg?.bank_details?.pg_account_number || '',
+      pg_ifsc_code: pg?.pg_ifsc_code || pg?.bank_details?.pg_ifsc_code || '',
+      pg_account_holder_name:
+        pg?.pg_account_holder_name || pg?.bank_details?.pg_account_holder_name || '',
+    };
+
+    setFormData(data);
+    setInitialData(data);
+  }, []);
+
+  // Fetch Current Live User Profile on mount
+  useEffect(() => {
+    let isMounted = true;
+    authService
+      .getMe()
+      .then((user) => {
+        if (!isMounted) return;
+        populateFromUser(user);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.warn('Failed to fetch user profile:', err);
+        if (!isMounted) return;
+        const stored = authService.getCurrentUser();
+        if (stored) {
+          populateFromUser(stored);
+        }
+        setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [populateFromUser]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleFieldChange = <K extends keyof ProfileFormData>(
+    field: K,
+    value: ProfileFormData[K]
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    if (errors[field as string]) {
+      setErrors((prev) => ({ ...prev, [field as string]: '' }));
+    }
+  };
+
+  // Toggle Amenity chip
+  const toggleAmenity = (amenity: string) => {
+    setFormData((prev) => {
+      const exists = prev.amenities.includes(amenity);
+      const updated = exists
+        ? prev.amenities.filter((a) => a !== amenity)
+        : [...prev.amenities, amenity];
+      return { ...prev, amenities: updated };
+    });
+  };
+
+  // Add custom amenity
+  const handleAddCustomAmenity = () => {
+    const trimmed = customAmenity.trim();
+    if (!trimmed) return;
+    if (!formData.amenities.includes(trimmed)) {
+      setFormData((prev) => ({
+        ...prev,
+        amenities: [...prev.amenities, trimmed],
+      }));
+    }
+    setCustomAmenity('');
+  };
+
+  // Reset to initial values
+  const handleReset = () => {
+    if (initialData) {
+      setFormData(initialData);
+    }
+    setErrors({});
+  };
+
+  // Validation
+  const validate = (): boolean => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Owner name is required';
+    }
+
+    if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+      newErrors.phone = 'Please provide a valid 10-digit phone number';
+    }
+
+    if (!formData.pg_name.trim()) {
+      newErrors.pg_name = 'PG facility name is required';
+    }
+
+    if (formData.pg_phone && !/^\d{10}$/.test(formData.pg_phone.replace(/\D/g, ''))) {
+      newErrors.pg_phone = 'Please provide a valid 10-digit PG phone number';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Submit Handler -> PUT /api/v1/auth/update-pg
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate() || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+
+      const payload = new FormData();
+
+      // Owner Fields (email sent as read-only value)
+      payload.append('name', formData.name.trim());
+      payload.append('email', formData.email.trim());
+      if (formData.phone.trim()) payload.append('phone', formData.phone.trim().replace(/\D/g, ''));
+      if (formData.gender) payload.append('gender', formData.gender);
+      if (formData.address.trim()) payload.append('address', formData.address.trim());
+
+      if (formData.profilePhotoFile) {
+        payload.append('profile_photo', formData.profilePhotoFile);
+      } else if (!formData.profilePhotoPreview && currentUser?.profile_photo) {
+        payload.append('profile_photo', 'null');
+      }
+
+      // PG Facility Fields (pg_email completely removed)
+      payload.append('pg_name', formData.pg_name.trim());
+      if (formData.pg_type) payload.append('pg_type', formData.pg_type);
+      if (formData.pg_phone.trim()) payload.append('pg_phone', formData.pg_phone.trim().replace(/\D/g, ''));
+      if (formData.pg_address.trim()) payload.append('pg_address', formData.pg_address.trim());
+      if (formData.pg_city.trim()) payload.append('pg_city', formData.pg_city.trim());
+      if (formData.pg_state.trim()) payload.append('pg_state', formData.pg_state.trim());
+      if (formData.pg_pincode.trim()) payload.append('pg_pincode', formData.pg_pincode.trim());
+
+      if (formData.total_rooms !== '') {
+        payload.append('total_rooms', String(Number(formData.total_rooms)));
+      }
+      if (formData.total_beds !== '') {
+        payload.append('total_beds', String(Number(formData.total_beds)));
+      }
+
+      payload.append('amenities', JSON.stringify(formData.amenities));
+      if (formData.rules.trim()) payload.append('rules', formData.rules.trim());
+      if (formData.status) payload.append('status', formData.status);
+
+      if (formData.logoFile) {
+        payload.append('logo', formData.logoFile);
+      } else if (!formData.logoPreview && currentUser?.pg?.logo) {
+        payload.append('logo', 'null');
+      }
+
+      // Banking & UPI Payout Fields
+      if (formData.pg_upi_id.trim()) payload.append('pg_upi_id', formData.pg_upi_id.trim());
+      if (formData.pg_bank_name.trim()) payload.append('pg_bank_name', formData.pg_bank_name.trim());
+      if (formData.pg_account_number.trim()) payload.append('pg_account_number', formData.pg_account_number.trim());
+      if (formData.pg_ifsc_code.trim()) payload.append('pg_ifsc_code', formData.pg_ifsc_code.trim().toUpperCase());
+      if (formData.pg_account_holder_name.trim()) {
+        payload.append('pg_account_holder_name', formData.pg_account_holder_name.trim());
+      }
+
+      // Execute PUT /api/v1/auth/update-pg
+      await authService.updatePgProfile(payload);
+
+      // Re-fetch updated user profile to synchronize cookies and topbar
+      const freshUser = await authService.getMe();
+      populateFromUser(freshUser);
+    } catch (err) {
+      console.error('Failed to update PG & owner profile:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center gap-3">
+        <BrandLoader />
+        <p className="text-xs text-gray-500 font-medium">Loading profile and PG facility details...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full space-y-8">
+      {/* Brand Loader Overlay during submission */}
+      {isSubmitting && <BrandLoader overlay message="Updating PG facility and owner profile..." />}
+
+      {/* Top Header matching Figma UI */}
+      <PageHeader
+        title="Admin Profile & PG Settings"
+        subtitle="Manage your personal owner credentials, PG facility details, and bank settlement payout."
+        backHref="/dashboard"
+        backTitle="Back to Dashboard"
+      />
+
+      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-10">
+        {/* SECTION 1: OWNER INFORMATION (No white container, clean layout like resident form) */}
+        <div className="space-y-5">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Owner Information
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Personal identification and administrator account credentials.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Fields Column (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  label="Owner Full Name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="e.g. Sunita Mehra"
+                  error={errors.name}
+                />
+
+                <TextInput
+                  label="Owner Email Address"
+                  name="email"
+                  type="email"
+                  required
+                  disabled
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="e.g. sunita.mehra@example.com"
+                  helperText="Email address is fixed and cannot be changed."
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                <TextInput
+                  label="Phone Number"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="e.g. 9876543220"
+                  error={errors.phone}
+                />
+
+                <RadioGroup
+                  label="Gender"
+                  name="gender"
+                  options={GENDER_OPTIONS}
+                  value={formData.gender}
+                  onChange={(val) => handleFieldChange('gender', val as ProfileFormData['gender'])}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                  Residential / Office Address
+                </label>
+                <textarea
+                  name="address"
+                  rows={3}
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Enter full address, street, landmark, city"
+                  className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+                />
+              </div>
+            </div>
+
+            {/* Right Photo Column (5 cols) */}
+            <div className="lg:col-span-5">
+              <PhotoUpload
+                label="Owner Profile Photo"
+                shape="rounded"
+                previewUrl={formData.profilePhotoPreview}
+                file={formData.profilePhotoFile}
+                helperText="JPG, PNG • Max 5MB. Displayed on topbar and receipts."
+                onSelectFile={(file) => {
+                  const url = URL.createObjectURL(file);
+                  setFormData((prev) => ({
+                    ...prev,
+                    profilePhotoFile: file,
+                    profilePhotoPreview: url,
+                  }));
+                }}
+                onRemove={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    profilePhotoFile: null,
+                    profilePhotoPreview: null,
+                  }));
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 2: PG FACILITY CONFIGURATION */}
+        <div className="pt-8 border-t border-gray-200 space-y-5">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              PG Facility Configuration
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Property identity, contact number, capacity, amenities, and resident rules.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Fields Column (7 cols) */}
+            <div className="lg:col-span-7 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  label="PG Name"
+                  name="pg_name"
+                  required
+                  value={formData.pg_name}
+                  onChange={handleChange}
+                  placeholder="e.g. HouseNest Sunshine PG"
+                  error={errors.pg_name}
+                />
+
+                <Dropdown
+                  label="PG Type"
+                  name="pg_type"
+                  value={formData.pg_type}
+                  options={PG_TYPE_OPTIONS}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* PG Phone (PG Email removed completely) */}
+              <div>
+                <TextInput
+                  label="PG Phone Number"
+                  name="pg_phone"
+                  value={formData.pg_phone}
+                  onChange={handleChange}
+                  placeholder="e.g. 9876543221"
+                  error={errors.pg_phone}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                  PG Facility Address
+                </label>
+                <input
+                  type="text"
+                  name="pg_address"
+                  value={formData.pg_address}
+                  onChange={handleChange}
+                  placeholder="e.g. Plot 45, Near St. Xavier College"
+                  className="w-full h-11 text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <TextInput
+                  label="City"
+                  name="pg_city"
+                  value={formData.pg_city}
+                  onChange={handleChange}
+                  placeholder="e.g. Ahmedabad"
+                />
+
+                <TextInput
+                  label="State"
+                  name="pg_state"
+                  value={formData.pg_state}
+                  onChange={handleChange}
+                  placeholder="e.g. Gujarat"
+                />
+
+                <TextInput
+                  label="Pincode"
+                  name="pg_pincode"
+                  value={formData.pg_pincode}
+                  onChange={handleChange}
+                  placeholder="e.g. 380009"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                <TextInput
+                  label="Total Rooms"
+                  name="total_rooms"
+                  type="number"
+                  min="0"
+                  value={formData.total_rooms}
+                  onChange={handleChange}
+                  placeholder="e.g. 25"
+                />
+
+                <TextInput
+                  label="Total Beds"
+                  name="total_beds"
+                  type="number"
+                  min="0"
+                  value={formData.total_beds}
+                  onChange={handleChange}
+                  placeholder="e.g. 50"
+                />
+
+                <RadioGroup
+                  label="Status"
+                  name="status"
+                  options={PG_STATUS_OPTIONS}
+                  value={formData.status}
+                  onChange={(val) => handleFieldChange('status', val as ProfileFormData['status'])}
+                />
+              </div>
+
+              {/* Amenities Selector */}
+              <div className="space-y-2 pt-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
+                  Included Amenities &amp; Facilities
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {COMMON_AMENITIES.map((amenity) => {
+                    const isSelected = formData.amenities.includes(amenity);
+                    return (
+                      <button
+                        key={amenity}
+                        type="button"
+                        onClick={() => toggleAmenity(amenity)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${isSelected
+                          ? 'bg-[#175C46] text-white shadow-2xs'
+                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                      >
+                        {isSelected ? (
+                          <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                          </svg>
+                        )}
+                        <span>{amenity}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Add Custom Amenity */}
+                <div className="flex items-center gap-2 pt-1 max-w-sm">
+                  <input
+                    type="text"
+                    value={customAmenity}
+                    onChange={(e) => setCustomAmenity(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCustomAmenity();
+                      }
+                    }}
+                    placeholder="Add custom amenity (e.g. Garden)"
+                    className="flex-1 h-9 text-xs rounded-xl border border-gray-200/90 bg-white px-3 focus:outline-none focus:ring-1 focus:ring-[#175C46] placeholder-gray-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomAmenity}
+                    className="px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-xl transition-colors cursor-pointer shadow-2xs"
+                  >
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Rules & Policies */}
+              <div className="pt-2">
+                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                  Rules, Curfew &amp; Policies
+                </label>
+                <textarea
+                  name="rules"
+                  rows={3}
+                  value={formData.rules}
+                  onChange={handleChange}
+                  placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
+                  className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+                />
+              </div>
+            </div>
+
+            {/* Right Logo Column (5 cols) */}
+            <div className="lg:col-span-5">
+              <PhotoUpload
+                label="PG Facility Brand Logo"
+                shape="rounded"
+                previewUrl={formData.logoPreview}
+                file={formData.logoFile}
+                helperText="JPG, PNG • Max 5MB. Displayed on resident app and receipts."
+                onSelectFile={(file) => {
+                  const url = URL.createObjectURL(file);
+                  setFormData((prev) => ({
+                    ...prev,
+                    logoFile: file,
+                    logoPreview: url,
+                  }));
+                }}
+                onRemove={() => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    logoFile: null,
+                    logoPreview: null,
+                  }));
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 3: BANK & UPI SETTLEMENT DETAILS */}
+        <div className="pt-8 border-t border-gray-200 space-y-5">
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Bank &amp; UPI Settlement Details
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Payout account and UPI VPA used for resident collections and invoice receipts.
+            </p>
+          </div>
+
+          <div className="max-w-4xl space-y-4">
+            <div className="p-3.5 bg-emerald-50/60 border border-emerald-100/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700">
+              <svg className="w-4 h-4 text-[#175C46] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>
+                The UPI ID and bank account details below are used for collecting resident rent and utility payments online.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <TextInput
+                label="PG UPI ID (VPA)"
+                name="pg_upi_id"
+                value={formData.pg_upi_id}
+                onChange={handleChange}
+                placeholder="e.g. jasminkorat204@oksbi"
+              />
+
+              <TextInput
+                label="Bank Name"
+                name="pg_bank_name"
+                value={formData.pg_bank_name}
+                onChange={handleChange}
+                placeholder="e.g. State Bank of India"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <TextInput
+                label="Account Number"
+                name="pg_account_number"
+                value={formData.pg_account_number}
+                onChange={handleChange}
+                placeholder="e.g. 38291048592"
+              />
+
+              <TextInput
+                label="IFSC Code"
+                name="pg_ifsc_code"
+                value={formData.pg_ifsc_code}
+                onChange={(e) => {
+                  handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
+                }}
+                placeholder="e.g. SBIN0001234"
+              />
+            </div>
+
+            <div className="max-w-md">
+              <TextInput
+                label="Account Holder Name"
+                name="pg_account_holder_name"
+                value={formData.pg_account_holder_name}
+                onChange={handleChange}
+                placeholder="e.g. Jasmin Patel"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Actions Bar */}
+        <div className="pt-6 border-t border-gray-200 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={isSubmitting}
+            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs sm:text-sm font-semibold text-gray-700 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+          >
+            Reset Form
+          </button>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Saving Changes...</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Save Profile &amp; PG Details</span>
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};

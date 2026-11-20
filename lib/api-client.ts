@@ -59,6 +59,13 @@ export interface RequestOptions extends RequestInit {
  * and finally to HTTP status code descriptions.
  */
 export function extractErrorMessage(data: unknown, status: number): string {
+  if (typeof data === 'string' && data.trim()) {
+    // If backend returned plain text string error (and not full HTML page)
+    if (!data.trim().startsWith('<')) {
+      return data.trim();
+    }
+  }
+
   if (data && typeof data === 'object') {
     const obj = data as Record<string, unknown>;
 
@@ -152,6 +159,10 @@ export function extractErrorMessage(data: unknown, status: number): string {
       return 'Validation failed. Please correct the highlighted fields.';
     case 500:
       return 'Internal server error. Please try again later.';
+    case 502:
+    case 503:
+    case 504:
+      return 'Service temporarily unavailable. Please try again in a few moments.';
     default:
       if (status > 0) {
         return `Request failed with status ${status}.`;
@@ -172,8 +183,38 @@ export function extractSuccessMessage(data: unknown): string | null {
     if (typeof obj.msg === 'string' && obj.msg.trim()) {
       return obj.msg.trim();
     }
+    if (obj.data && typeof obj.data === 'object') {
+      const dataObj = obj.data as Record<string, unknown>;
+      if (typeof dataObj.message === 'string' && dataObj.message.trim()) {
+        return dataObj.message.trim();
+      }
+      if (typeof dataObj.msg === 'string' && dataObj.msg.trim()) {
+        return dataObj.msg.trim();
+      }
+    }
   }
   return null;
+}
+
+/**
+ * Appropriate fallback success message when the API response does not provide one
+ */
+export function getDefaultSuccessMessage(method: string, endpoint: string): string {
+  const upperMethod = method.toUpperCase();
+  if (endpoint.includes('/export') || endpoint.includes('/receipt')) {
+    return 'File downloaded successfully.';
+  }
+  switch (upperMethod) {
+    case 'DELETE':
+      return 'Record deleted successfully.';
+    case 'POST':
+      return 'Record created successfully.';
+    case 'PUT':
+    case 'PATCH':
+      return 'Changes saved successfully.';
+    default:
+      return 'Operation completed successfully.';
+  }
 }
 
 export async function apiClient<T>(
@@ -327,13 +368,17 @@ export async function apiClient<T>(
     // Display backend response message for mutations (POST, PUT, PATCH, DELETE) or when explicitly requested
     const method = (fetchOptions.method || 'GET').toUpperCase();
     const isMutation = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-    const isSilentEndpoint = endpoint.includes('/auth/refresh') || endpoint.includes('/auth/me');
+    const isSilentEndpoint =
+      endpoint.includes('/auth/refresh') ||
+      endpoint.includes('/auth/me') ||
+      endpoint.includes('/auth/logout');
 
     const shouldShowSuccess =
       showSuccessToast !== undefined ? showSuccessToast : isMutation && !isSilentEndpoint;
 
     if (shouldShowSuccess) {
-      const backendSuccessMessage = extractSuccessMessage(data);
+      const backendSuccessMessage =
+        extractSuccessMessage(data) || getDefaultSuccessMessage(method, endpoint);
       if (backendSuccessMessage) {
         toast.success(backendSuccessMessage);
       }

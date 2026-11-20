@@ -432,8 +432,8 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
         </div>
       </div>
 
-      {/* Main Form Card matching Figma */}
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-xs space-y-6">
+      {/* Main Form */}
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Row 1: Resident Name & Request Type */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>

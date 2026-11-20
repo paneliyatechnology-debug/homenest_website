@@ -109,11 +109,14 @@ class NoticeService {
    * POST /notices (multipart/form-data)
    * Creates a new notice (draft or scheduled or sent)
    */
-  async createNotice(formData: FormData): Promise<{ success: boolean; data?: Notice; message?: string }> {
+  async createNotice(
+    formData: FormData,
+    options?: { showSuccessToast?: boolean }
+  ): Promise<{ success: boolean; data?: Notice; message?: string }> {
     const response = await apiClient<{ success: boolean; data: Notice; message?: string }>('/notices', {
       method: 'POST',
       body: formData,
-      showSuccessToast: true,
+      showSuccessToast: options?.showSuccessToast,
     });
     return response;
   }
@@ -122,11 +125,15 @@ class NoticeService {
    * PUT /notices/:id (multipart/form-data)
    * Updates an existing notice
    */
-  async updateNotice(id: number | string, formData: FormData): Promise<{ success: boolean; data?: Notice; message?: string }> {
+  async updateNotice(
+    id: number | string,
+    formData: FormData,
+    options?: { showSuccessToast?: boolean }
+  ): Promise<{ success: boolean; data?: Notice; message?: string }> {
     const response = await apiClient<{ success: boolean; data: Notice; message?: string }>(`/notices/${id}`, {
       method: 'PUT',
       body: formData,
-      showSuccessToast: true,
+      showSuccessToast: options?.showSuccessToast,
     });
     return response;
   }
