@@ -250,13 +250,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       },
     },
     {
-      label: 'Settings',
-      icon: 'pi pi-cog',
-      command: () => {
-        router.push('/dashboard/settings/staff');
-      },
-    },
-    {
       separator: true,
     },
     {

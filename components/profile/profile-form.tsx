@@ -35,7 +35,7 @@ export interface ProfileFormData {
   total_beds: string | number;
   amenities: string[];
   rules: string;
-  status: 'active' | 'inactive';
+  status: 'active' | 'inactive' | '';
   logoFile: File | null;
   logoPreview: string | null;
 
@@ -51,13 +51,13 @@ const DEFAULT_PROFILE_FORM_DATA: ProfileFormData = {
   name: '',
   email: '',
   phone: '',
-  gender: 'female',
+  gender: '',
   address: '',
   profilePhotoFile: null,
   profilePhotoPreview: null,
 
   pg_name: '',
-  pg_type: 'girls',
+  pg_type: '',
   pg_phone: '',
   pg_address: '',
   pg_city: '',
@@ -65,9 +65,9 @@ const DEFAULT_PROFILE_FORM_DATA: ProfileFormData = {
   pg_pincode: '',
   total_rooms: '',
   total_beds: '',
-  amenities: ['Wi-Fi', 'AC', 'Meals', 'Laundry'],
+  amenities: [],
   rules: '',
-  status: 'active',
+  status: '',
   logoFile: null,
   logoPreview: null,
 
@@ -135,17 +135,36 @@ export const ProfileForm: React.FC = () => {
     const rawLogo = pg?.logo_url || pg?.logo;
     const resolvedLogo = rawLogo ? resolveFileUrl(rawLogo) : null;
 
+    // Parse amenities strictly from API (if none from API, keep empty array)
+    let initialAmenities: string[] = [];
+    const rawAmenities = (pg as unknown as { amenities?: unknown })?.amenities;
+    if (Array.isArray(rawAmenities)) {
+      initialAmenities = rawAmenities.filter((item): item is string => typeof item === 'string');
+    } else if (typeof rawAmenities === 'string' && rawAmenities.trim()) {
+      try {
+        const parsed = JSON.parse(rawAmenities);
+        if (Array.isArray(parsed)) {
+          initialAmenities = parsed.filter((item): item is string => typeof item === 'string');
+        }
+      } catch {
+        initialAmenities = rawAmenities
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean);
+      }
+    }
+
     const data: ProfileFormData = {
       name: user.name || '',
       email: user.email || '',
       phone: user.phone || '',
-      gender: (user.gender?.toLowerCase() as ProfileFormData['gender']) || 'female',
+      gender: user.gender ? (user.gender.toLowerCase() as ProfileFormData['gender']) : '',
       address: user.address || '',
       profilePhotoFile: null,
       profilePhotoPreview: resolvedPhoto,
 
       pg_name: pg?.name || '',
-      pg_type: (pg?.type?.toLowerCase() as ProfileFormData['pg_type']) || 'girls',
+      pg_type: pg?.type ? (pg.type.toLowerCase() as ProfileFormData['pg_type']) : '',
       pg_phone: pg?.phone || '',
       pg_address: pg?.address || '',
       pg_city: pg?.city || '',
@@ -153,9 +172,9 @@ export const ProfileForm: React.FC = () => {
       pg_pincode: pg?.pincode || '',
       total_rooms: pg?.total_rooms !== undefined && pg?.total_rooms !== null ? pg.total_rooms : '',
       total_beds: pg?.total_beds !== undefined && pg?.total_beds !== null ? pg.total_beds : '',
-      amenities: Array.isArray(pg?.amenities) ? pg.amenities : ['Wi-Fi', 'AC', 'Meals', 'Laundry'],
+      amenities: initialAmenities,
       rules: pg?.rules || '',
-      status: (pg?.status?.toLowerCase() as ProfileFormData['status']) || 'active',
+      status: pg?.status ? (pg.status.toLowerCase() as ProfileFormData['status']) : '',
       logoFile: null,
       logoPreview: resolvedLogo,
 
@@ -291,49 +310,135 @@ export const ProfileForm: React.FC = () => {
       // Owner Fields (email sent as read-only value)
       payload.append('name', formData.name.trim());
       payload.append('email', formData.email.trim());
-      if (formData.phone.trim()) payload.append('phone', formData.phone.trim().replace(/\D/g, ''));
-      if (formData.gender) payload.append('gender', formData.gender);
-      if (formData.address.trim()) payload.append('address', formData.address.trim());
+
+      if (formData.phone.trim()) {
+        payload.append('phone', formData.phone.trim().replace(/\D/g, ''));
+      } else if (initialData?.phone || currentUser?.phone) {
+        payload.append('phone', 'null');
+      }
+
+      if (formData.gender) {
+        payload.append('gender', formData.gender);
+      } else if (initialData?.gender || currentUser?.gender) {
+        payload.append('gender', 'null');
+      }
+
+      if (formData.address.trim()) {
+        payload.append('address', formData.address.trim());
+      } else if (initialData?.address || currentUser?.address) {
+        payload.append('address', 'null');
+      }
 
       if (formData.profilePhotoFile) {
         payload.append('profile_photo', formData.profilePhotoFile);
-      } else if (!formData.profilePhotoPreview && currentUser?.profile_photo) {
+      } else if (!formData.profilePhotoPreview && (initialData?.profilePhotoPreview || currentUser?.profile_photo)) {
         payload.append('profile_photo', 'null');
       }
 
       // PG Facility Fields (pg_email completely removed)
       payload.append('pg_name', formData.pg_name.trim());
-      if (formData.pg_type) payload.append('pg_type', formData.pg_type);
-      if (formData.pg_phone.trim()) payload.append('pg_phone', formData.pg_phone.trim().replace(/\D/g, ''));
-      if (formData.pg_address.trim()) payload.append('pg_address', formData.pg_address.trim());
-      if (formData.pg_city.trim()) payload.append('pg_city', formData.pg_city.trim());
-      if (formData.pg_state.trim()) payload.append('pg_state', formData.pg_state.trim());
-      if (formData.pg_pincode.trim()) payload.append('pg_pincode', formData.pg_pincode.trim());
+
+      if (formData.pg_type) {
+        payload.append('pg_type', formData.pg_type);
+      } else if (initialData?.pg_type || currentUser?.pg?.type) {
+        payload.append('pg_type', 'null');
+      }
+
+      if (formData.pg_phone.trim()) {
+        payload.append('pg_phone', formData.pg_phone.trim().replace(/\D/g, ''));
+      } else if (initialData?.pg_phone || currentUser?.pg?.phone) {
+        payload.append('pg_phone', 'null');
+      }
+
+      if (formData.pg_address.trim()) {
+        payload.append('pg_address', formData.pg_address.trim());
+      } else if (initialData?.pg_address || currentUser?.pg?.address) {
+        payload.append('pg_address', 'null');
+      }
+
+      if (formData.pg_city.trim()) {
+        payload.append('pg_city', formData.pg_city.trim());
+      } else if (initialData?.pg_city || currentUser?.pg?.city) {
+        payload.append('pg_city', 'null');
+      }
+
+      if (formData.pg_state.trim()) {
+        payload.append('pg_state', formData.pg_state.trim());
+      } else if (initialData?.pg_state || currentUser?.pg?.state) {
+        payload.append('pg_state', 'null');
+      }
+
+      if (formData.pg_pincode.trim()) {
+        payload.append('pg_pincode', formData.pg_pincode.trim());
+      } else if (initialData?.pg_pincode || currentUser?.pg?.pincode) {
+        payload.append('pg_pincode', 'null');
+      }
 
       if (formData.total_rooms !== '') {
         payload.append('total_rooms', String(Number(formData.total_rooms)));
-      }
-      if (formData.total_beds !== '') {
-        payload.append('total_beds', String(Number(formData.total_beds)));
+      } else if (initialData?.total_rooms !== '' && initialData?.total_rooms !== undefined) {
+        payload.append('total_rooms', 'null');
       }
 
-      payload.append('amenities', JSON.stringify(formData.amenities));
-      if (formData.rules.trim()) payload.append('rules', formData.rules.trim());
-      if (formData.status) payload.append('status', formData.status);
+      if (formData.total_beds !== '') {
+        payload.append('total_beds', String(Number(formData.total_beds)));
+      } else if (initialData?.total_beds !== '' && initialData?.total_beds !== undefined) {
+        payload.append('total_beds', 'null');
+      }
+
+      if (formData.amenities.length > 0) {
+        payload.append('amenities', JSON.stringify(formData.amenities));
+      } else if (initialData?.amenities && initialData.amenities.length > 0) {
+        payload.append('amenities', 'null');
+      }
+
+      if (formData.rules.trim()) {
+        payload.append('rules', formData.rules.trim());
+      } else if (initialData?.rules || currentUser?.pg?.rules) {
+        payload.append('rules', 'null');
+      }
+
+      if (formData.status) {
+        payload.append('status', formData.status);
+      } else if (initialData?.status || currentUser?.pg?.status) {
+        payload.append('status', 'null');
+      }
 
       if (formData.logoFile) {
         payload.append('logo', formData.logoFile);
-      } else if (!formData.logoPreview && currentUser?.pg?.logo) {
+      } else if (!formData.logoPreview && (initialData?.logoPreview || currentUser?.pg?.logo)) {
         payload.append('logo', 'null');
       }
 
       // Banking & UPI Payout Fields
-      if (formData.pg_upi_id.trim()) payload.append('pg_upi_id', formData.pg_upi_id.trim());
-      if (formData.pg_bank_name.trim()) payload.append('pg_bank_name', formData.pg_bank_name.trim());
-      if (formData.pg_account_number.trim()) payload.append('pg_account_number', formData.pg_account_number.trim());
-      if (formData.pg_ifsc_code.trim()) payload.append('pg_ifsc_code', formData.pg_ifsc_code.trim().toUpperCase());
+      if (formData.pg_upi_id.trim()) {
+        payload.append('pg_upi_id', formData.pg_upi_id.trim());
+      } else if (initialData?.pg_upi_id || currentUser?.pg?.bank_details?.pg_upi_id || currentUser?.pg?.pg_upi_id) {
+        payload.append('pg_upi_id', 'null');
+      }
+
+      if (formData.pg_bank_name.trim()) {
+        payload.append('pg_bank_name', formData.pg_bank_name.trim());
+      } else if (initialData?.pg_bank_name || currentUser?.pg?.bank_details?.pg_bank_name || currentUser?.pg?.pg_bank_name) {
+        payload.append('pg_bank_name', 'null');
+      }
+
+      if (formData.pg_account_number.trim()) {
+        payload.append('pg_account_number', formData.pg_account_number.trim());
+      } else if (initialData?.pg_account_number || currentUser?.pg?.bank_details?.pg_account_number || currentUser?.pg?.pg_account_number) {
+        payload.append('pg_account_number', 'null');
+      }
+
+      if (formData.pg_ifsc_code.trim()) {
+        payload.append('pg_ifsc_code', formData.pg_ifsc_code.trim().toUpperCase());
+      } else if (initialData?.pg_ifsc_code || currentUser?.pg?.bank_details?.pg_ifsc_code || currentUser?.pg?.pg_ifsc_code) {
+        payload.append('pg_ifsc_code', 'null');
+      }
+
       if (formData.pg_account_holder_name.trim()) {
         payload.append('pg_account_holder_name', formData.pg_account_holder_name.trim());
+      } else if (initialData?.pg_account_holder_name || currentUser?.pg?.bank_details?.pg_account_holder_name || currentUser?.pg?.pg_account_holder_name) {
+        payload.append('pg_account_holder_name', 'null');
       }
 
       // Execute PUT /api/v1/auth/update-pg
@@ -500,6 +605,7 @@ export const ProfileForm: React.FC = () => {
                 <Dropdown
                   label="PG Type"
                   name="pg_type"
+                  placeholder="Select PG type"
                   value={formData.pg_type}
                   options={PG_TYPE_OPTIONS}
                   onChange={handleChange}
