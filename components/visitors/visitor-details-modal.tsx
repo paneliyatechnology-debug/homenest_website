@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { Visitor, VisitorLog } from '@/types/visitor';
 import { visitorService } from '@/services/visitor.service';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 import { formatDateToDDMMYYYY } from '@/components/ui/app-date-picker';
 
 interface VisitorDetailsModalProps {
@@ -63,8 +63,21 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title={
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
+                Visitor Details
+              </h2>
+              {current?.pass_code && (
+                <span className="font-mono text-[11px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-semibold">
+                  {current.pass_code}
+                </span>
+              )}
+            </div>
+          }
+          subtitle="Pass overview & movement activity records"
+          icon={
             <svg
               className="w-5 h-5 stroke-current"
               fill="none"
@@ -77,23 +90,8 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
                 d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
               />
             </svg>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
-                Visitor Details
-              </h2>
-              {current?.pass_code && (
-                <span className="font-mono text-[11px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded font-semibold">
-                  {current.pass_code}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Pass overview & movement activity records
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
     >
       <div className="space-y-4 pt-1 text-xs sm:text-sm">

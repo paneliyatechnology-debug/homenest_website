@@ -44,7 +44,14 @@ export type { PhotoUploadProps } from './photo-upload';
 export { BrandLoader } from './brand-loader';
 export type { BrandLoaderProps } from './brand-loader';
 
-export { AppDatePicker, formatDateToDDMMYYYY, formatDateForApi, parseDateString } from './app-date-picker';
+export {
+  AppDatePicker,
+  formatDateToDDMMYYYY,
+  formatDateForApi,
+  parseDateString,
+  toInputDate,
+  isDateValid,
+} from './app-date-picker';
 export { AppTimePicker, parseTimeString, formatTimeToString } from './app-time-picker';
 export type { AppTimePickerProps } from './app-time-picker';
 
@@ -89,3 +96,18 @@ export type { ClearFilterButtonProps } from './clear-filter-button';
 
 export { ExportDropdown } from './export-dropdown';
 export type { ExportDropdownProps, ExportFormat } from './export-dropdown';
+
+export { StatCard, StatCardGrid } from './stat-card';
+export type { StatCardProps, StatCardGridProps } from './stat-card';
+
+export { ModalHeader } from './modal-header';
+export type { ModalHeaderProps } from './modal-header';
+
+export { DetailRow, DetailGrid } from './detail-row';
+export type { DetailRowProps, DetailGridProps } from './detail-row';
+
+export { ModalFooter } from './modal-footer';
+export type { ModalFooterProps } from './modal-footer';
+
+export { AttachmentPreviewModal } from './attachment-preview-modal';
+export type { AttachmentPreviewModalProps } from './attachment-preview-modal';

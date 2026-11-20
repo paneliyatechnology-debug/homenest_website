@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { Room } from '@/types/room';
 import { roomService } from '@/services/room.service';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface RoomDetailsModalProps {
   visible: boolean;
@@ -87,17 +87,16 @@ export const RoomDetailsModal: React.FC<RoomDetailsModalProps> = ({
       visible={visible}
       onHide={onHide}
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center font-bold text-sm">
+        <ModalHeader
+          title={titleName}
+          subtitle={roomTypeLabel}
+          iconShape="circle"
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v11m0-4h18m0-7v11M3 11a3 3 0 013-3h3a3 3 0 013 3v3H3v-3z" />
             </svg>
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 leading-tight">{titleName}</h3>
-            <p className="text-xs text-gray-500 capitalize">{roomTypeLabel}</p>
-          </div>
-        </div>
+          }
+        />
       }
       style={{ width: '480px' }}
       modal

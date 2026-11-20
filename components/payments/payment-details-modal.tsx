@@ -9,7 +9,7 @@ import {
   formatCurrency,
 } from '@/types/payment';
 import { paymentService } from '@/services/payment.service';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface PaymentDetailsModalProps {
   visible: boolean;
@@ -89,26 +89,23 @@ export const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
       visible={visible}
       onHide={onHide}
       header={
-        <div className="flex items-center justify-between w-full pr-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center font-bold text-sm shrink-0">
-              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+        <ModalHeader
+          title={
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-base font-bold text-gray-900 leading-tight">
+                Payment Details
+              </h3>
+              {current && <StatusBadge status={current.status} />}
             </div>
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h3 className="text-base font-bold text-gray-900 leading-tight">
-                  Payment Details
-                </h3>
-                {current && <StatusBadge status={current.status} />}
-              </div>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {current?.title || (targetId ? `Payment #${targetId}` : '')}
-              </p>
-            </div>
-          </div>
-        </div>
+          }
+          subtitle={current?.title || (targetId ? `Payment #${targetId}` : '')}
+          iconShape="circle"
+          icon={
+            <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          }
+        />
       }
       style={{ width: '620px', maxWidth: '95vw' }}
       modal

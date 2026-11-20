@@ -12,14 +12,18 @@ import { paymentService } from '@/services/payment.service';
 import { Complaint, ComplaintAttachment } from '@/types/complaint';
 import { complaintService } from '@/services/complaint.service';
 import { PaymentFormModal, PaymentCollectModal, PaymentDetailsModal } from '@/components/payments';
-import { DeleteConfirmationModal, StatusBadge, IconButton } from '@/components/ui';
 import {
+  DeleteConfirmationModal,
+  StatusBadge,
+  IconButton,
   AttachmentPreviewModal,
+} from '@/components/ui';
+import {
   resolveFileUrl,
   isImageFile,
   isPdfFile,
   getFileExtension,
-} from '@/components/complaints/attachment-preview-modal';
+} from '@/lib/file-utils';
 
 interface ResidentDetailPageProps {
   params: Promise<{ id: string }>;

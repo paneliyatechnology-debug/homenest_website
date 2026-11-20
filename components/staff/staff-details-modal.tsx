@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { StaffMember } from '@/types/staff';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface StaffDetailsModalProps {
   visible: boolean;
@@ -34,15 +34,12 @@ export const StaffDetailsModal: React.FC<StaffDetailsModalProps> = ({
       visible={visible}
       onHide={onHide}
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center font-bold text-sm">
-            {staff.name ? staff.name.charAt(0).toUpperCase() : 'S'}
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 leading-tight">{staff.name}</h3>
-            <p className="text-xs text-gray-500 capitalize">{staff.staff_role?.replace(/_/g, ' ') || 'Staff Member'}</p>
-          </div>
-        </div>
+        <ModalHeader
+          title={staff.name}
+          subtitle={staff.staff_role?.replace(/_/g, ' ') || 'Staff Member'}
+          iconShape="circle"
+          icon={staff.name ? staff.name.charAt(0).toUpperCase() : 'S'}
+        />
       }
       style={{ width: '480px' }}
       modal

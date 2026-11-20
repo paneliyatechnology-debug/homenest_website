@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppDatePicker } from '@/components/ui/app-date-picker';
+import { AppDatePicker, toInputDate } from '@/components/ui/app-date-picker';
 import { PageHeader, Dropdown, PhotoUpload, BrandLoader } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
 import { toast } from '@/lib/toast';
@@ -66,35 +66,7 @@ interface FormState {
   subscription_plan_id: number | string;
 }
 
-/**
- * Normalizes backend date strings (DD-MM-YYYY, YYYY-MM-DD, or ISO strings)
- * into standard YYYY-MM-DD format for internal form storage and date pickers.
- */
-function toInputDate(val?: string | null): string {
-  if (!val) return '';
-  const str = String(val).trim();
-  // Check if DD-MM-YYYY or DD/MM/YYYY
-  const dmYMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
-  if (dmYMatch) {
-    const [, d, m, y] = dmYMatch;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-  }
-  // Check if plain YYYY-MM-DD
-  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
-  if (ymdMatch) {
-    const [, y, m, d] = ymdMatch;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-  }
-  // ISO format or date with time (e.g. 2000-01-09T18:30:00.000Z)
-  const d = new Date(str);
-  if (!isNaN(d.getTime())) {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-  return str.split(' ')[0].split('T')[0];
-}
+
 
 interface FormInitialDataSource extends Partial<ResidentDetail> {
   name?: string;

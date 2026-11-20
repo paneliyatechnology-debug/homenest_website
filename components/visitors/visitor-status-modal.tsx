@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Visitor } from '@/types/visitor';
 import { visitorService } from '@/services/visitor.service';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface VisitorStatusModalProps {
   visible: boolean;
@@ -101,8 +101,20 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
       resizable={false}
       className="w-full max-w-[480px] mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title="Change Visitor Status"
+          subtitle={
+            visitor?.visitor_name ? (
+              <>
+                <span className="font-semibold text-gray-800">{visitor.visitor_name}</span>
+                {visitor.pass_code ? ` • ${visitor.pass_code}` : ''}
+              </>
+            ) : (
+              'Update status & access record'
+            )
+          }
+          iconBg="bg-amber-50 text-amber-600"
+          icon={
             <svg
               className="w-5 h-5 stroke-current"
               fill="none"
@@ -115,23 +127,8 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
-              Change Visitor Status
-            </h2>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              {visitor?.visitor_name ? (
-                <>
-                  <span className="font-semibold text-gray-800">{visitor.visitor_name}</span>
-                  {visitor.pass_code ? ` • ${visitor.pass_code}` : ''}
-                </>
-              ) : (
-                'Update status & access record'
-              )}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
     >
       <div className="space-y-4 pt-1 text-xs sm:text-sm">

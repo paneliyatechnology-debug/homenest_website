@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Notice } from '@/types/notice';
 import { noticeService } from '@/services/notice.service';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface NoticeDetailsModalProps {
   visible: boolean;
@@ -83,8 +83,17 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title={
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
+                Notice Details
+              </h2>
+              {current?.status && <StatusBadge status={current.status} />}
+            </div>
+          }
+          subtitle="Notice summary, broadcast target & schedule details"
+          icon={
             <svg
               className="w-5 h-5 stroke-current"
               fill="none"
@@ -97,19 +106,8 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
                 d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
               />
             </svg>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
-                Notice Details
-              </h2>
-              {current?.status && <StatusBadge status={current.status} />}
-            </div>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Notice summary, broadcast target & schedule details
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
     >
       <div className="space-y-4 pt-1 text-xs sm:text-sm">

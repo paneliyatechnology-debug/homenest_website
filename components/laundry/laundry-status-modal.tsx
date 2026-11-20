@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { LaundryRequest, LaundryStatus } from '@/types/laundry';
 import { laundryService } from '@/services/laundry.service';
+import { ModalHeader } from '@/components/ui';
 
 interface LaundryStatusModalProps {
   visible: boolean;
@@ -81,21 +82,15 @@ export const LaundryStatusModal: React.FC<LaundryStatusModalProps> = ({
       resizable={false}
       className="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title="Update Request Status"
+          subtitle={`Order ${request.request_number} • ${request.resident?.name}`}
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Update Request Status
-            </h2>
-            <p className="text-xs text-gray-500 font-normal">
-              Order {request.request_number} • {request.resident?.name}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 bg-white"
     >

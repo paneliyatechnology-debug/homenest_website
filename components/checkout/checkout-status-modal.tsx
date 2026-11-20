@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { CheckoutDetails, CheckoutListItem, CheckoutStatus, UpdateCheckoutStatusPayload } from '@/types/checkout';
 import { checkoutService } from '@/services/checkout.service';
+import { ModalHeader } from '@/components/ui';
 
 interface CheckoutStatusModalProps {
   visible: boolean;
@@ -70,21 +71,15 @@ export const CheckoutStatusModal: React.FC<CheckoutStatusModalProps> = ({
       resizable={false}
       className="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title="Review & Process Clearance"
+          subtitle={`${checkout.resident.name} • Checkout Request #${checkout.id}`}
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Review & Process Clearance
-            </h2>
-            <p className="text-xs text-gray-500 font-normal">
-              {checkout.resident.name} • Checkout Request #{checkout.id}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 bg-white space-y-4"
     >

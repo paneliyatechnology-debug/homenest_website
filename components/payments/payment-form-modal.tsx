@@ -14,7 +14,7 @@ import { residentService } from '@/services/resident.service';
 import { branchService } from '@/services/branch.service';
 import { Resident } from '@/types/resident';
 import { Branch } from '@/types/branch';
-import { AppDatePicker, Dropdown } from '@/components/ui';
+import { AppDatePicker, Dropdown, ModalHeader } from '@/components/ui';
 import { ResidentDropdown } from '@/components/residents/resident-dropdown';
 
 interface ResidentContext {
@@ -89,8 +89,15 @@ export const PaymentFormModal: React.FC<PaymentFormModalProps> = ({
       visible={visible}
       onHide={handleClose}
       header={
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EBF7F2] text-[#175C46] flex items-center justify-center shrink-0">
+        <ModalHeader
+          title={isEdit ? 'Edit Payment / Invoice' : 'Record Payment / Generate Bill'}
+          subtitle={
+            isEdit
+              ? 'Update billing breakdown, due date, and notes'
+              : 'Create a new charge or invoice for the resident'
+          }
+          iconBg="bg-[#EBF7F2] text-[#175C46]"
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path
                 strokeLinecap="round"
@@ -98,18 +105,8 @@ export const PaymentFormModal: React.FC<PaymentFormModalProps> = ({
                 d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z"
               />
             </svg>
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900">
-              {isEdit ? 'Edit Payment / Invoice' : 'Record Payment / Generate Bill'}
-            </h3>
-            <p className="text-xs text-gray-500">
-              {isEdit
-                ? 'Update billing breakdown, due date, and notes'
-                : 'Create a new charge or invoice for the resident'}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
       style={{ width: '94vw', maxWidth: '640px' }}
       modal

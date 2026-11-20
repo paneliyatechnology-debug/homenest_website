@@ -4,7 +4,7 @@ import React from 'react';
 import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { Branch } from '@/types/branch';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader, DetailRow, DetailGrid } from '@/components/ui';
 
 interface BranchDetailsModalProps {
   visible: boolean;
@@ -32,8 +32,10 @@ export const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl border-0"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title="Branch Details"
+          subtitle={`${branch.name} • ${branch.location || 'No location set'}`}
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path
                 strokeLinecap="round"
@@ -41,16 +43,8 @@ export const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({
                 d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
               />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
-              Branch Details
-            </h2>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              {branch.name} &bull; {branch.location || 'No location set'}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
     >
       <div className="space-y-4 pt-2 text-xs sm:text-sm">
@@ -92,36 +86,20 @@ export const BranchDetailsModal: React.FC<BranchDetailsModalProps> = ({
         </div>
 
         {/* Detailed Fields */}
-        <div className="divide-y divide-gray-100 border-t border-b border-gray-100 py-1">
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Branch Name</span>
-            <span className="font-semibold text-gray-900">{branch.name}</span>
-          </div>
-
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Location</span>
-            <span className="font-medium text-gray-800">{branch.location || '—'}</span>
-          </div>
-
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Status</span>
-            <StatusBadge variant="branch" status={branch.status} />
-          </div>
-
+        <DetailGrid>
+          <DetailRow label="Branch Name" value={branch.name} />
+          <DetailRow label="Location" value={branch.location || '—'} />
+          <DetailRow
+            label="Status"
+            value={<StatusBadge variant="branch" status={branch.status} />}
+          />
           {branch.pg_name && (
-            <div className="py-2.5 flex items-center justify-between">
-              <span className="text-gray-500 font-medium">PG Property</span>
-              <span className="text-gray-800">{branch.pg_name}</span>
-            </div>
+            <DetailRow label="PG Property" value={branch.pg_name} />
           )}
-
           {branch.created_at && (
-            <div className="py-2.5 flex items-center justify-between">
-              <span className="text-gray-500 font-medium">Created On</span>
-              <span className="text-gray-600">{branch.created_at}</span>
-            </div>
+            <DetailRow label="Created On" value={branch.created_at} />
           )}
-        </div>
+        </DetailGrid>
 
         {/* Action Buttons */}
         <div className="flex items-center justify-end gap-2.5 pt-3">

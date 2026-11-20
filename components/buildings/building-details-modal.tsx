@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Building } from '@/types/building';
 import { buildingService } from '@/services/building.service';
+import { ModalHeader } from '@/components/ui';
 
 interface BuildingDetailsModalProps {
   visible: boolean;
@@ -80,17 +81,16 @@ export const BuildingDetailsModal: React.FC<BuildingDetailsModalProps> = ({
       visible={visible}
       onHide={onHide}
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center font-bold text-sm">
+        <ModalHeader
+          title={titleName}
+          subtitle={branchName}
+          iconShape="circle"
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-gray-900 leading-tight">{titleName}</h3>
-            <p className="text-xs text-gray-500">{branchName}</p>
-          </div>
-        </div>
+          }
+        />
       }
       style={{ width: '520px' }}
       modal

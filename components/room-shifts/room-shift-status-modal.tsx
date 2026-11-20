@@ -6,6 +6,7 @@ import { RoomShiftRequest } from '@/types/room-shift';
 import { roomShiftService } from '@/services/room-shift.service';
 import { roomService } from '@/services/room.service';
 import { Room } from '@/types/room';
+import { ModalHeader } from '@/components/ui';
 
 interface RoomShiftStatusModalProps {
   visible: boolean;
@@ -234,21 +235,15 @@ export const RoomShiftStatusModal: React.FC<RoomShiftStatusModalProps> = ({
       resizable={false}
       className="w-full max-w-lg mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
+        <ModalHeader
+          title="Process Room Shift Status"
+          subtitle={`Review and update decision for ${shift.resident?.name} (Shift #${shift.id})`}
+          icon={
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Process Room Shift Status
-            </h2>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Review and update decision for {shift.resident?.name} (Shift #{shift.id})
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 bg-white"
     >

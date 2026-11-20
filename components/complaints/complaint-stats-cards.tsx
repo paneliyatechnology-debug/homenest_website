@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { ComplaintStats } from '@/types/complaint';
+import { StatCard, StatCardGrid } from '@/components/ui';
 
 interface ComplaintStatsCardsProps {
   stats: ComplaintStats;
@@ -72,27 +73,17 @@ export const ComplaintStatsCards: React.FC<ComplaintStatsCardsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4 w-full">
+    <StatCardGrid columns={5}>
       {cards.map((card) => (
-        <div
+        <StatCard
           key={card.label}
-          className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 hover:shadow-xs transition-all min-h-[92px]"
-        >
-          <div
-            className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center shrink-0`}
-          >
-            {card.icon}
-          </div>
-          <div className="min-w-0 flex flex-col justify-center">
-            <span className="text-xs font-medium text-gray-500 tracking-tight truncate">
-              {card.label}
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight mt-0.5">
-              {loading ? '—' : Number(card.value).toLocaleString('en-IN')}
-            </span>
-          </div>
-        </div>
+          label={card.label}
+          value={loading ? '—' : card.value}
+          icon={card.icon}
+          iconBg={card.iconBg}
+          iconShape="rounded"
+        />
       ))}
-    </div>
+    </StatCardGrid>
   );
 };

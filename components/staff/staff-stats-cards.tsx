@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { StaffStats } from '@/types/staff';
+import { StatCard, StatCardGrid } from '@/components/ui';
 
 interface StaffStatsCardsProps {
   stats: StaffStats;
@@ -72,29 +73,18 @@ export const StaffStatsCards: React.FC<StaffStatsCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+    <StatCardGrid columns={4}>
       {cards.map((card) => (
-        <div
+        <StatCard
           key={card.label}
-          className="bg-white rounded-2xl border border-gray-100/90 px-5 py-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-xs transition-all"
-        >
-          {/* Circular Icon Badge */}
-          <div className={`w-12 h-12 rounded-full ${card.bgCircle} flex items-center justify-center shrink-0`}>
-            {card.icon}
-          </div>
-
-          {/* Label and Count */}
-          <div className="min-w-0 flex flex-col justify-center">
-            <span className={`text-[12px] sm:text-[13px] font-medium ${card.textColor} tracking-tight truncate`}>
-              {card.label}
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight mt-0.5">
-              {Number(card.value).toLocaleString()}
-            </span>
-          </div>
-        </div>
+          label={card.label}
+          value={Number(card.value).toLocaleString()}
+          icon={card.icon}
+          iconBg={card.bgCircle}
+          labelColor={card.textColor}
+        />
       ))}
-    </div>
+    </StatCardGrid>
   );
 };
 

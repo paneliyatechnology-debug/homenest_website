@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { NoticeStats } from '@/types/notice';
+import { StatCard, StatCardGrid } from '@/components/ui';
 
 interface NoticeStatsCardsProps {
   stats: NoticeStats;
@@ -57,27 +58,16 @@ export const NoticeStatsCards: React.FC<NoticeStatsCardsProps> = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+    <StatCardGrid columns={4}>
       {cards.map((card) => (
-        <div
+        <StatCard
           key={card.label}
-          className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-xs transition-all"
-        >
-          <div
-            className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${card.iconBg}`}
-          >
-            {card.icon}
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-semibold text-gray-500 truncate">
-              {card.label}
-            </span>
-            <span className="text-2xl font-bold text-gray-900 tracking-tight mt-0.5">
-              {loading ? '—' : card.value}
-            </span>
-          </div>
-        </div>
+          label={card.label}
+          value={loading ? '—' : card.value}
+          icon={card.icon}
+          iconBg={card.iconBg}
+        />
       ))}
-    </div>
+    </StatCardGrid>
   );
 };

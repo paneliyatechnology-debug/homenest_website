@@ -3,6 +3,7 @@
 import React from 'react';
 import { PaymentStats } from '@/types/payment';
 import { formatCurrency } from './payment-overview-stats-cards';
+import { StatCard, StatCardGrid } from '@/components/ui';
 
 interface PaymentHistoryStatsCardsProps {
   stats: PaymentStats;
@@ -53,27 +54,16 @@ export const PaymentHistoryStatsCards: React.FC<PaymentHistoryStatsCardsProps> =
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 w-full">
+    <StatCardGrid columns={4}>
       {cards.map((card) => (
-        <div
+        <StatCard
           key={card.label}
-          className="bg-white rounded-2xl border border-gray-100 p-4.5 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-xs transition-all min-h-[96px]"
-        >
-          <div
-            className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full ${card.iconBg} flex items-center justify-center shrink-0`}
-          >
-            {card.icon}
-          </div>
-          <div className="min-w-0 flex flex-col justify-center">
-            <span className="text-xs sm:text-[13px] font-medium text-gray-500 tracking-tight truncate">
-              {card.label}
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight leading-tight mt-0.5">
-              {card.value}
-            </span>
-          </div>
-        </div>
+          label={card.label}
+          value={card.value}
+          icon={card.icon}
+          iconBg={card.iconBg}
+        />
       ))}
-    </div>
+    </StatCardGrid>
   );
 };

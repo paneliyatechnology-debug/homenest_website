@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { CheckoutDetails } from '@/types/checkout';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface CheckoutDetailsModalProps {
   visible: boolean;
@@ -33,24 +33,22 @@ export const CheckoutDetailsModal: React.FC<CheckoutDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-3xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
-            <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
-            </svg>
-          </div>
-          <div>
+        <ModalHeader
+          title={
             <div className="flex items-center gap-2.5">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
                 Departure & Refund Review
               </h2>
               <StatusBadge status={checkout.status} label={checkout.status} />
             </div>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Checkout Request #{checkout.id} • Created on {checkout.created_at}
-            </p>
-          </div>
-        </div>
+          }
+          subtitle={`Checkout Request #${checkout.id} • Created on ${checkout.created_at}`}
+          icon={
+            <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+            </svg>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 space-y-6 bg-gray-50/50 max-h-[78vh] overflow-y-auto"
       footer={

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { RoomShiftRequest } from '@/types/room-shift';
-import { StatusBadge, formatDateToDDMMYYYY } from '@/components/ui';
+import { StatusBadge, formatDateToDDMMYYYY, ModalHeader } from '@/components/ui';
 
 interface RoomShiftDetailsModalProps {
   visible: boolean;
@@ -31,24 +31,22 @@ export const RoomShiftDetailsModal: React.FC<RoomShiftDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-2xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-          </div>
-          <div>
+        <ModalHeader
+          title={
             <div className="flex items-center gap-2.5">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
                 Room Shift Request Details
               </h2>
               <StatusBadge status={shift.status} label={shift.status} />
             </div>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Request #{shift.id} • Created on {formatDateToDDMMYYYY(shift.created_at)}
-            </p>
-          </div>
-        </div>
+          }
+          subtitle={`Request #${shift.id} • Created on ${formatDateToDDMMYYYY(shift.created_at)}`}
+          icon={
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 space-y-5 bg-gray-50/50 max-h-[75vh] overflow-y-auto"
       footer={

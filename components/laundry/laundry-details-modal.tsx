@@ -3,7 +3,7 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { LaundryRequest } from '@/types/laundry';
-import { StatusBadge } from '@/components/ui';
+import { StatusBadge, ModalHeader } from '@/components/ui';
 
 interface LaundryDetailsModalProps {
   visible: boolean;
@@ -33,13 +33,8 @@ export const LaundryDetailsModal: React.FC<LaundryDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-2xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0 font-sans"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
-            <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
-            </svg>
-          </div>
-          <div>
+        <ModalHeader
+          title={
             <div className="flex items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
                 {request.request_number}
@@ -55,11 +50,14 @@ export const LaundryDetailsModal: React.FC<LaundryDetailsModalProps> = ({
                 </span>
               )}
             </div>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Created on {request.created_at}
-            </p>
-          </div>
-        </div>
+          }
+          subtitle={`Created on ${request.created_at}`}
+          icon={
+            <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+            </svg>
+          }
+        />
       }
       contentClassName="p-5 sm:p-6 space-y-5 bg-gray-50/50 max-h-[75vh] overflow-y-auto"
       footer={

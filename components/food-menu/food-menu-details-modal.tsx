@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Dialog } from 'primereact/dialog';
 import { FoodMenuItem } from '@/types/food-menu';
 import { foodMenuService } from '@/services/food-menu.service';
-import { StatusBadge, formatDateToDDMMYYYY } from '@/components/ui';
+import { StatusBadge, formatDateToDDMMYYYY, ModalHeader } from '@/components/ui';
 
 interface FoodMenuDetailsModalProps {
   visible: boolean;
@@ -31,8 +31,15 @@ export const FoodMenuDetailsModal: React.FC<FoodMenuDetailsModalProps> = ({
       visible={visible}
       onHide={onHide}
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center font-bold text-sm shrink-0">
+        <ModalHeader
+          title={initialItem?.name || 'Food Menu Details'}
+          subtitle={
+            <>
+              {initialItem?.meal_type ? `${initialItem.meal_type} Meal` : 'Dining Details'}
+              {initialItem?.branch_name ? ` • ${initialItem.branch_name}` : ''}
+            </>
+          }
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path
                 strokeLinecap="round"
@@ -40,17 +47,8 @@ export const FoodMenuDetailsModal: React.FC<FoodMenuDetailsModalProps> = ({
                 d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"
               />
             </svg>
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-base font-bold text-gray-900 leading-tight truncate">
-              {initialItem?.name || 'Food Menu Details'}
-            </h3>
-            <p className="text-xs text-gray-500 capitalize">
-              {initialItem?.meal_type ? `${initialItem.meal_type} Meal` : 'Dining Details'}
-              {initialItem?.branch_name ? ` • ${initialItem.branch_name}` : ''}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
       style={{ width: '92vw', maxWidth: '540px' }}
       modal

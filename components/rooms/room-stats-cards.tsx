@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { RoomStats } from '@/types/room';
+import { StatCard, StatCardGrid } from '@/components/ui';
 
 interface RoomStatsCardsProps {
   stats: RoomStats;
@@ -92,28 +93,18 @@ export const RoomStatsCards: React.FC<RoomStatsCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+    <StatCardGrid columns={5}>
       {cards.map((card, idx) => (
-        <div
+        <StatCard
           key={idx}
-          className="bg-white rounded-2xl p-4 sm:p-5 border border-gray-100/80 shadow-2xs flex items-center gap-3.5 transition-shadow hover:shadow-xs"
-        >
-          <div
-            className={`w-11 h-11 rounded-full ${card.iconBg} ${card.iconColor} flex items-center justify-center shrink-0 shadow-2xs`}
-          >
-            {card.icon}
-          </div>
-          <div className="min-w-0 flex-1">
-            <span className="text-xs font-semibold text-gray-500 block truncate">
-              {card.label}
-            </span>
-            <span className="text-xl sm:text-2xl font-bold text-gray-900 block tracking-tight mt-0.5">
-              {card.value}
-            </span>
-          </div>
-        </div>
+          label={card.label}
+          value={card.value}
+          icon={card.icon}
+          iconBg={card.iconBg}
+          iconColor={card.iconColor}
+        />
       ))}
-    </div>
+    </StatCardGrid>
   );
 };
 

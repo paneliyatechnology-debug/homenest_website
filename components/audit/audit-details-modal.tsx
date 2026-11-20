@@ -3,6 +3,7 @@
 import React from 'react';
 import { Dialog } from 'primereact/dialog';
 import { AuditLog } from '@/types/audit';
+import { ModalHeader, DetailRow, DetailGrid } from '@/components/ui';
 
 interface AuditDetailsModalProps {
   visible: boolean;
@@ -26,21 +27,15 @@ export const AuditDetailsModal: React.FC<AuditDetailsModalProps> = ({
       resizable={false}
       className="w-full max-w-xl mx-4 rounded-2xl overflow-hidden shadow-2xl border-0"
       header={
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 shadow-2xs">
+        <ModalHeader
+          title="Activity Log Details"
+          subtitle={`Record #${record.id} • ${record.timestamp || record.created_at || '—'}`}
+          icon={
             <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-gray-900 tracking-tight leading-snug">
-              Activity Log Details
-            </h2>
-            <p className="text-xs text-gray-500 font-normal mt-0.5">
-              Record #{record.id} &bull; {record.timestamp || record.created_at || '—'}
-            </p>
-          </div>
-        </div>
+          }
+        />
       }
     >
       <div className="space-y-4 pt-3 text-xs sm:text-sm">
@@ -63,40 +58,31 @@ export const AuditDetailsModal: React.FC<AuditDetailsModalProps> = ({
         </div>
 
         {/* Key-Value Details */}
-        <div className="divide-y divide-gray-100/90 border-t border-b border-gray-100 py-1">
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Action</span>
-            <span className="font-semibold text-gray-900">{record.action}</span>
-          </div>
-
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Module</span>
-            <span className="px-2.5 py-0.5 bg-[#E8F8F0] text-[#175C46] rounded-md font-semibold text-xs">
-              {record.module}
-            </span>
-          </div>
-
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Branch / Property</span>
-            <span className="text-gray-800 font-medium">
-              {record.branch_name || record.pg_name || 'All Branches'}
-            </span>
-          </div>
-
-          <div className="py-2.5 flex items-center justify-between">
-            <span className="text-gray-500 font-medium">Timestamp</span>
-            <span className="text-gray-700">{record.timestamp || record.created_at_formatted || record.created_at || '—'}</span>
-          </div>
-
-          {record.entity_type && (
-            <div className="py-2.5 flex items-center justify-between">
-              <span className="text-gray-500 font-medium">Entity</span>
-              <span className="text-gray-800 capitalize">
-                {record.entity_type} {record.entity_id ? `(#${record.entity_id})` : ''}
+        <DetailGrid>
+          <DetailRow label="Action" value={record.action} />
+          <DetailRow
+            label="Module"
+            value={
+              <span className="px-2.5 py-0.5 bg-[#E8F8F0] text-[#175C46] rounded-md font-semibold text-xs">
+                {record.module}
               </span>
-            </div>
+            }
+          />
+          <DetailRow
+            label="Branch / Property"
+            value={record.branch_name || record.pg_name || 'All Branches'}
+          />
+          <DetailRow
+            label="Timestamp"
+            value={record.timestamp || record.created_at_formatted || record.created_at || '—'}
+          />
+          {record.entity_type && (
+            <DetailRow
+              label="Entity"
+              value={`${record.entity_type} ${record.entity_id ? `(#${record.entity_id})` : ''}`}
+            />
           )}
-        </div>
+        </DetailGrid>
 
         {/* Detailed Description */}
         <div>
@@ -120,4 +106,3 @@ export const AuditDetailsModal: React.FC<AuditDetailsModalProps> = ({
     </Dialog>
   );
 };
-

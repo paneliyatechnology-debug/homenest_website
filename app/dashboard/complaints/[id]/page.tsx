@@ -12,17 +12,22 @@ import {
 import { StaffMember } from '@/types/staff';
 import { complaintService } from '@/services/complaint.service';
 import { staffService } from '@/services/staff.service';
-import { StatusBadge, BackButton, Button, AppDatePicker } from '@/components/ui';
+import {
+  StatusBadge,
+  BackButton,
+  Button,
+  AppDatePicker,
+  AttachmentPreviewModal,
+} from '@/components/ui';
 import { ComplaintCategoryIcon } from '@/components/complaints/complaint-category-icon';
 import { StaffAssignmentDropdown } from '@/components/complaints/staff-assignment-dropdown';
 import {
-  AttachmentPreviewModal,
   resolveFileUrl,
   formatFileSize,
   isImageFile,
   isPdfFile,
   getFileExtension,
-} from '@/components/complaints/attachment-preview-modal';
+} from '@/lib/file-utils';
 import { toast } from '@/lib/toast';
 import { useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
