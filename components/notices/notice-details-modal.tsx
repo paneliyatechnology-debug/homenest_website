@@ -4,7 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Notice } from '@/types/notice';
 import { noticeService } from '@/services/notice.service';
-import { StatusBadge, ModalHeader } from '@/components/ui';
+import { StatusBadge, ModalHeader, AttachmentPreviewModal } from '@/components/ui';
+import {
+  resolveFileUrl,
+  formatFileSize,
+  isImageFile,
+  isPdfFile,
+  getFileExtension,
+} from '@/lib/file-utils';
 
 interface NoticeDetailsModalProps {
   visible: boolean;
@@ -28,6 +35,7 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
   const [fetchedNotice, setFetchedNotice] = useState<Notice | null>(notice || null);
   const [loading, setLoading] = useState<boolean>(() => !notice && Boolean(targetId));
   const [isSending, setIsSending] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (!visible || !targetId) return;
@@ -55,6 +63,33 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
 
   const current = fetchedNotice || notice || null;
 
+  // Resolve attachment details
+  const rawAttachmentUrl = current?.attachment?.file_url || current?.file_url || '';
+  const attachmentUrl = resolveFileUrl(rawAttachmentUrl);
+  const fileName = current?.attachment?.file_name || current?.file_name || 'Attached File';
+  const fileSize = formatFileSize(current?.attachment?.file_size);
+  const isImage = isImageFile(fileName, attachmentUrl);
+  const isPdf = isPdfFile(fileName, attachmentUrl);
+  const ext = getFileExtension(fileName, attachmentUrl);
+  const hasAttachment = Boolean(
+    current?.has_attachment || current?.attachment || current?.file_url
+  );
+
+  const previewAttachments =
+    hasAttachment && attachmentUrl
+      ? [
+          {
+            id: current?.id || 1,
+            name: fileName,
+            file_name: fileName,
+            url: attachmentUrl,
+            file_url: attachmentUrl,
+            size: fileSize,
+            file_size: fileSize,
+          },
+        ]
+      : [];
+
   const handleSendNow = async () => {
     if (!current?.id || isSending) return;
     try {
@@ -69,13 +104,9 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
     }
   };
 
-  const getAttachmentUrl = (url?: string | null) => {
-    if (!url) return '';
-    return url;
-  };
-
   return (
-    <Dialog
+    <>
+      <Dialog
       visible={visible}
       onHide={onHide}
       modal
@@ -181,39 +212,159 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
               </p>
             </div>
 
-            {/* Attachment if present */}
-            {(current.has_attachment || current.attachment || current.file_url) && (
-              <div className="p-3.5 rounded-xl bg-gray-50/80 border border-gray-100 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-lg bg-emerald-50 text-[#175C46] flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                    </svg>
+            {/* Attachment Preview Section */}
+            {hasAttachment && (
+              <div className="p-3.5 rounded-xl border border-gray-100 bg-white space-y-2.5 shadow-2xs">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-md bg-[#175C46]/10 text-[#175C46] flex items-center justify-center shrink-0">
+                      <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                      </svg>
+                    </div>
+                    <span className="text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+                      Attachment Preview
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-semibold text-gray-900 truncate">
-                      {current.attachment?.file_name || current.file_name || 'Attached File'}
-                    </p>
-                    {current.attachment?.file_size && (
-                      <p className="text-[11px] text-gray-500">
-                        {current.attachment.file_size}
-                      </p>
+
+                  <div className="flex items-center gap-2">
+                    {attachmentUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewOpen(true)}
+                        className="text-[11px] font-semibold text-[#175C46] hover:text-[#124B38] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>Enlarge</span>
+                        <svg className="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </button>
+                    )}
+                    {attachmentUrl && <span className="text-gray-300">•</span>}
+                    {attachmentUrl && (
+                      <a
+                        href={attachmentUrl}
+                        download={fileName}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] font-semibold text-[#175C46] hover:text-[#124B38] hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <svg className="w-3 h-3 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        <span>Download</span>
+                      </a>
                     )}
                   </div>
                 </div>
 
-                <a
-                  href={getAttachmentUrl(current.attachment?.file_url || current.file_url)}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  className="px-3 py-1.5 text-xs font-semibold text-[#175C46] hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-1 shrink-0"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download
-                </a>
+                {/* If Image: Visual preview card with hover effect matching Payments and Complaints */}
+                {isImage && attachmentUrl ? (
+                  <div
+                    onClick={() => setPreviewOpen(true)}
+                    className="group relative rounded-xl border border-gray-200 overflow-hidden bg-gray-50 cursor-pointer flex flex-col items-center justify-center hover:border-[#175C46]/40 transition-all shadow-2xs"
+                  >
+                    <img
+                      src={attachmentUrl}
+                      alt={fileName}
+                      className="w-full max-h-56 sm:max-h-60 object-contain transition-transform duration-300 group-hover:scale-[1.01]"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 text-white">
+                      <div className="bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                        <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                        <span>Click to preview image</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* If PDF or Other Document: Standardized Document Card matching Complaints / Residents */
+                  <div
+                    onClick={() => attachmentUrl && setPreviewOpen(true)}
+                    className="p-3 rounded-xl border border-gray-200/90 bg-gray-50/60 hover:bg-white hover:border-[#175C46]/40 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div
+                        className={`w-11 h-11 rounded-lg shrink-0 flex items-center justify-center ${
+                          isPdf ? 'bg-rose-50 text-rose-600' : 'bg-[#E8F8F0] text-[#175C46]'
+                        }`}
+                      >
+                        {isPdf ? (
+                          <i className="pi pi-file-pdf text-xl" />
+                        ) : (
+                          <i className="pi pi-file text-xl" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm font-semibold text-gray-900 group-hover:text-[#175C46] transition-colors truncate">
+                          {fileName}
+                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gray-100 text-gray-600">
+                            {ext}
+                          </span>
+                          {fileSize && <span className="text-xs text-gray-400">{fileSize}</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewOpen(true);
+                        }}
+                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#175C46] hover:bg-[#E8F8F0] rounded-lg transition-colors cursor-pointer"
+                        title="Preview attachment"
+                      >
+                        <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+                      {attachmentUrl && (
+                        <a
+                          href={attachmentUrl}
+                          download={fileName}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#175C46] hover:bg-[#E8F8F0] rounded-lg transition-colors shrink-0"
+                          title="Download attachment"
+                        >
+                          <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                          </svg>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* File info footer row */}
+                <div className="flex items-center justify-between text-xs pt-0.5 px-0.5 text-gray-500">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gray-100 text-gray-600">
+                      {ext}
+                    </span>
+                    <span className="truncate max-w-[280px] font-medium text-gray-700">
+                      {fileName}
+                    </span>
+                    {fileSize && <span className="text-gray-400 text-[11px]">• {fileSize}</span>}
+                  </div>
+                  {attachmentUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewOpen(true)}
+                      className="text-[11px] font-semibold text-[#175C46] hover:underline cursor-pointer"
+                    >
+                      Open Preview
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
@@ -260,5 +411,15 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
         )}
       </div>
     </Dialog>
+
+    {/* Universal Attachment Preview Lightbox Modal */}
+    {hasAttachment && previewAttachments.length > 0 && (
+      <AttachmentPreviewModal
+        visible={previewOpen}
+        onHide={() => setPreviewOpen(false)}
+        attachments={previewAttachments}
+      />
+    )}
+  </>
   );
 };
