@@ -35,6 +35,9 @@ export interface VisitorRoomInfo {
   id: number;
   room_no: string;
   room_type: string;
+  building_name?: string;
+  floor_name?: string;
+  floor_number?: number;
 }
 
 export interface VisitorPgInfo {
