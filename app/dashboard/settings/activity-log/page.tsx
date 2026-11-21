@@ -537,14 +537,6 @@ export default function AdministrativeActivityLogPage() {
             ),
           },
           {
-            header: 'IP address',
-            cell: (item) => (
-              <span className="font-mono text-gray-600 text-xs whitespace-nowrap">
-                {item.ip_address || '—'}
-              </span>
-            ),
-          },
-          {
             header: 'Action',
             align: 'center',
             width: '80px',

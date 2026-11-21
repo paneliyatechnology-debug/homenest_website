@@ -47,14 +47,6 @@ export const AuditDetailsModal: React.FC<AuditDetailsModalProps> = ({
               {record.user_name || record.user}
             </span>
           </div>
-          {record.ip_address && (
-            <div className="text-right">
-              <span className="text-xs text-gray-400 block">IP Address</span>
-              <span className="font-mono text-xs text-gray-700 bg-white px-2 py-0.5 rounded border border-gray-200 mt-0.5 inline-block">
-                {record.ip_address}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Key-Value Details */}

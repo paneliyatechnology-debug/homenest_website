@@ -192,7 +192,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         </svg>
       ),
       children: [
-        { label: 'Admin & PG Profile', href: '/dashboard/profile' },
         { label: 'Staff Management', href: '/dashboard/settings/staff' },
         { label: 'Branch Management', href: '/dashboard/settings/branches' },
         { label: 'Administrative Activity Log', href: '/dashboard/settings/activity-log' },
