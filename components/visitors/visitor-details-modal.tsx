@@ -187,44 +187,60 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
 
             {/* Host Resident & QR Code Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Host Resident */}
-              <div className="sm:col-span-2 p-3.5 rounded-xl border border-gray-100 bg-[#FAFBFB] space-y-1.5">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                  Host Resident & Room
-                </span>
-                <div className="space-y-1">
-                  <div className="font-bold text-gray-900 text-xs sm:text-sm truncate">
-                    {current.resident?.name || current.host_resident || 'Resident not assigned'}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
-                    <span>
-                      Room:{' '}
-                      <strong className="font-bold text-[#175C46]">
-                        {current.room?.room_no || '—'}
-                      </strong>
-                    </span>
-                    {current.room?.room_type && (
-                      <span>
-                        Type:{' '}
-                        <strong className="font-semibold text-gray-800 capitalize">
-                          {current.room.room_type}
-                        </strong>
-                      </span>
-                    )}
-                    {current.resident?.phone && (
-                      <span>
-                        Phone:{' '}
-                        <strong className="font-semibold text-gray-800">
-                          {current.resident.phone}
-                        </strong>
-                      </span>
-                    )}
-                  </div>
-                  {current.pg?.name && (
-                    <div className="text-[11px] text-gray-400 pt-0.5 truncate">
-                      {current.pg.name}{current.pg.city ? `, ${current.pg.city}` : ''}
+              {/* Host Resident & Admin Notes */}
+              <div className="sm:col-span-2 p-3.5 rounded-xl border border-gray-100 bg-[#FAFBFB] flex flex-col justify-between space-y-2.5">
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                    Host Resident & Room
+                  </span>
+                  <div className="space-y-1">
+                    <div className="font-bold text-gray-900 text-xs sm:text-sm truncate">
+                      {current.resident?.name || current.host_resident || 'Resident not assigned'}
                     </div>
-                  )}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-600">
+                      <span>
+                        Room:{' '}
+                        <strong className="font-bold text-[#175C46]">
+                          {current.room?.room_no || '—'}
+                        </strong>
+                      </span>
+                      {current.room?.room_type && (
+                        <span>
+                          Type:{' '}
+                          <strong className="font-semibold text-gray-800 capitalize">
+                            {current.room.room_type}
+                          </strong>
+                        </span>
+                      )}
+                      {current.resident?.phone && (
+                        <span>
+                          Phone:{' '}
+                          <strong className="font-semibold text-gray-800">
+                            {current.resident.phone}
+                          </strong>
+                        </span>
+                      )}
+                    </div>
+                    {current.pg?.name && (
+                      <div className="text-[11px] text-gray-400 pt-0.5 truncate">
+                        {current.pg.name}{current.pg.city ? `, ${current.pg.city}` : ''}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Admin Notes Section */}
+                <div className="pt-2.5 border-t border-gray-200/70 space-y-1">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                    Admin Notes
+                  </span>
+                  <p className="text-xs text-gray-800 leading-relaxed font-medium whitespace-pre-line break-words">
+                    {current.admin_notes?.trim() ||
+                      (current as any).notes?.trim() ||
+                      (current as any).remarks?.trim() || (
+                        <span className="text-gray-400 font-normal">—</span>
+                      )}
+                  </p>
                 </div>
               </div>
 
@@ -255,18 +271,6 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
                 </span>
               </div>
             </div>
-
-            {/* Admin Notes (displayed conditionally only when available) */}
-            {Boolean(current.admin_notes?.trim() || (current as any).notes?.trim()) && (
-              <div className="p-3.5 rounded-xl border border-gray-100 bg-[#FAFBFB] space-y-1">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-                  Admin Notes
-                </span>
-                <p className="text-xs sm:text-sm text-gray-800 leading-relaxed whitespace-pre-line font-medium">
-                  {current.admin_notes?.trim() || (current as any).notes?.trim()}
-                </p>
-              </div>
-            )}
 
             {/* Movement Activity Logs */}
             <div className="space-y-2">
