@@ -12,6 +12,7 @@ import {
   BrandLoader,
 } from '@/components/ui';
 import { resolveFileUrl } from '@/lib/file-utils';
+import { toast } from '@/lib/toast';
 
 export interface ProfileFormData {
   // Owner Personal Details
@@ -122,6 +123,15 @@ export const ProfileForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [customAmenity, setCustomAmenity] = useState<string>('');
+
+  // Step-wise wizard navigation state & definitions
+  const [activeStep, setActiveStep] = useState<number>(0);
+
+  const STEPS = [
+    { id: 'owner', title: 'Owner Information', subtitle: 'Credentials & personal info' },
+    { id: 'facility', title: 'PG Facility Details', subtitle: 'Property identity & rules' },
+    { id: 'banking', title: 'Bank & Settlement', subtitle: 'Payout accounts & UPI' },
+  ];
 
   const populateFromUser = useCallback((user: User) => {
     setCurrentUser(user);
@@ -271,9 +281,119 @@ export const ProfileForm: React.FC = () => {
       setFormData(initialData);
     }
     setErrors({});
+    toast.info('Form has been reset to saved profile data.');
   };
 
-  // Validation
+  // Step Validation
+  const validateStep = (stepIdx: number): boolean => {
+    const newErrors: { [key: string]: string } = { ...errors };
+    let hasError = false;
+
+    if (stepIdx === 0) {
+      if (!formData.name.trim()) {
+        newErrors.name = 'Owner name is required';
+        hasError = true;
+      }
+      if (formData.phone && !/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+        newErrors.phone = 'Please provide a valid 10-digit phone number';
+        hasError = true;
+      }
+    } else if (stepIdx === 1) {
+      if (!formData.pg_name.trim()) {
+        newErrors.pg_name = 'PG facility name is required';
+        hasError = true;
+      }
+      if (formData.pg_phone && !/^\d{10}$/.test(formData.pg_phone.replace(/\D/g, ''))) {
+        newErrors.pg_phone = 'Please provide a valid 10-digit PG phone number';
+        hasError = true;
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (hasError) {
+      const stepFields =
+        stepIdx === 0
+          ? ['name', 'phone']
+          : stepIdx === 1
+          ? ['pg_name', 'pg_phone']
+          : [];
+      const firstError = stepFields.find((f) => !!newErrors[f]);
+      if (firstError) {
+        setTimeout(() => {
+          const el = document.querySelector(`[name="${firstError}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  // Step Completion Indicator
+  const isStepComplete = (stepIdx: number): boolean => {
+    if (stepIdx === 0) {
+      return Boolean(formData.name.trim() && !errors.name && !errors.phone);
+    }
+    if (stepIdx === 1) {
+      return Boolean(formData.pg_name.trim() && !errors.pg_name && !errors.pg_phone);
+    }
+    if (stepIdx === 2) {
+      return Boolean(
+        formData.pg_upi_id.trim() ||
+        formData.pg_bank_name.trim() ||
+        formData.pg_account_number.trim()
+      );
+    }
+    return false;
+  };
+
+  // Step Error Indicator
+  const hasStepError = (stepIdx: number): boolean => {
+    if (stepIdx === 0) return Boolean(errors.name || errors.phone);
+    if (stepIdx === 1) return Boolean(errors.pg_name || errors.pg_phone);
+    if (stepIdx === 2) return Boolean(errors.pg_upi_id || errors.pg_bank_name || errors.pg_account_number || errors.pg_ifsc_code);
+    return false;
+  };
+
+  const handleNextStep = () => {
+    if (activeStep === 0) {
+      if (!validateStep(0)) {
+        toast.warn('Please fill in all required fields marked in red.');
+        return;
+      }
+      setActiveStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (activeStep === 1) {
+      if (!validateStep(1)) {
+        toast.warn('Please fill in all required fields marked in red.');
+        return;
+      }
+      setActiveStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (activeStep > 0) {
+      setActiveStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleStepClick = (idx: number) => {
+    if (idx > activeStep) {
+      if (!validateStep(activeStep)) {
+        toast.warn('Please resolve required fields before proceeding.');
+        return;
+      }
+    }
+    setActiveStep(idx);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Overall Validation
   const validate = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
@@ -294,7 +414,17 @@ export const ProfileForm: React.FC = () => {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length > 0) {
+      if (newErrors.name || newErrors.phone) {
+        setActiveStep(0);
+      } else if (newErrors.pg_name || newErrors.pg_phone) {
+        setActiveStep(1);
+      }
+      return false;
+    }
+
+    return true;
   };
 
   // Submit Handler -> PUT /api/v1/auth/update-pg
@@ -447,7 +577,7 @@ export const ProfileForm: React.FC = () => {
       // Re-fetch updated user profile to synchronize cookies and topbar
       const freshUser = await authService.getMe();
       populateFromUser(freshUser);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to update PG & owner profile:', err);
     } finally {
       setIsSubmitting(false);
@@ -464,7 +594,7 @@ export const ProfileForm: React.FC = () => {
   }
 
   return (
-    <div className="w-full space-y-8">
+    <div className="w-full space-y-6">
       {/* Brand Loader Overlay during submission */}
       {isSubmitting && <BrandLoader overlay message="Updating PG facility and owner profile..." />}
 
@@ -476,427 +606,547 @@ export const ProfileForm: React.FC = () => {
         backTitle="Back to Dashboard"
       />
 
-      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-10">
-        {/* SECTION 1: OWNER INFORMATION (No white container, clean layout like resident form) */}
-        <div className="space-y-5">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Owner Information
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Personal identification and administrator account credentials.
-            </p>
-          </div>
+      {/* Step Navigation Wizard matching Resident Form style */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-2 shadow-2xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {STEPS.map((step, idx) => {
+            const isActive = activeStep === idx;
+            const isCompleted = isStepComplete(idx);
+            const hasError = hasStepError(idx);
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Fields Column (7 cols) */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextInput
-                  label="Owner Full Name"
-                  name="name"
-                  required
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder="e.g. Sunita Mehra"
-                  error={errors.name}
-                />
-
-                <TextInput
-                  label="Owner Email Address"
-                  name="email"
-                  type="email"
-                  required
-                  disabled
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="e.g. sunita.mehra@example.com"
-                  helperText="Email address is fixed and cannot be changed."
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                <TextInput
-                  label="Phone Number"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="e.g. 9876543220"
-                  error={errors.phone}
-                />
-
-                <RadioGroup
-                  label="Gender"
-                  name="gender"
-                  options={GENDER_OPTIONS}
-                  value={formData.gender}
-                  onChange={(val) => handleFieldChange('gender', val as ProfileFormData['gender'])}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
-                  Residential / Office Address
-                </label>
-                <textarea
-                  name="address"
-                  rows={3}
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Enter full address, street, landmark, city"
-                  className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
-                />
-              </div>
-            </div>
-
-            {/* Right Photo Column (5 cols) */}
-            <div className="lg:col-span-5">
-              <PhotoUpload
-                label="Owner Profile Photo"
-                shape="rounded"
-                previewUrl={formData.profilePhotoPreview}
-                file={formData.profilePhotoFile}
-                helperText="JPG, PNG • Max 5MB. Displayed on topbar and receipts."
-                onSelectFile={(file) => {
-                  const url = URL.createObjectURL(file);
-                  setFormData((prev) => ({
-                    ...prev,
-                    profilePhotoFile: file,
-                    profilePhotoPreview: url,
-                  }));
-                }}
-                onRemove={() => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    profilePhotoFile: null,
-                    profilePhotoPreview: null,
-                  }));
-                }}
-              />
-            </div>
-          </div>
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => handleStepClick(idx)}
+                className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all cursor-pointer relative ${
+                  isActive
+                    ? 'bg-[#EBF7F2] text-[#175C46] ring-1 ring-[#175C46]/30 shadow-2xs'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                    isActive
+                      ? 'bg-[#175C46] text-white shadow-xs'
+                      : isCompleted
+                      ? 'bg-emerald-100 text-[#175C46]'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <svg className="w-4 h-4 text-[#175C46]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    idx + 1
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                    {step.title}
+                  </p>
+                  <p
+                    className={`text-[11px] truncate mt-0.5 ${
+                      isActive ? 'text-[#175C46]/80 font-medium' : 'text-gray-400 font-normal'
+                    }`}
+                  >
+                    {step.subtitle}
+                  </p>
+                </div>
+                {hasError && (
+                  <span
+                    className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 absolute top-2 right-2 ring-2 ring-white"
+                    title="Missing or invalid fields in this step"
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* SECTION 2: PG FACILITY CONFIGURATION */}
-        <div className="pt-8 border-t border-gray-200 space-y-5">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              PG Facility Configuration
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Property identity, contact number, capacity, amenities, and resident rules.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Fields Column (7 cols) */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextInput
-                  label="PG Name"
-                  name="pg_name"
-                  required
-                  value={formData.pg_name}
-                  onChange={handleChange}
-                  placeholder="e.g. HouseNest Sunshine PG"
-                  error={errors.pg_name}
-                />
-
-                <Dropdown
-                  label="PG Type"
-                  name="pg_type"
-                  placeholder="Select PG type"
-                  value={formData.pg_type}
-                  options={PG_TYPE_OPTIONS}
-                  onChange={handleChange}
-                />
+      {/* Main Step Card Container */}
+      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+          {/* STEP 1: OWNER INFORMATION */}
+          <div className={activeStep === 0 ? 'block space-y-6' : 'hidden'}>
+            <div className="border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+                  Step 1 of 3
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                  Owner Information
+                </h2>
               </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Personal identification and administrator account credentials.
+              </p>
+            </div>
 
-              {/* PG Phone (PG Email removed completely) */}
-              <div>
-                <TextInput
-                  label="PG Phone Number"
-                  name="pg_phone"
-                  value={formData.pg_phone}
-                  onChange={handleChange}
-                  placeholder="e.g. 9876543221"
-                  error={errors.pg_phone}
-                />
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Fields Column (7 cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <TextInput
+                    label="Owner Full Name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="e.g. Sunita Mehra"
+                    error={errors.name}
+                  />
 
-              <div>
-                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
-                  PG Facility Address
-                </label>
-                <input
-                  type="text"
-                  name="pg_address"
-                  value={formData.pg_address}
-                  onChange={handleChange}
-                  placeholder="e.g. Plot 45, Near St. Xavier College"
-                  className="w-full h-11 text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <TextInput
-                  label="City"
-                  name="pg_city"
-                  value={formData.pg_city}
-                  onChange={handleChange}
-                  placeholder="e.g. Ahmedabad"
-                />
-
-                <TextInput
-                  label="State"
-                  name="pg_state"
-                  value={formData.pg_state}
-                  onChange={handleChange}
-                  placeholder="e.g. Gujarat"
-                />
-
-                <TextInput
-                  label="Pincode"
-                  name="pg_pincode"
-                  value={formData.pg_pincode}
-                  onChange={handleChange}
-                  placeholder="e.g. 380009"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                <TextInput
-                  label="Total Rooms"
-                  name="total_rooms"
-                  type="number"
-                  min="0"
-                  value={formData.total_rooms}
-                  onChange={handleChange}
-                  placeholder="e.g. 25"
-                />
-
-                <TextInput
-                  label="Total Beds"
-                  name="total_beds"
-                  type="number"
-                  min="0"
-                  value={formData.total_beds}
-                  onChange={handleChange}
-                  placeholder="e.g. 50"
-                />
-
-                <RadioGroup
-                  label="Status"
-                  name="status"
-                  options={PG_STATUS_OPTIONS}
-                  value={formData.status}
-                  onChange={(val) => handleFieldChange('status', val as ProfileFormData['status'])}
-                />
-              </div>
-
-              {/* Amenities Selector */}
-              <div className="space-y-2 pt-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
-                  Included Amenities &amp; Facilities
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {COMMON_AMENITIES.map((amenity) => {
-                    const isSelected = formData.amenities.includes(amenity);
-                    return (
-                      <button
-                        key={amenity}
-                        type="button"
-                        onClick={() => toggleAmenity(amenity)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${isSelected
-                          ? 'bg-[#175C46] text-white shadow-2xs'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
-                          }`}
-                      >
-                        {isSelected ? (
-                          <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        ) : (
-                          <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                          </svg>
-                        )}
-                        <span>{amenity}</span>
-                      </button>
-                    );
-                  })}
+                  <TextInput
+                    label="Owner Email Address"
+                    name="email"
+                    type="email"
+                    required
+                    disabled
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="e.g. sunita.mehra@example.com"
+                    helperText="Email address is fixed and cannot be changed."
+                  />
                 </div>
 
-                {/* Add Custom Amenity */}
-                <div className="flex items-center gap-2 pt-1 max-w-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                  <TextInput
+                    label="Phone Number"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="e.g. 9876543220"
+                    error={errors.phone}
+                  />
+
+                  <RadioGroup
+                    label="Gender"
+                    name="gender"
+                    options={GENDER_OPTIONS}
+                    value={formData.gender}
+                    onChange={(val) => handleFieldChange('gender', val as ProfileFormData['gender'])}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                    Residential / Office Address
+                  </label>
+                  <textarea
+                    name="address"
+                    rows={3}
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Enter full address, street, landmark, city"
+                    className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+                  />
+                </div>
+              </div>
+
+              {/* Right Photo Column (5 cols) */}
+              <div className="lg:col-span-5">
+                <PhotoUpload
+                  label="Owner Profile Photo"
+                  shape="rounded"
+                  previewUrl={formData.profilePhotoPreview}
+                  file={formData.profilePhotoFile}
+                  helperText="JPG, PNG • Max 5MB. Displayed on topbar and receipts."
+                  onSelectFile={(file) => {
+                    const url = URL.createObjectURL(file);
+                    setFormData((prev) => ({
+                      ...prev,
+                      profilePhotoFile: file,
+                      profilePhotoPreview: url,
+                    }));
+                  }}
+                  onRemove={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      profilePhotoFile: null,
+                      profilePhotoPreview: null,
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 2: PG FACILITY CONFIGURATION */}
+          <div className={activeStep === 1 ? 'block space-y-6' : 'hidden'}>
+            <div className="border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+                  Step 2 of 3
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                  PG Facility Configuration
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Property identity, contact number, capacity, amenities, and resident rules.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Fields Column (7 cols) */}
+              <div className="lg:col-span-7 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <TextInput
+                    label="PG Name"
+                    name="pg_name"
+                    required
+                    value={formData.pg_name}
+                    onChange={handleChange}
+                    placeholder="e.g. HouseNest Sunshine PG"
+                    error={errors.pg_name}
+                  />
+
+                  <Dropdown
+                    label="PG Type"
+                    name="pg_type"
+                    placeholder="Select PG type"
+                    value={formData.pg_type}
+                    options={PG_TYPE_OPTIONS}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                {/* PG Phone */}
+                <div>
+                  <TextInput
+                    label="PG Phone Number"
+                    name="pg_phone"
+                    value={formData.pg_phone}
+                    onChange={handleChange}
+                    placeholder="e.g. 9876543221"
+                    error={errors.pg_phone}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                    PG Facility Address
+                  </label>
                   <input
                     type="text"
-                    value={customAmenity}
-                    onChange={(e) => setCustomAmenity(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddCustomAmenity();
-                      }
-                    }}
-                    placeholder="Add custom amenity (e.g. Garden)"
-                    className="flex-1 h-9 text-xs rounded-xl border border-gray-200/90 bg-white px-3 focus:outline-none focus:ring-1 focus:ring-[#175C46] placeholder-gray-400"
+                    name="pg_address"
+                    value={formData.pg_address}
+                    onChange={handleChange}
+                    placeholder="e.g. Plot 45, Near St. Xavier College"
+                    className="w-full h-11 text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddCustomAmenity}
-                    className="px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-xl transition-colors cursor-pointer shadow-2xs"
-                  >
-                    Add
-                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <TextInput
+                    label="City"
+                    name="pg_city"
+                    value={formData.pg_city}
+                    onChange={handleChange}
+                    placeholder="e.g. Ahmedabad"
+                  />
+
+                  <TextInput
+                    label="State"
+                    name="pg_state"
+                    value={formData.pg_state}
+                    onChange={handleChange}
+                    placeholder="e.g. Gujarat"
+                  />
+
+                  <TextInput
+                    label="Pincode"
+                    name="pg_pincode"
+                    value={formData.pg_pincode}
+                    onChange={handleChange}
+                    placeholder="e.g. 380009"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                  <TextInput
+                    label="Total Rooms"
+                    name="total_rooms"
+                    type="number"
+                    min="0"
+                    value={formData.total_rooms}
+                    onChange={handleChange}
+                    placeholder="e.g. 25"
+                  />
+
+                  <TextInput
+                    label="Total Beds"
+                    name="total_beds"
+                    type="number"
+                    min="0"
+                    value={formData.total_beds}
+                    onChange={handleChange}
+                    placeholder="e.g. 50"
+                  />
+
+                  <RadioGroup
+                    label="Status"
+                    name="status"
+                    options={PG_STATUS_OPTIONS}
+                    value={formData.status}
+                    onChange={(val) => handleFieldChange('status', val as ProfileFormData['status'])}
+                  />
+                </div>
+
+                {/* Amenities Selector */}
+                <div className="space-y-2 pt-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
+                    Included Amenities &amp; Facilities
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_AMENITIES.map((amenity) => {
+                      const isSelected = formData.amenities.includes(amenity);
+                      return (
+                        <button
+                          key={amenity}
+                          type="button"
+                          onClick={() => toggleAmenity(amenity)}
+                          className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                            isSelected
+                              ? 'bg-[#175C46] text-white shadow-2xs'
+                              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : (
+                            <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                          )}
+                          <span>{amenity}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Add Custom Amenity */}
+                  <div className="flex items-center gap-2 pt-1 max-w-sm">
+                    <input
+                      type="text"
+                      value={customAmenity}
+                      onChange={(e) => setCustomAmenity(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddCustomAmenity();
+                        }
+                      }}
+                      placeholder="Add custom amenity (e.g. Garden)"
+                      className="flex-1 h-9 text-xs rounded-xl border border-gray-200/90 bg-white px-3 focus:outline-none focus:ring-1 focus:ring-[#175C46] placeholder-gray-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddCustomAmenity}
+                      className="px-3 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-xl transition-colors cursor-pointer shadow-2xs"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {/* Rules & Policies */}
+                <div className="pt-2">
+                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                    Rules, Curfew &amp; Policies
+                  </label>
+                  <textarea
+                    name="rules"
+                    rows={3}
+                    value={formData.rules}
+                    onChange={handleChange}
+                    placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
+                    className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+                  />
                 </div>
               </div>
 
-              {/* Rules & Policies */}
-              <div className="pt-2">
-                <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
-                  Rules, Curfew &amp; Policies
-                </label>
-                <textarea
-                  name="rules"
-                  rows={3}
-                  value={formData.rules}
-                  onChange={handleChange}
-                  placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
-                  className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
+              {/* Right Logo Column (5 cols) */}
+              <div className="lg:col-span-5">
+                <PhotoUpload
+                  label="PG Facility Brand Logo"
+                  shape="rounded"
+                  previewUrl={formData.logoPreview}
+                  file={formData.logoFile}
+                  helperText="JPG, PNG • Max 5MB. Displayed on resident app and receipts."
+                  onSelectFile={(file) => {
+                    const url = URL.createObjectURL(file);
+                    setFormData((prev) => ({
+                      ...prev,
+                      logoFile: file,
+                      logoPreview: url,
+                    }));
+                  }}
+                  onRemove={() => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      logoFile: null,
+                      logoPreview: null,
+                    }));
+                  }}
                 />
               </div>
             </div>
-
-            {/* Right Logo Column (5 cols) */}
-            <div className="lg:col-span-5">
-              <PhotoUpload
-                label="PG Facility Brand Logo"
-                shape="rounded"
-                previewUrl={formData.logoPreview}
-                file={formData.logoFile}
-                helperText="JPG, PNG • Max 5MB. Displayed on resident app and receipts."
-                onSelectFile={(file) => {
-                  const url = URL.createObjectURL(file);
-                  setFormData((prev) => ({
-                    ...prev,
-                    logoFile: file,
-                    logoPreview: url,
-                  }));
-                }}
-                onRemove={() => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    logoFile: null,
-                    logoPreview: null,
-                  }));
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 3: BANK & UPI SETTLEMENT DETAILS */}
-        <div className="pt-8 border-t border-gray-200 space-y-5">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Bank &amp; UPI Settlement Details
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Payout account and UPI VPA used for resident collections and invoice receipts.
-            </p>
           </div>
 
-          <div className="max-w-4xl space-y-4">
-            <div className="p-3.5 bg-emerald-50/60 border border-emerald-100/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700">
-              <svg className="w-4 h-4 text-[#175C46] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>
-                The UPI ID and bank account details below are used for collecting resident rent and utility payments online.
-              </span>
+          {/* STEP 3: BANK & UPI SETTLEMENT DETAILS */}
+          <div className={activeStep === 2 ? 'block space-y-6' : 'hidden'}>
+            <div className="border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+                  Step 3 of 3
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                  Bank &amp; UPI Settlement Details
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Payout account and UPI VPA used for resident collections and invoice receipts.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextInput
-                label="PG UPI ID (VPA)"
-                name="pg_upi_id"
-                value={formData.pg_upi_id}
-                onChange={handleChange}
-                placeholder="e.g. jasminkorat204@oksbi"
-              />
-
-              <TextInput
-                label="Bank Name"
-                name="pg_bank_name"
-                value={formData.pg_bank_name}
-                onChange={handleChange}
-                placeholder="e.g. State Bank of India"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextInput
-                label="Account Number"
-                name="pg_account_number"
-                value={formData.pg_account_number}
-                onChange={handleChange}
-                placeholder="e.g. 38291048592"
-              />
-
-              <TextInput
-                label="IFSC Code"
-                name="pg_ifsc_code"
-                value={formData.pg_ifsc_code}
-                onChange={(e) => {
-                  handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
-                }}
-                placeholder="e.g. SBIN0001234"
-              />
-            </div>
-
-            <div className="max-w-md">
-              <TextInput
-                label="Account Holder Name"
-                name="pg_account_holder_name"
-                value={formData.pg_account_holder_name}
-                onChange={handleChange}
-                placeholder="e.g. Jasmin Patel"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Actions Bar */}
-        <div className="pt-6 border-t border-gray-200 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={isSubmitting}
-            className="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-xs sm:text-sm font-semibold text-gray-700 transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
-          >
-            Reset Form
-          </button>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Saving Changes...</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            <div className="max-w-4xl space-y-4">
+              <div className="p-3.5 bg-emerald-50/60 border border-emerald-100/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700">
+                <svg className="w-4 h-4 text-[#175C46] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span>Save Profile &amp; PG Details</span>
-              </>
-            )}
-          </button>
+                <span>
+                  The UPI ID and bank account details below are used for collecting resident rent and utility payments online.
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  label="PG UPI ID (VPA)"
+                  name="pg_upi_id"
+                  value={formData.pg_upi_id}
+                  onChange={handleChange}
+                  placeholder="e.g. jasminkorat204@oksbi"
+                />
+
+                <TextInput
+                  label="Bank Name"
+                  name="pg_bank_name"
+                  value={formData.pg_bank_name}
+                  onChange={handleChange}
+                  placeholder="e.g. State Bank of India"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <TextInput
+                  label="Account Number"
+                  name="pg_account_number"
+                  value={formData.pg_account_number}
+                  onChange={handleChange}
+                  placeholder="e.g. 38291048592"
+                />
+
+                <TextInput
+                  label="IFSC Code"
+                  name="pg_ifsc_code"
+                  value={formData.pg_ifsc_code}
+                  onChange={(e) => {
+                    handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
+                  }}
+                  placeholder="e.g. SBIN0001234"
+                />
+              </div>
+
+              <div className="max-w-md">
+                <TextInput
+                  label="Account Holder Name"
+                  name="pg_account_holder_name"
+                  value={formData.pg_account_holder_name}
+                  onChange={handleChange}
+                  placeholder="e.g. Jasmin Patel"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Action Footer Navigation Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-100">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {activeStep > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              {/* Quick Save Option */}
+              {activeStep < 2 && (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+                >
+                  Save Changes
+                </button>
+              )}
+
+              {activeStep < 2 ? (
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <span>Continue</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Save Profile &amp; PG Details</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       </form>
     </div>

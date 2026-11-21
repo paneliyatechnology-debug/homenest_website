@@ -108,6 +108,11 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
       return;
     }
 
+    if (paymentMethod === 'upi' && upiRefNo.trim() && upiRefNo.trim().length !== 12) {
+      setError('Transaction ID must be exactly 12 digits');
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
 
@@ -194,24 +199,27 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
         />
       </div>
 
-      {/* UPI Reference Number (Visible when method is UPI) */}
+      {/* Transaction ID (Visible when method is UPI) */}
       {paymentMethod === 'upi' && (
         <div>
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            UPI Reference / UTR Number
+            Transaction ID
           </label>
           <input
             type="text"
+            inputMode="numeric"
+            maxLength={12}
             value={upiRefNo}
             onChange={(e) => {
-              setUpiRefNo(e.target.value);
+              const numericVal = e.target.value.replace(/\D/g, '').slice(0, 12);
+              setUpiRefNo(numericVal);
               if (error) setError(null);
             }}
-            placeholder="e.g. 123456789012 (12-digit UTR/Ref)"
+            placeholder="e.g. 123456789012 (12-digit ID)"
             className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-mono"
           />
           <p className="text-[11px] text-gray-400 mt-1">
-            12-digit transaction reference number from Google Pay, PhonePe, Paytm, etc.
+            12-digit transaction ID from Google Pay, PhonePe, Paytm, etc.
           </p>
         </div>
       )}

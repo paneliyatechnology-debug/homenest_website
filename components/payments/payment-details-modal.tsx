@@ -240,7 +240,7 @@ export const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
               )}
               {current.upi_ref_no && (
                 <div>
-                  <span className="text-gray-400 block font-medium">UPI Ref / UTR No.</span>
+                  <span className="text-gray-400 block font-medium">Transaction ID</span>
                   <span className="text-gray-800 font-semibold mt-0.5 block truncate font-mono text-[11px]">
                     {current.upi_ref_no}
                   </span>

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { AppDatePicker, toInputDate } from '@/components/ui/app-date-picker';
+import { AppDatePicker, toInputDate, parseDateString } from '@/components/ui/app-date-picker';
 import { PageHeader, Dropdown, PhotoUpload, BrandLoader } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
 import { toast } from '@/lib/toast';
@@ -287,6 +287,287 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Multi-step form navigation state & definitions
+  const [activeStep, setActiveStep] = useState<number>(0);
+
+  const STEPS = [
+    { id: 'personal', title: 'Personal & Room', subtitle: 'Basic info & room' },
+    { id: 'address', title: 'Address & Contact', subtitle: 'Address & emergency' },
+    { id: 'financials', title: 'Stay & Financials', subtitle: 'Bed allocation & rent' },
+    { id: 'documents', title: 'Documents & KYC', subtitle: 'ID proofs & signature' },
+  ];
+
+  // Maximum Date of Birth allowed: yesterday (disables today and all future dates)
+  const maxDobDate = useMemo(() => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(23, 59, 59, 999);
+    return yesterday;
+  }, []);
+
+  // Minimum Check-out Date allowed: check_in_date (disables all dates before selected check-in date)
+  const minCheckoutDate = useMemo(() => {
+    if (!formData.check_in_date || !formData.check_in_date.trim()) return null;
+    const d = parseDateString(formData.check_in_date);
+    if (!d) return null;
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [formData.check_in_date]);
+
+  // Maximum Check-in Date allowed: check_out_date (disables all dates after selected check-out date)
+  const maxCheckinDate = useMemo(() => {
+    if (!formData.check_out_date || !formData.check_out_date.trim()) return null;
+    const d = parseDateString(formData.check_out_date);
+    if (!d) return null;
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, [formData.check_out_date]);
+
+  const step0Fields = [
+    'name',
+    'branch_id',
+    'building_id',
+    'floor_id',
+    'room_id',
+    'room_type',
+    'phone',
+    'gender',
+    'status',
+    'nationality',
+    'marital_status',
+    'occupation',
+    'date_of_birth',
+    'check_in_date',
+    'check_out_date',
+    'email',
+  ];
+
+  const step1Fields = ['pincode', 'emergency_contact_phone'];
+  const step2Fields = ['bed_number', 'monthly_rent', 'security_deposit'];
+
+  const validateStep = (stepIdx: number): boolean => {
+    const newErrors: Record<string, string> = { ...errors };
+    let hasError = false;
+
+    if (stepIdx === 0) {
+      if (!formData.name.trim()) {
+        newErrors.name = 'Resident name is required.';
+        hasError = true;
+      }
+      if (!formData.branch_id) {
+        newErrors.branch_id = 'Branch is required.';
+        hasError = true;
+      }
+      if (!formData.building_id) {
+        newErrors.building_id = 'Building is required.';
+        hasError = true;
+      }
+      if (!formData.floor_id) {
+        newErrors.floor_id = 'Floor is required.';
+        hasError = true;
+      }
+      if (!formData.room_id) {
+        newErrors.room_id = 'Resident room no. is required.';
+        hasError = true;
+      }
+      if (!formData.room_type.trim()) {
+        newErrors.room_type = 'Resident room type is required.';
+        hasError = true;
+      }
+      if (!formData.phone.trim()) {
+        newErrors.phone = 'Resident phone number is required.';
+        hasError = true;
+      } else if (!/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(formData.phone.trim())) {
+        newErrors.phone = 'Please provide a valid 10-digit mobile number starting with 6-9.';
+        hasError = true;
+      }
+      if (!formData.gender) {
+        newErrors.gender = 'Gender is required.';
+        hasError = true;
+      }
+      if (!formData.status) {
+        newErrors.status = 'Status is required.';
+        hasError = true;
+      }
+      if (!formData.nationality.trim()) {
+        newErrors.nationality = 'Nationality is required.';
+        hasError = true;
+      }
+      if (!formData.marital_status.trim()) {
+        newErrors.marital_status = 'Marital status is required.';
+        hasError = true;
+      }
+      if (!formData.occupation.trim()) {
+        newErrors.occupation = 'Occupation is required.';
+        hasError = true;
+      }
+      if (formData.date_of_birth && formData.date_of_birth.trim()) {
+        const parsedDob = parseDateString(formData.date_of_birth);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (parsedDob && parsedDob >= today) {
+          newErrors.date_of_birth = 'Date of birth must be before today (today and future dates are not allowed).';
+          hasError = true;
+        }
+      }
+      if (!formData.check_in_date.trim()) {
+        newErrors.check_in_date = 'Check in date is required.';
+        hasError = true;
+      }
+      if (formData.check_in_date.trim() && formData.check_out_date && formData.check_out_date.trim()) {
+        const inDate = parseDateString(formData.check_in_date);
+        const outDate = parseDateString(formData.check_out_date);
+        if (inDate && outDate && outDate < inDate) {
+          newErrors.check_out_date = 'Check out date cannot be before check in date.';
+          hasError = true;
+        }
+      }
+      if (!formData.email.trim()) {
+        newErrors.email = 'E-mail is required.';
+        hasError = true;
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        newErrors.email = 'Please enter a valid email address.';
+        hasError = true;
+      }
+    } else if (stepIdx === 1) {
+      if (formData.pincode && formData.pincode.trim()) {
+        if (!/^[1-9][0-9]{5}$/.test(formData.pincode.trim())) {
+          newErrors.pincode = 'Please enter a valid 6-digit Indian PIN code.';
+          hasError = true;
+        }
+      }
+      if (formData.emergency_contact_phone && formData.emergency_contact_phone.trim()) {
+        if (!/^(\+91[\-\s]?)?[6-9]\d{9}$/.test(formData.emergency_contact_phone.trim())) {
+          newErrors.emergency_contact_phone = 'Please provide a valid 10-digit emergency mobile number starting with 6-9.';
+          hasError = true;
+        }
+      }
+    } else if (stepIdx === 2) {
+      if (!formData.bed_number.trim()) {
+        newErrors.bed_number = 'Bed number is required.';
+        hasError = true;
+      }
+      if (
+        formData.monthly_rent === '' ||
+        formData.monthly_rent === undefined ||
+        formData.monthly_rent === null ||
+        String(formData.monthly_rent).trim() === ''
+      ) {
+        newErrors.monthly_rent = 'Monthly rent is required.';
+        hasError = true;
+      } else if (isNaN(Number(formData.monthly_rent)) || Number(formData.monthly_rent) < 0) {
+        newErrors.monthly_rent = 'Monthly rent must be a valid non-negative amount.';
+        hasError = true;
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (hasError) {
+      const firstErrorField = Object.keys(newErrors).find((f) =>
+        stepIdx === 0
+          ? step0Fields.includes(f)
+          : stepIdx === 1
+          ? step1Fields.includes(f)
+          : step2Fields.includes(f)
+      );
+      if (firstErrorField) {
+        setTimeout(() => {
+          const el = document.querySelector(`[name="${firstErrorField}"]`);
+          el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
+      }
+      return false;
+    }
+
+    return true;
+  };
+
+  const isStepComplete = (stepIdx: number): boolean => {
+    if (stepIdx === 0) {
+      return Boolean(
+        formData.name.trim() &&
+        formData.branch_id &&
+        formData.building_id &&
+        formData.floor_id &&
+        formData.room_id &&
+        formData.room_type &&
+        formData.phone.trim() &&
+        formData.gender &&
+        formData.status &&
+        formData.nationality.trim() &&
+        formData.marital_status.trim() &&
+        formData.occupation.trim() &&
+        formData.check_in_date.trim() &&
+        formData.email.trim() &&
+        !step0Fields.some((f) => !!errors[f])
+      );
+    }
+    if (stepIdx === 1) {
+      return Boolean(
+        (formData.address_line_1.trim() || formData.city.trim() || formData.emergency_contact_name.trim()) &&
+        !step1Fields.some((f) => !!errors[f])
+      );
+    }
+    if (stepIdx === 2) {
+      return Boolean(
+        formData.bed_number.trim() &&
+        String(formData.monthly_rent).trim() !== '' &&
+        !step2Fields.some((f) => !!errors[f])
+      );
+    }
+    if (stepIdx === 3) {
+      return Boolean(
+        photoFile ||
+        photoPreview ||
+        aadharFile ||
+        existingAadhar ||
+        signatureFile ||
+        existingSignature
+      );
+    }
+    return false;
+  };
+
+  const hasStepError = (stepIdx: number): boolean => {
+    if (stepIdx === 0) return step0Fields.some((f) => !!errors[f]);
+    if (stepIdx === 1) return step1Fields.some((f) => !!errors[f]);
+    if (stepIdx === 2) return step2Fields.some((f) => !!errors[f]);
+    return false;
+  };
+
+  const handleNextStep = () => {
+    if (activeStep === 0) {
+      if (!validateStep(0)) {
+        toast.warn('Please fill in all required fields marked in red.');
+        return;
+      }
+      setActiveStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (activeStep === 1) {
+      if (!validateStep(1)) {
+        toast.warn('Please correct the errors before proceeding.');
+        return;
+      }
+      setActiveStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (activeStep === 2) {
+      if (!validateStep(2)) {
+        toast.warn('Please fill in bed number and monthly rent.');
+        return;
+      }
+      setActiveStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (activeStep > 0) {
+      setActiveStep((prev) => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const clearError = (field: string) => {
     setErrors((prev) => {
       if (!prev[field]) return prev;
@@ -549,6 +830,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   };
 
   const resetAllFields = () => {
+    setActiveStep(0);
     setErrors({});
     setFormData({
       name: '',
@@ -688,9 +970,16 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       newErrors.occupation = 'Occupation is required.';
     }
 
-    // 13. Check In Date
+    // 13. Check In Date & Check Out Date
     if (!formData.check_in_date.trim()) {
       newErrors.check_in_date = 'Check in date is required.';
+    }
+    if (formData.check_in_date.trim() && formData.check_out_date && formData.check_out_date.trim()) {
+      const inDate = parseDateString(formData.check_in_date);
+      const outDate = parseDateString(formData.check_out_date);
+      if (inDate && outDate && outDate < inDate) {
+        newErrors.check_out_date = 'Check out date cannot be before check in date.';
+      }
     }
 
     // 14. Email
@@ -731,14 +1020,38 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       }
     }
 
+    // Date of Birth check (if provided, must be in the past)
+    if (formData.date_of_birth && formData.date_of_birth.trim()) {
+      const parsedDob = parseDateString(formData.date_of_birth);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (parsedDob && parsedDob >= today) {
+        newErrors.date_of_birth = 'Date of birth must be before today (today and future dates are not allowed).';
+      }
+    }
+
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
       const firstField = Object.keys(newErrors)[0];
-      const targetElement = document.querySelector(`[name="${firstField}"]`);
-      if (targetElement) {
-        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (step0Fields.includes(firstField)) {
+        setActiveStep(0);
+      } else if (step1Fields.includes(firstField)) {
+        setActiveStep(1);
+      } else if (step2Fields.includes(firstField)) {
+        setActiveStep(2);
+      } else {
+        setActiveStep(3);
       }
+
+      setTimeout(() => {
+        const targetElement = document.querySelector(`[name="${firstField}"]`);
+        if (targetElement) {
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          (targetElement as HTMLElement).focus?.();
+        }
+      }, 50);
+
       return false;
     }
 
@@ -937,10 +1250,84 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         </div>
       )}
 
-      {/* Form Card Container matching Figma layout */}
-      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-8">
-        {/* Section 1: Personal & Profile Info */}
-        <div className="space-y-6">
+      {/* Stepper Navigation matching project design system */}
+      <div className="bg-white rounded-2xl border border-gray-200/80 p-2 shadow-2xs">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {STEPS.map((step, idx) => {
+            const isActive = activeStep === idx;
+            const isCompleted = isStepComplete(idx);
+            const hasError = hasStepError(idx);
+
+            return (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setActiveStep(idx)}
+                className={`flex items-center gap-3 p-3 rounded-xl text-left transition-all cursor-pointer relative ${
+                  isActive
+                    ? 'bg-[#EBF7F2] text-[#175C46] ring-1 ring-[#175C46]/30 shadow-2xs'
+                    : 'hover:bg-gray-50 text-gray-700'
+                }`}
+              >
+                <div
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                    isActive
+                      ? 'bg-[#175C46] text-white shadow-xs'
+                      : isCompleted
+                      ? 'bg-emerald-100 text-[#175C46]'
+                      : 'bg-gray-100 text-gray-500'
+                  }`}
+                >
+                  {isCompleted ? (
+                    <svg className="w-4 h-4 text-[#175C46]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    idx + 1
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-semibold truncate leading-tight">
+                    {step.title}
+                  </p>
+                  <p
+                    className={`text-[11px] truncate mt-0.5 ${
+                      isActive ? 'text-[#175C46]/80 font-medium' : 'text-gray-400 font-normal'
+                    }`}
+                  >
+                    {step.subtitle}
+                  </p>
+                </div>
+                {hasError && (
+                  <span
+                    className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0 absolute top-2 right-2 ring-2 ring-white"
+                    title="Missing or invalid fields in this step"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Form Card Container */}
+      <form onSubmit={handleSubmit} noValidate autoComplete="off" className="space-y-6">
+        <div className="bg-white rounded-2xl border border-gray-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+          {/* STEP 1: Personal & Profile Info */}
+          <div className={activeStep === 0 ? 'block space-y-6' : 'hidden'}>
+            <div className="border-b border-gray-100 pb-4">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+                  Step 1 of 4
+                </span>
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                  Personal Information & Room Allocation
+                </h2>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Enter resident personal details, assign PG branch, and choose a room.
+              </p>
+            </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Fields Column (7 cols) */}
             <div className="lg:col-span-7 space-y-4">
@@ -1179,6 +1566,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               <AppDatePicker
                 name="date_of_birth"
                 value={formData.date_of_birth}
+                maxDate={maxDobDate}
                 onChange={(val) => {
                   setFormData((prev) => ({ ...prev, date_of_birth: val }));
                   clearError('date_of_birth');
@@ -1309,9 +1697,21 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 name="check_in_date"
                 value={formData.check_in_date}
                 onChange={(val) => {
-                  setFormData((prev) => ({ ...prev, check_in_date: val }));
+                  setFormData((prev) => {
+                    const next = { ...prev, check_in_date: val };
+                    if (val && prev.check_out_date) {
+                      const inD = parseDateString(val);
+                      const outD = parseDateString(prev.check_out_date);
+                      if (inD && outD && inD > outD) {
+                        next.check_out_date = '';
+                      }
+                    }
+                    return next;
+                  });
                   clearError('check_in_date');
+                  clearError('check_out_date');
                 }}
+                maxDate={maxCheckinDate}
                 placeholder="dd-mm-yyyy"
                 hasError={!!errors.check_in_date}
               />
@@ -1327,9 +1727,31 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 name="check_out_date"
                 value={formData.check_out_date}
                 onChange={(val) => {
-                  setFormData((prev) => ({ ...prev, check_out_date: val }));
+                  setFormData((prev) => {
+                    const next = { ...prev, check_out_date: val };
+                    if (val && prev.check_in_date) {
+                      const inDate = parseDateString(prev.check_in_date);
+                      const outDate = parseDateString(val);
+                      if (inDate && outDate && inDate > outDate) {
+                        next.check_in_date = '';
+                      }
+                    }
+                    return next;
+                  });
                   clearError('check_out_date');
+                  clearError('check_in_date');
+                  if (val && formData.check_in_date) {
+                    const inDate = parseDateString(formData.check_in_date);
+                    const outDate = parseDateString(val);
+                    if (inDate && outDate && outDate < inDate) {
+                      setErrors((prevErr) => ({
+                        ...prevErr,
+                        check_out_date: 'Check out date cannot be before check in date.',
+                      }));
+                    }
+                  }
                 }}
+                minDate={minCheckoutDate}
                 placeholder="dd-mm-yyyy"
                 hasError={!!errors.check_out_date}
               />
@@ -1354,12 +1776,28 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           </div>
         </div>
 
-        {/* Section 2: Contact & Address Details */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
+      {/* STEP 2: Address & Emergency Contacts */}
+      <div className={activeStep === 1 ? 'block space-y-6' : 'hidden'}>
+        <div className="border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+              Step 2 of 4
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Address & Emergency Contacts
+            </h2>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Enter permanent residential address and emergency contact details.
+          </p>
+        </div>
+
+        {/* Address Details */}
+        <div className="space-y-4">
           <div className="pb-1">
             <h3 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#175C46]" />
-              Address Details
+              Permanent / Current Address
             </h3>
           </div>
 
@@ -1475,16 +1913,25 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Section 4: Room Stay & Financials */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <div className="pb-1">
-            <h3 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#175C46]" />
-              Stay & Financial Details
-            </h3>
+      {/* STEP 3: Room Stay & Financials */}
+      <div className={activeStep === 2 ? 'block space-y-6' : 'hidden'}>
+        <div className="border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+              Step 3 of 4
+            </span>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Stay Duration & Financial Agreement
+            </h2>
           </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Confirm bed assignment, monthly rental fee, and refundable deposit terms.
+          </p>
+        </div>
 
+        <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
@@ -1530,17 +1977,49 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               {renderFieldError('security_deposit')}
             </div>
           </div>
-        </div>
 
-        {/* Section 5: Documents & Signature Uploads */}
-        <div className="space-y-4 pt-4 border-t border-gray-100">
-          <div className="pb-1 flex items-center justify-between">
-            <h3 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#175C46]" />
-              Resident Documents & Signature
-            </h3>
-            <span className="text-xs text-gray-400">PDF, JPG, PNG &bull; Max 5MB</span>
+          {/* Stay & Financial Summary Preview Card */}
+          <div className="p-4 sm:p-5 rounded-xl bg-[#F7F7F5] border border-gray-200/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Assigned Room & Bed</span>
+              <p className="text-xs sm:text-sm font-semibold text-gray-900 mt-0.5">
+                {formData.room_no ? `${formData.room_no} (${formData.room_type || 'Room'})` : 'No room selected'} &bull; {formData.bed_number || 'Bed pending'}
+              </p>
+            </div>
+            <div>
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Monthly Rental</span>
+              <p className="text-xs sm:text-sm font-bold text-[#175C46] mt-0.5">
+                {formData.monthly_rent ? `₹ ${Number(formData.monthly_rent).toLocaleString('en-IN')}` : '₹ 0'}
+              </p>
+            </div>
+            <div>
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Security Deposit</span>
+              <p className="text-xs sm:text-sm font-bold text-gray-900 mt-0.5">
+                {formData.security_deposit ? `₹ ${Number(formData.security_deposit).toLocaleString('en-IN')}` : '₹ 0'}
+              </p>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* STEP 4: Documents & Signature Uploads */}
+      <div className={activeStep === 3 ? 'block space-y-6' : 'hidden'}>
+        <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
+                Step 4 of 4
+              </span>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                Resident Documents & Digital Signature
+              </h2>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Upload resident identification proof, tenant agreement, and signature files.
+            </p>
+          </div>
+          <span className="text-xs text-gray-400">PDF, JPG, PNG &bull; Max 5MB</span>
+        </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* 1. Aadhaar Card */}
@@ -1828,17 +2307,62 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           </div>
         </div>
 
-        {/* Primary Save Action Button */}
-        <div className="pt-4 border-t border-gray-100">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="w-full py-3.5 px-6 bg-[#175C46] hover:bg-[#124B38] text-white text-base font-semibold rounded-xl shadow-xs transition-colors flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <span>{mode === 'edit' ? 'Save Changes' : 'Save'}</span>
-          </button>
+      {/* Action Footer Navigation Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-100">
+        <div>
+          {activeStep > 0 && (
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back</span>
+            </button>
+          )}
         </div>
-      </form>
+
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+          {/* Quick Save Option */}
+          {activeStep < 3 && (
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+            >
+              {mode === 'edit' ? 'Save Changes' : 'Save Resident'}
+            </button>
+          )}
+
+          {activeStep < 3 ? (
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <span>Continue</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{mode === 'edit' ? 'Save Changes' : 'Create Resident'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  </form>
     </main>
   );
 };

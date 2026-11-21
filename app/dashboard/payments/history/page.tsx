@@ -9,6 +9,8 @@ import {
   formatCurrency,
 } from '@/types/payment';
 import { paymentService, INITIAL_PAYMENT_STATS } from '@/services/payment.service';
+import { residentService } from '@/services/resident.service';
+import { Branch } from '@/types/resident';
 import {
   PaymentHistoryStatsCards,
   PaymentDetailsModal,
@@ -69,6 +71,34 @@ export default function PaymentHistoryPage() {
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
   const [statusPayment, setStatusPayment] = useState<PaymentRecord | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Branch lookup map for table display
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    residentService
+      .getBranches({ page: 1, limit: 100 })
+      .then((res) => {
+        if (!isMounted) return;
+        setBranches(res.data || []);
+      })
+      .catch((err) => {
+        console.warn('Failed to load branches for lookup:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const branchMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    branches.forEach((b) => {
+      map[b.id] = b.name;
+    });
+    return map;
+  }, [branches]);
 
   // Check if any filter is active
   const hasActiveFilters = useMemo(() => {
@@ -342,10 +372,52 @@ export default function PaymentHistoryPage() {
       key: 'resident_name',
       header: 'Resident Name',
       cell: (item) => (
-        <span className="font-medium text-gray-900">
-          {item.resident?.name || 'Aarav sharma'}
+        <span className="font-medium text-gray-900 whitespace-nowrap">
+          {item.resident?.name || '—'}
         </span>
       ),
+    },
+    {
+      key: 'branch',
+      header: 'Branch',
+      cell: (item) => {
+        const branchDisplay =
+          item.branch_name ||
+          (item.branch_id ? branchMap[item.branch_id] : null) ||
+          item.pg_name ||
+          '—';
+        return (
+          <span className="text-gray-800 font-medium whitespace-nowrap">
+            {branchDisplay}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'building',
+      header: 'Building',
+      cell: (item) => (
+        <span className="text-gray-800 font-medium whitespace-nowrap">
+          {item.building_name || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'floor',
+      header: 'Floor',
+      cell: (item) => {
+        const floorDisplay =
+          item.floor_name ||
+          (item.floor_number !== undefined && item.floor_number !== null
+            ? `Floor ${item.floor_number}`
+            : null) ||
+          '—';
+        return (
+          <span className="text-gray-700 whitespace-nowrap">
+            {floorDisplay}
+          </span>
+        );
+      },
     },
     {
       key: 'room_no',

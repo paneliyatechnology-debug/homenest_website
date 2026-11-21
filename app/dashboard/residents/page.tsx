@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { DeleteConfirmationModal, Dropdown, DataTable, StatusBadge, IconButton, TableActions, SearchInput, ClearFilterButton } from '@/components/ui';
 import { useResetOnNavigation, useSocketEvent, SOCKET_EVENTS } from '@/hooks';
 
-import { Resident, ResidentMeta, ResidentStats } from '@/types/resident';
+import { Resident, ResidentMeta, ResidentStats, Branch } from '@/types/resident';
 import { residentService, DEFAULT_RESIDENT_STATS } from '@/services/resident.service';
 import { BranchDropdown } from '@/components/residents/branch-dropdown';
 
@@ -49,6 +49,34 @@ export default function ResidentsListPage() {
   const [deletingResident, setDeletingResident] = useState<Resident | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Branch lookup map for table display
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    residentService
+      .getBranches({ page: 1, limit: 100 })
+      .then((res) => {
+        if (!isMounted) return;
+        setBranches(res.data || []);
+      })
+      .catch((err) => {
+        console.warn('Failed to load branches for table lookup:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const branchMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    branches.forEach((b) => {
+      map[b.id] = b.name;
+    });
+    return map;
+  }, [branches]);
 
   // Real-time WebSocket updates for Resident Stats & List
   useSocketEvent(SOCKET_EVENTS.RESIDENT_STATS_UPDATED, () => {
@@ -373,6 +401,44 @@ export default function ResidentsListPage() {
             cell: (resident) => (
               <span className="font-semibold text-gray-900 whitespace-nowrap">{resident.name}</span>
             ),
+          },
+          {
+            header: 'Branch',
+            cell: (resident) => {
+              const branchDisplay =
+                resident.branch_name ||
+                (resident.branch_id ? branchMap[resident.branch_id] : null) ||
+                '—';
+              return (
+                <span className="text-gray-800 font-medium whitespace-nowrap">
+                  {branchDisplay}
+                </span>
+              );
+            },
+          },
+          {
+            header: 'Building',
+            cell: (resident) => (
+              <span className="text-gray-800 font-medium whitespace-nowrap">
+                {resident.building_name || '—'}
+              </span>
+            ),
+          },
+          {
+            header: 'Floor',
+            cell: (resident) => {
+              const floorDisplay =
+                resident.floor_name ||
+                (resident.floor_number !== undefined && resident.floor_number !== null
+                  ? `Floor ${resident.floor_number}`
+                  : null) ||
+                '—';
+              return (
+                <span className="text-gray-700 whitespace-nowrap">
+                  {floorDisplay}
+                </span>
+              );
+            },
           },
           {
             header: 'Room no.',
