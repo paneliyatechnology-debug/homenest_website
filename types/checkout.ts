@@ -1,4 +1,4 @@
-export type CheckoutTab = 'all' | 'pending' | 'approved' | 'rejected';
+export type CheckoutTab = 'all' | 'pending' | 'in_progress' | 'approved' | 'rejected';
 
 export type CheckoutStatus =
   | 'pending'

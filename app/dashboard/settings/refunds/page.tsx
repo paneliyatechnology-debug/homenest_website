@@ -231,11 +231,13 @@ export default function CheckoutAndRefundApprovalsPage() {
     }
   };
 
-  // Tabs List matching image media_1794915924159_0ad2ab2e.png
+  // Tabs List matching all checkout statuses
   const tabs: { key: CheckoutTab; label: string }[] = [
     { key: 'all', label: 'All' },
     { key: 'pending', label: 'Pending' },
+    { key: 'in_progress', label: 'In Progress' },
     { key: 'approved', label: 'Approved' },
+    { key: 'rejected', label: 'Rejected' },
   ];
 
   // Branch Options
@@ -414,9 +416,9 @@ export default function CheckoutAndRefundApprovalsPage() {
         </div>
       </div>
 
-      {/* Tabs Row matching Figma All / Pending / Approved */}
+      {/* Tabs Row matching status filters */}
       <div className="border-b border-gray-200">
-        <nav className="flex space-x-6 sm:space-x-8" aria-label="Tabs">
+        <nav className="flex space-x-6 sm:space-x-8 overflow-x-auto scrollbar-none" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
               key={tab.key}
@@ -425,7 +427,7 @@ export default function CheckoutAndRefundApprovalsPage() {
                 setActiveTab(tab.key);
                 setCurrentPage(1);
               }}
-              className={`py-3 px-1 border-b-2 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              className={`py-3 px-1 border-b-2 text-xs sm:text-sm font-semibold transition-colors cursor-pointer whitespace-nowrap ${
                 activeTab === tab.key
                   ? 'border-[#175C46] text-[#175C46]'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
