@@ -564,7 +564,7 @@ export default function PaymentHistoryPage() {
               setSelectedStatus(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="All status"
+            placeholder="All Status"
           />
         </div>
 
@@ -579,7 +579,7 @@ export default function PaymentHistoryPage() {
                 setDebouncedSearch('');
                 setCurrentPage(1);
               }}
-              placeholder="Search resident or transaction ID"
+              placeholder="Search resident or transaction ID..."
             />
           </div>
           {hasActiveFilters && (

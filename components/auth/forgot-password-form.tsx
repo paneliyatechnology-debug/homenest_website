@@ -167,7 +167,7 @@ export const ForgotPasswordForm: React.FC = () => {
             type="text"
             inputMode="email"
             label="Email Address"
-            placeholder="admin@homenest.com"
+            placeholder="Enter your email address"
             value={formData.email}
             onChange={handleChange}
             error={error}

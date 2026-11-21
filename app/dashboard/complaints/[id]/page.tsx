@@ -970,7 +970,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       <div className="fixed bottom-0 left-0 right-0 lg:left-[265px] xl:left-[275px] bg-white border-t border-gray-200 px-4 sm:px-8 py-3.5 z-40 shadow-lg flex items-center gap-3">
         <input
           type="text"
-          placeholder="Add Update or resolution notes..."
+          placeholder="Add update or resolution notes..."
           value={bottomNotes}
           onChange={(e) => setBottomNotes(e.target.value)}
           onKeyDown={(e) => {

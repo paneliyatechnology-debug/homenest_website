@@ -193,7 +193,7 @@ export const CheckoutStatusModal: React.FC<CheckoutStatusModalProps> = ({
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
             rows={3}
-            placeholder="e.g. Room inspected, key returned, NOC issued and refund approved"
+            placeholder="Enter inspection remarks, key handover details, or refund notes..."
             className="w-full p-3 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] resize-none"
           />
         </div>

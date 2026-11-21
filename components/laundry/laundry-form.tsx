@@ -535,7 +535,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
             <AppTimePicker
               value={pickupTime}
               onChange={setPickupTime}
-              placeholder="Select Time"
+              placeholder="Select time"
               className="w-full"
             />
           </div>
@@ -690,7 +690,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
             value={specialInstructions}
             onChange={(e) => setSpecialInstructions(e.target.value)}
             rows={3}
-            placeholder="e.g. Gentle wash, do not iron, return by Friday morning, etc."
+            placeholder="Enter special instructions or preferences..."
             className="w-full p-3.5 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] transition-all resize-none"
           />
         </div>

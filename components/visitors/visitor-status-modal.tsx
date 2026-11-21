@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Visitor } from '@/types/visitor';
 import { visitorService } from '@/services/visitor.service';
@@ -55,14 +55,21 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
     return visitor?.status || 'approved';
   });
   const [adminNotes, setAdminNotes] = useState<string>(() => {
-    return visitor?.admin_notes || 'Approved by gate security';
+    return visitor?.admin_notes || '';
   });
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible && visitor) {
+      setSelectedStatus(visitor.status || 'approved');
+      setAdminNotes(visitor.admin_notes || '');
+    }
+  }, [visible, visitor]);
 
   const handleClose = () => {
     if (visitor) {
       setSelectedStatus(visitor.status || 'approved');
-      setAdminNotes(visitor.admin_notes || 'Approved by gate security');
+      setAdminNotes(visitor.admin_notes || '');
     }
     onHide();
   };
@@ -198,7 +205,7 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
             type="text"
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
-            placeholder="e.g. Approved by gate security"
+            placeholder="Enter admin notes or remarks..."
             className="w-full h-11 px-4 py-2.5 rounded-xl border border-gray-200/90 hover:border-gray-300 text-xs sm:text-sm text-gray-800 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-all shadow-2xs focus:outline-none"
           />
         </div>

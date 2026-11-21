@@ -276,7 +276,7 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
               required
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. Block A - Silver Wing"
+              placeholder="Enter building name (e.g. Block A)"
               error={errors.name}
             />
           </div>

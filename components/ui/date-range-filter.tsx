@@ -37,7 +37,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   startDate = '',
   endDate = '',
   onChange,
-  placeholder = 'Select Date Range',
+  placeholder = 'Select date range',
   className = '',
 }) => {
   const [isOpen, setIsOpen] = useState(false);

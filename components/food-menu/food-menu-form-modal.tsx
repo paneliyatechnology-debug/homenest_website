@@ -492,7 +492,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
                 setName(e.target.value);
                 if (errors.name) setErrors((prev) => ({ ...prev, name: '' }));
               }}
-              placeholder="e.g. Aloo Paratha with Curd & Pickle"
+              placeholder="Enter meal or item name"
               className={`w-full h-11 px-4 bg-white border ${
                 errors.name
                   ? 'border-red-500'
@@ -556,7 +556,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
           type="text"
           value={includedItems}
           onChange={(e) => setIncludedItems(e.target.value)}
-          placeholder="e.g. Hot Tea, Fresh Curd, Mixed Pickle, Salad"
+          placeholder="Enter included items (separated by commas)"
           className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 placeholder-gray-400 font-sans"
         />
         <p className="text-[11px] text-gray-400 mt-1">Separate complementary items by commas.</p>
@@ -571,7 +571,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
           rows={2}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="e.g. Freshly prepared wheat flatbread stuffed with spiced potatoes and butter"
+          placeholder="Enter meal description or dietary details..."
           className="w-full p-3.5 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 placeholder-gray-400 font-sans resize-none"
         />
       </div>

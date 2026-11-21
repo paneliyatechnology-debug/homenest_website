@@ -403,7 +403,7 @@ export default function RoomInventoryPage() {
                   setDebouncedSearch('');
                   setCurrentPage(1);
                 }}
-                placeholder="Search room number"
+                placeholder="Search by room number..."
               />
             </div>
             {hasActiveFilters && (

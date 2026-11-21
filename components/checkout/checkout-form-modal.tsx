@@ -352,7 +352,7 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
               setErrors((prev) => ({ ...prev, reason: undefined }));
             }
           }}
-          placeholder="e.g. Job Relocation, Course Completed..."
+          placeholder="Enter reason for checkout..."
           className={`w-full h-10 px-3 text-xs sm:text-sm bg-white border rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 transition-colors ${errors.reason
               ? 'border-red-400 focus:ring-red-400 focus:border-red-400'
               : 'border-gray-200 focus:ring-[#175C46] focus:border-[#175C46]'
@@ -394,7 +394,7 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
           value={additionalNotes}
           onChange={(e) => setAdditionalNotes(e.target.value)}
           rows={3}
-          placeholder="Add any additional instructions or relocation notes..."
+          placeholder="Enter additional instructions or relocation notes..."
           className="w-full p-3 text-xs sm:text-sm bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors resize-none"
         />
       </div>

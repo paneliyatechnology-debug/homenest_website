@@ -215,7 +215,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
               setUpiRefNo(numericVal);
               if (error) setError(null);
             }}
-            placeholder="e.g. 123456789012 (12-digit ID)"
+            placeholder="Enter 12-digit transaction ID"
             className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-mono"
           />
           <p className="text-[11px] text-gray-400 mt-1">
@@ -237,7 +237,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
               setDetails(e.target.value);
               if (error) setError(null);
             }}
-            placeholder="e.g. Cheque #452188 or Cash handed over"
+            placeholder="Enter payment reference or transaction details"
             className="w-full h-11 px-4 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-sans"
           />
         </div>
@@ -252,7 +252,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
           rows={2}
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. Paid via Google Pay UPI / Received on front desk"
+          placeholder="Enter payment notes or remarks..."
           className="w-full px-4 py-2.5 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 font-sans resize-none"
         />
       </div>

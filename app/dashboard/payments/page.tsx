@@ -666,7 +666,7 @@ export default function PaymentOverviewPage() {
               setSelectedMethod(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="All methods"
+            placeholder="All Methods"
           />
         </div>
 
@@ -681,7 +681,7 @@ export default function PaymentOverviewPage() {
                 setDebouncedSearch('');
                 setCurrentPage(1);
               }}
-              placeholder="Search resident or transaction ID"
+              placeholder="Search resident or transaction ID..."
             />
           </div>
           {hasActiveFilters && (

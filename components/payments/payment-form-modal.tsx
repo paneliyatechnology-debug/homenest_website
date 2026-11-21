@@ -632,7 +632,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
             setTitle(e.target.value);
             if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
           }}
-          placeholder="e.g. Monthly Rent & Utility Bill - October 2026"
+          placeholder="Enter invoice title (e.g. Monthly Rent & Utilities)"
           className={`w-full h-11 px-4 bg-white border ${errors.title
             ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
             : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
@@ -868,7 +868,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
           rows={2}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="e.g. Rent is due by 25th of every month. Late payment may attract a fine."
+          placeholder="Enter invoice payment terms or remarks..."
           className="w-full p-3 bg-white border border-gray-200/90 hover:border-gray-300 focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] rounded-xl text-xs sm:text-sm focus:outline-none transition-all shadow-2xs text-gray-800 placeholder-gray-400 font-sans resize-none"
         />
       </div>

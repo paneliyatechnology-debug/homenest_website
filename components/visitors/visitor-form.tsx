@@ -92,7 +92,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     initialData?.branch?.id ? String(initialData.branch.id) : ''
   );
   const [adminNotes, setAdminNotes] = useState(initialData?.admin_notes || '');
-  const [status, setStatus] = useState<string>(initialData?.status || '');
+  const [status, setStatus] = useState<string>(initialData?.status || 'approved');
 
   // Photo state
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -175,7 +175,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
           : (branches.length > 0 && branches[0].pg_id ? String(branches[0].pg_id) : '')
       );
       setAdminNotes(initialData.admin_notes || '');
-      setStatus(initialData.status || '');
+      setStatus(initialData.status || 'approved');
       setPhotoFile(null);
       setPhotoPreview(initialData.visitor_photo_url || initialData.visitor_photo || null);
     } else {
@@ -198,7 +198,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
       setBranchId(branches.length > 0 ? String(branches[0].id) : '');
       setPgId(defaultPg ? String(defaultPg) : '');
       setAdminNotes('');
-      setStatus('');
+      setStatus('approved');
       setPhotoFile(null);
       setPhotoPreview(null);
     }
@@ -474,9 +474,6 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
         newErrors.valid_until = 'Valid until date cannot be before visit date';
       }
     }
-    if (!status.trim()) {
-      newErrors.status = 'Status is required';
-    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -569,13 +566,6 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     { label: 'Delivery', value: 'Delivery' },
     { label: 'Maintenance', value: 'Maintenance' },
     { label: 'Other', value: 'Other' },
-  ];
-
-  const statusOptions = [
-    { label: 'Approved', value: 'approved' },
-    { label: 'In Office', value: 'in_office' },
-    { label: 'Pending', value: 'pending' },
-    { label: 'Left', value: 'left' },
   ];
 
   // Derived details for read-only Resident location display
@@ -676,68 +666,34 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
               )}
             </div>
 
-            {/* Visitor phone no. & Purpose */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <TextInput
-                label="Visitor phone no."
-                required
-                type="tel"
-                inputMode="tel"
-                placeholder="Enter 10-digit phone no."
-                maxLength={visitorPhone.startsWith('+') ? 14 : 10}
-                value={visitorPhone}
-                onChange={handlePhoneChange}
-                onKeyDown={handlePhoneKeyDown}
-                onBlur={handlePhoneBlur}
-                error={errors.visitor_phone}
-              />
+            {/* Visitor phone no. */}
+            <TextInput
+              label="Visitor phone no."
+              required
+              type="tel"
+              inputMode="tel"
+              placeholder="Enter 10-digit phone no."
+              maxLength={visitorPhone.startsWith('+') ? 14 : 10}
+              value={visitorPhone}
+              onChange={handlePhoneChange}
+              onKeyDown={handlePhoneKeyDown}
+              onBlur={handlePhoneBlur}
+              error={errors.visitor_phone}
+            />
 
-              <Dropdown
-                label="Purpose"
-                required
-                placeholder="Select Purpose"
-                options={purposeOptions}
-                value={purpose}
-                onChange={(e) => {
-                  setPurpose(e.target.value);
-                  if (errors.purpose) setErrors((prev) => ({ ...prev, purpose: '' }));
-                }}
-                error={errors.purpose}
-              />
-            </div>
-
-            {/* Status Radio Group (Left side) */}
-            <div className="space-y-2 pt-1">
-              <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
-                Status <span className="text-[#175C46]">*</span>
-              </label>
-              <div className="flex flex-wrap items-center gap-6 pt-1">
-                {statusOptions.map((item) => (
-                  <label
-                    key={item.value}
-                    className="inline-flex items-center gap-2 cursor-pointer select-none"
-                  >
-                    <input
-                      type="radio"
-                      name="visitor_status"
-                      value={item.value}
-                      checked={status === item.value}
-                      onChange={() => {
-                        setStatus(item.value);
-                        if (errors.status) setErrors((prev) => ({ ...prev, status: '' }));
-                      }}
-                      className="w-4 h-4 text-[#175C46] focus:ring-[#175C46] border-gray-300 cursor-pointer accent-[#175C46]"
-                    />
-                    <span className="text-xs sm:text-sm font-medium text-gray-700">
-                      {item.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-              {errors.status && (
-                <p className="text-[11px] text-rose-500 mt-0.5">{errors.status}</p>
-              )}
-            </div>
+            {/* Purpose */}
+            <Dropdown
+              label="Purpose"
+              required
+              placeholder="Select purpose"
+              options={purposeOptions}
+              value={purpose}
+              onChange={(e) => {
+                setPurpose(e.target.value);
+                if (errors.purpose) setErrors((prev) => ({ ...prev, purpose: '' }));
+              }}
+              error={errors.purpose}
+            />
           </div>
 
           {/* Right Column: Photo, Visit Date / Valid Until & Time */}
@@ -926,13 +882,13 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                 <AppTimePicker
                   value={entryTime}
                   onChange={(val) => setEntryTime(val)}
-                  placeholder="Select Entry time"
+                  placeholder="Select entry time"
                 />
               </div>
 
               <TextInput
                 label="Admin notes"
-                placeholder="e.g. Approved by gate security"
+                placeholder="Enter admin notes or remarks..."
                 value={adminNotes}
                 onChange={(e) => setAdminNotes(e.target.value)}
               />

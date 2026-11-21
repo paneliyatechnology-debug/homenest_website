@@ -8,6 +8,12 @@ import { visitorService } from '@/services/visitor.service';
 import { StatusBadge, ModalHeader } from '@/components/ui';
 import { formatDateToDDMMYYYY } from '@/components/ui/app-date-picker';
 
+function formatDisplayDate(val?: string | null): string {
+  if (!val) return '—';
+  const formatted = formatDateToDDMMYYYY(val);
+  return formatted && formatted !== '—' ? formatted.split(' ')[0] : '—';
+}
+
 interface VisitorDetailsModalProps {
   visible: boolean;
   onHide: () => void;
@@ -156,13 +162,13 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
               <div>
                 <span className="text-[11px] text-gray-400 block font-medium">Visit Date</span>
                 <span className="text-xs sm:text-sm text-gray-800 font-semibold mt-0.5 block truncate">
-                  {formatDateToDDMMYYYY(current.visit_date)}
+                  {formatDisplayDate(current.visit_date)}
                 </span>
               </div>
               <div>
                 <span className="text-[11px] text-gray-400 block font-medium">Valid Until</span>
                 <span className="text-xs sm:text-sm text-gray-800 font-semibold mt-0.5 block truncate">
-                  {formatDateToDDMMYYYY(current.valid_until || current.visit_date)}
+                  {formatDisplayDate(current.valid_until || current.visit_date)}
                 </span>
               </div>
               <div>
@@ -249,6 +255,18 @@ export const VisitorDetailsModal: React.FC<VisitorDetailsModalProps> = ({
                 </span>
               </div>
             </div>
+
+            {/* Admin Notes (displayed conditionally only when available) */}
+            {Boolean(current.admin_notes?.trim() || (current as any).notes?.trim()) && (
+              <div className="p-3.5 rounded-xl border border-gray-100 bg-[#FAFBFB] space-y-1">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                  Admin Notes
+                </span>
+                <p className="text-xs sm:text-sm text-gray-800 leading-relaxed whitespace-pre-line font-medium">
+                  {current.admin_notes?.trim() || (current as any).notes?.trim()}
+                </p>
+              </div>
+            )}
 
             {/* Movement Activity Logs */}
             <div className="space-y-2">

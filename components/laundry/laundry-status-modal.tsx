@@ -133,7 +133,7 @@ export const LaundryStatusModal: React.FC<LaundryStatusModalProps> = ({
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
             rows={3}
-            placeholder="e.g. Laundry washed, folded, and returned to resident room."
+            placeholder="Enter fulfillment remarks or status update..."
             className="w-full p-3 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] transition-all resize-none"
           />
         </div>

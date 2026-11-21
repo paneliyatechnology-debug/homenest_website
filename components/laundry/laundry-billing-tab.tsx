@@ -656,7 +656,7 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
                 type="text"
                 value={billTitle}
                 onChange={(e) => setBillTitle(e.target.value)}
-                placeholder="e.g. Laundry Charges - November 2026"
+                placeholder="Enter invoice title (e.g. Monthly Laundry Charges)"
                 required
                 className="w-full h-11 px-3.5 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46]"
               />
@@ -683,7 +683,7 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
               value={billNotes}
               onChange={(e) => setBillNotes(e.target.value)}
               rows={2}
-              placeholder="e.g. Monthly laundry billing"
+              placeholder="Enter invoice notes or remarks..."
               className="w-full p-3 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] resize-none"
             />
           </div>

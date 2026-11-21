@@ -827,7 +827,7 @@ export default function FoodMenuPage() {
                     value: String(b.id),
                   })),
                 ]}
-                placeholder="Branch"
+                placeholder="Select branch"
               />
             </div>
 
@@ -848,7 +848,7 @@ export default function FoodMenuPage() {
                   { label: 'Lunch', value: 'lunch' },
                   { label: 'Dinner', value: 'dinner' },
                 ]}
-                placeholder="Meal Type"
+                placeholder="Select meal type"
               />
             </div>
 

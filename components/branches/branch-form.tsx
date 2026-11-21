@@ -228,7 +228,7 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
                 required
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="Enter location (e.g. Navrangpura)"
+                placeholder="Enter branch location or area"
                 error={errors.location}
               />
 

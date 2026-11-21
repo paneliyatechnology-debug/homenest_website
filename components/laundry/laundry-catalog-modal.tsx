@@ -173,7 +173,7 @@ export const LaundryCatalogModal: React.FC<LaundryCatalogModalProps> = ({
               type="text"
               value={pickupSlot}
               onChange={(e) => setPickupSlot(e.target.value)}
-              placeholder="e.g. 09:00 AM - 11:00 AM (Mon - Sat)"
+              placeholder="Enter pickup hours (e.g. 09:00 AM - 11:00 AM)"
               className="w-full h-11 px-3.5 rounded-xl border border-gray-200 text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] transition-all"
             />
           </div>
@@ -238,7 +238,7 @@ export const LaundryCatalogModal: React.FC<LaundryCatalogModalProps> = ({
             type="text"
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
-            placeholder="New item (e.g. Bedsheet, Blanket)"
+            placeholder="Enter item name (e.g. Bedsheet)"
             className="flex-1 h-9 px-3 text-xs bg-white rounded-lg border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] w-full"
           />
           <input
@@ -246,7 +246,7 @@ export const LaundryCatalogModal: React.FC<LaundryCatalogModalProps> = ({
             min="0"
             value={newItemRate}
             onChange={(e) => setNewItemRate(e.target.value)}
-            placeholder="Rate (₹)"
+            placeholder="Enter rate (₹)"
             className="w-full sm:w-24 h-9 px-3 text-xs bg-white rounded-lg border border-gray-200 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46]"
           />
           <button

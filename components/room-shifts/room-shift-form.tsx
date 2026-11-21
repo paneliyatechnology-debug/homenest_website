@@ -488,7 +488,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
                   type="text"
                   readOnly
                   value={currentRoomNo || ''}
-                  placeholder="Enter room no."
+                  placeholder="Current room number"
                   className="w-full h-11 px-3.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 cursor-not-allowed select-none"
                 />
               </div>
@@ -502,7 +502,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
                   type="text"
                   readOnly
                   value={currentBranchName || ''}
-                  placeholder="Branch name"
+                  placeholder="Current branch"
                   className="w-full h-11 px-3.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 cursor-not-allowed select-none"
                 />
               </div>
@@ -516,7 +516,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
                   type="text"
                   readOnly
                   value={currentBuildingName || ''}
-                  placeholder="Building name"
+                  placeholder="Current building"
                   className="w-full h-11 px-3.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 cursor-not-allowed select-none"
                 />
               </div>
@@ -530,7 +530,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
                   type="text"
                   readOnly
                   value={currentFloorName || ''}
-                  placeholder="Floor name"
+                  placeholder="Current floor"
                   className="w-full h-11 px-3.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 cursor-not-allowed select-none"
                 />
               </div>
@@ -702,7 +702,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               rows={3}
               value={additionalNotes}
               onChange={(e) => setAdditionalNotes(e.target.value)}
-              placeholder="e.g. Prefer quiet room facing garden, study table required, etc."
+              placeholder="Enter room preferences, relocation reasons, or special requests..."
               disabled={submitting}
               className="w-full p-3.5 text-xs sm:text-sm bg-white border border-gray-200 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors resize-none"
             />

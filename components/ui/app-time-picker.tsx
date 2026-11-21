@@ -47,7 +47,7 @@ export const AppTimePicker: React.FC<AppTimePickerProps> = ({
   name,
   value,
   onChange,
-  placeholder = 'Select Entry time',
+  placeholder = 'Select time',
   required = false,
   disabled = false,
   className = '',

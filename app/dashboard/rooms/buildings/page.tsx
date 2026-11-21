@@ -227,7 +227,7 @@ export default function BuildingsPage() {
                   setDebouncedSearch('');
                   setCurrentPage(1);
                 }}
-                placeholder="Search building name"
+                placeholder="Search by building name..."
               />
             </div>
             {hasActiveFilters && (

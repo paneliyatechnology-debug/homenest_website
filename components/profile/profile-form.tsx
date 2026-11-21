@@ -690,7 +690,7 @@ export const ProfileForm: React.FC = () => {
                     required
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g. Sunita Mehra"
+                    placeholder="Enter your full name"
                     error={errors.name}
                   />
 
@@ -702,7 +702,7 @@ export const ProfileForm: React.FC = () => {
                     disabled
                     value={formData.email}
                     onChange={handleChange}
-                    placeholder="e.g. sunita.mehra@example.com"
+                    placeholder="Enter your email address"
                     helperText="Email address is fixed and cannot be changed."
                   />
                 </div>
@@ -714,7 +714,7 @@ export const ProfileForm: React.FC = () => {
                     disabled
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="e.g. 9876543220"
+                    placeholder="Enter 10-digit phone number"
                     error={errors.phone}
                   />
 
@@ -797,7 +797,7 @@ export const ProfileForm: React.FC = () => {
                     disabled
                     value={formData.pg_name}
                     onChange={handleChange}
-                    placeholder="e.g. HouseNest Sunshine PG"
+                    placeholder="Enter PG facility name"
                     error={errors.pg_name}
                   />
 
@@ -819,7 +819,7 @@ export const ProfileForm: React.FC = () => {
                     disabled
                     value={formData.pg_phone}
                     onChange={handleChange}
-                    placeholder="e.g. 9876543221"
+                    placeholder="Enter 10-digit PG phone number"
                     error={errors.pg_phone}
                   />
                 </div>
@@ -833,7 +833,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_address"
                     value={formData.pg_address}
                     onChange={handleChange}
-                    placeholder="e.g. Plot 45, Near St. Xavier College"
+                    placeholder="Enter street address, building, landmark"
                     className="w-full h-11 text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
                   />
                 </div>
@@ -844,7 +844,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_city"
                     value={formData.pg_city}
                     onChange={handleChange}
-                    placeholder="e.g. Ahmedabad"
+                    placeholder="Enter city"
                   />
 
                   <TextInput
@@ -852,7 +852,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_state"
                     value={formData.pg_state}
                     onChange={handleChange}
-                    placeholder="e.g. Gujarat"
+                    placeholder="Enter state"
                   />
 
                   <TextInput
@@ -860,7 +860,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_pincode"
                     value={formData.pg_pincode}
                     onChange={handleChange}
-                    placeholder="e.g. 380009"
+                    placeholder="Enter 6-digit pincode"
                   />
                 </div>
 
@@ -873,7 +873,7 @@ export const ProfileForm: React.FC = () => {
                     min="0"
                     value={formData.total_rooms}
                     onChange={handleChange}
-                    placeholder="e.g. 25"
+                    placeholder="Enter total rooms"
                   />
 
                   <TextInput
@@ -883,7 +883,7 @@ export const ProfileForm: React.FC = () => {
                     min="0"
                     value={formData.total_beds}
                     onChange={handleChange}
-                    placeholder="e.g. 50"
+                    placeholder="Enter total beds"
                   />
                 </div>
 
@@ -933,7 +933,7 @@ export const ProfileForm: React.FC = () => {
                           handleAddCustomAmenity();
                         }
                       }}
-                      placeholder="Add custom amenity (e.g. Garden)"
+                      placeholder="Enter custom amenity name"
                       className="flex-1 h-9 text-xs rounded-xl border border-gray-200/90 bg-white px-3 focus:outline-none focus:ring-1 focus:ring-[#175C46] placeholder-gray-400"
                     />
                     <button
@@ -982,7 +982,7 @@ export const ProfileForm: React.FC = () => {
                     rows={4}
                     value={formData.rules}
                     onChange={handleChange}
-                    placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
+                    placeholder="Enter PG rules, curfew timings, and resident policies..."
                     className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs resize-y"
                   />
                   <p className="text-[11px] text-gray-400 mt-1">
@@ -1042,7 +1042,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_account_holder_name"
                     value={formData.pg_account_holder_name}
                     onChange={handleChange}
-                    placeholder="e.g. Jasmin Patel"
+                    placeholder="Enter account holder name"
                   />
 
                   <TextInput
@@ -1050,7 +1050,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_bank_name"
                     value={formData.pg_bank_name}
                     onChange={handleChange}
-                    placeholder="e.g. State Bank of India"
+                    placeholder="Enter bank name"
                   />
                 </div>
 
@@ -1060,7 +1060,7 @@ export const ProfileForm: React.FC = () => {
                     name="pg_account_number"
                     value={formData.pg_account_number}
                     onChange={handleChange}
-                    placeholder="e.g. 38291048592"
+                    placeholder="Enter bank account number"
                   />
 
                   <TextInput
@@ -1070,7 +1070,7 @@ export const ProfileForm: React.FC = () => {
                     onChange={(e) => {
                       handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
                     }}
-                    placeholder="e.g. SBIN0001234"
+                    placeholder="Enter 11-character IFSC code"
                   />
                 </div>
               </div>
@@ -1097,7 +1097,7 @@ export const ProfileForm: React.FC = () => {
                   name="pg_upi_id"
                   value={formData.pg_upi_id}
                   onChange={handleChange}
-                  placeholder="e.g. jasminkorat204@oksbi"
+                  placeholder="Enter UPI ID (e.g. name@bank)"
                   helperText="Enter your official business or personal UPI VPA (e.g. name@okaxis)."
                 />
 

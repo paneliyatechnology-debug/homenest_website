@@ -479,7 +479,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                   setCategory(e.target.value);
                   if (errors.category) setErrors((prev) => ({ ...prev, category: '' }));
                 }}
-                placeholder="Enter category"
+                placeholder="Select category"
                 className="w-full"
               />
               {errors.category && (
@@ -498,7 +498,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                   setPriority(e.target.value);
                   if (errors.priority) setErrors((prev) => ({ ...prev, priority: '' }));
                 }}
-                placeholder="Enter priority"
+                placeholder="Select priority"
                 className="w-full"
               />
               {errors.priority && (
@@ -592,7 +592,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                       setAudienceType('branch');
                       if (errors.audience) setErrors((prev) => ({ ...prev, audience: '' }));
                     }}
-                    placeholder="Select Branch"
+                    placeholder="Select branch"
                     className="w-full"
                   />
                   {audienceType === 'branch' && errors.branch && (
@@ -647,7 +647,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                       setAudienceType('resident');
                       if (errors.audience) setErrors((prev) => ({ ...prev, audience: '' }));
                     }}
-                    placeholder="Select Room/Resident"
+                    placeholder="Select room or resident"
                     className="w-full"
                   />
                   {audienceType === 'resident' && errors.resident && (
@@ -796,7 +796,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                   <AppDatePicker
                     value={scheduleDate}
                     onChange={(val) => setScheduleDate(val)}
-                    placeholder="Select Date"
+                    placeholder="Select date"
                     disabled={sendNow}
                     className="w-full"
                   />
@@ -805,7 +805,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                   <AppTimePicker
                     value={scheduleTime}
                     onChange={(val) => setScheduleTime(val)}
-                    placeholder="Select Time"
+                    placeholder="Select time"
                     disabled={sendNow}
                     className="w-full"
                   />
