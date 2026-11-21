@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Visitor } from '@/types/visitor';
 import { visitorService } from '@/services/visitor.service';
 import { branchService } from '@/services/branch.service';
 import { residentService } from '@/services/resident.service';
+import { authService } from '@/services/auth.service';
 import { Resident } from '@/types/resident';
 import { Branch } from '@/types/branch';
 import { ResidentDropdown } from '@/components/residents/resident-dropdown';
@@ -16,6 +17,7 @@ import {
   Dropdown,
   AppDatePicker,
   AppTimePicker,
+  parseDateString,
   formatDateForApi,
   formatDateToDDMMYYYY,
 } from '@/components/ui';
@@ -80,8 +82,15 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
   const [roomNo, setRoomNo] = useState(initialData?.room?.room_no || '');
 
   // PG, Branch, and Notes
-  const [pgId] = useState<string>(String(initialData?.pg?.id || '1'));
-  const [branchId, setBranchId] = useState<string>(String(initialData?.branch?.id || '1'));
+  const [pgId, setPgId] = useState<string>(() => {
+    if (initialData?.pg?.id) return String(initialData.pg.id);
+    const u = authService.getCurrentUser();
+    const found = u?.pg?.id || (u as any)?.pg_id;
+    return found ? String(found) : '';
+  });
+  const [branchId, setBranchId] = useState<string>(
+    initialData?.branch?.id ? String(initialData.branch.id) : ''
+  );
   const [adminNotes, setAdminNotes] = useState(initialData?.admin_notes || '');
   const [status, setStatus] = useState<string>(initialData?.status || '');
 
@@ -100,6 +109,45 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
   // Available branches
   const [branches, setBranches] = useState<Branch[]>([]);
 
+  // Minimum allowed visit date: today (past dates disabled)
+  const minVisitDate = useMemo(() => {
+    if (isEdit && initialData?.visit_date) {
+      const existing = parseDateString(initialData.visit_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (existing && existing < today) {
+        existing.setHours(0, 0, 0, 0);
+        return existing;
+      }
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }, [isEdit, initialData?.visit_date]);
+
+  // Maximum allowed visit date: valid until date (if selected)
+  const maxVisitDate = useMemo(() => {
+    if (!validUntil || !validUntil.trim()) return null;
+    const d = parseDateString(validUntil);
+    if (!d) return null;
+    d.setHours(23, 59, 59, 999);
+    return d;
+  }, [validUntil]);
+
+  // Minimum allowed valid until date: visit date (disables all dates before visit date)
+  const minValidUntilDate = useMemo(() => {
+    if (visitDate && visitDate.trim()) {
+      const d = parseDateString(visitDate);
+      if (d) {
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  }, [visitDate]);
+
   // Reset form to clean defaults (or record values if in edit mode)
   const resetForm = useCallback(() => {
     if (isEdit && initialData) {
@@ -116,7 +164,16 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
         (initialData.host_resident ? initialData.host_resident.replace(/^.*?\((.*?)\).*$/, '$1') : '')
       );
       setRoomNo(initialData.room?.room_no || '');
-      setBranchId(String(initialData.branch?.id || '1'));
+      setBranchId(
+        initialData.branch?.id
+          ? String(initialData.branch.id)
+          : (branches.length > 0 ? String(branches[0].id) : '')
+      );
+      setPgId(
+        initialData.pg?.id
+          ? String(initialData.pg.id)
+          : (branches.length > 0 && branches[0].pg_id ? String(branches[0].pg_id) : '')
+      );
       setAdminNotes(initialData.admin_notes || '');
       setStatus(initialData.status || '');
       setPhotoFile(null);
@@ -133,7 +190,13 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
       setSelectedResidentId(null);
       setResidentName('');
       setRoomNo('');
-      setBranchId(branches.length > 0 ? String(branches[0].id) : '1');
+      const currentUser = authService.getCurrentUser();
+      const defaultPg =
+        currentUser?.pg?.id ||
+        (currentUser as any)?.pg_id ||
+        (branches.length > 0 && branches[0].pg_id ? branches[0].pg_id : '');
+      setBranchId(branches.length > 0 ? String(branches[0].id) : '');
+      setPgId(defaultPg ? String(defaultPg) : '');
       setAdminNotes('');
       setStatus('');
       setPhotoFile(null);
@@ -181,7 +244,10 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
         if (res && res.data && res.data.length > 0) {
           setBranches(res.data);
           if (!initialData?.branch?.id) {
-            setBranchId(String(res.data[0].id));
+            setBranchId((prev) => prev || String(res.data[0].id));
+          }
+          if (!initialData?.pg?.id && res.data[0].pg_id) {
+            setPgId((prev) => prev || String(res.data[0].pg_id));
           }
         }
       })
@@ -237,8 +303,12 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
       }
       if (resident.branch_id) {
         setBranchId(String(resident.branch_id));
-      } else if (resident.building_id && branches.length > 0) {
-        setBranchId(String(resident.building_id || 1));
+        const matched = branches.find((b) => b.id === resident.branch_id);
+        if (matched?.pg_id) {
+          setPgId(String(matched.pg_id));
+        }
+      } else if (branches.length > 0) {
+        setBranchId((prev) => prev || String(branches[0].id));
       }
       if (errors.resident_id) {
         setErrors((prev) => ({ ...prev, resident_id: '' }));
@@ -389,6 +459,20 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     }
     if (!visitDate.trim()) {
       newErrors.visit_date = 'Visit date is required';
+    } else {
+      const vDate = parseDateString(visitDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (!isEdit && vDate && vDate < today) {
+        newErrors.visit_date = 'Visit date cannot be in the past';
+      }
+    }
+    if (visitDate.trim() && validUntil.trim()) {
+      const vDate = parseDateString(visitDate);
+      const uDate = parseDateString(validUntil);
+      if (vDate && uDate && uDate < vDate) {
+        newErrors.valid_until = 'Valid until date cannot be before visit date';
+      }
     }
     if (!status.trim()) {
       newErrors.status = 'Status is required';
@@ -416,9 +500,38 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
       if (entryTime.trim()) {
         formData.append('entry_time', entryTime.trim());
       }
-      formData.append('resident_id', String(selectedResidentId || 3));
-      formData.append('pg_id', String(pgId || 1));
-      formData.append('branch_id', String(branchId || 1));
+      // Dynamically resolve PG and Branch IDs from auth user, selected resident, and branch list
+      const currentUser = authService.getCurrentUser();
+      const matchedBranch = branches.find(
+        (b) => String(b.id) === String(selectedResident?.branch_id || branchId)
+      ) || (branches.length > 0 ? branches[0] : null);
+
+      const effectivePgId =
+        initialData?.pg?.id ||
+        matchedBranch?.pg_id ||
+        pgId ||
+        currentUser?.pg?.id ||
+        (currentUser as any)?.pg_id;
+
+      const effectiveBranchId =
+        selectedResident?.branch_id ||
+        branchId ||
+        matchedBranch?.id ||
+        initialData?.branch?.id;
+
+      const resId = selectedResidentId || initialData?.resident?.id;
+      if (resId) {
+        formData.append('resident_id', String(resId));
+      }
+      if (effectivePgId) {
+        formData.append('pg_id', String(effectivePgId));
+      }
+      if (effectiveBranchId) {
+        formData.append('branch_id', String(effectiveBranchId));
+      }
+      if (selectedResident?.room_id || initialData?.room?.id) {
+        formData.append('room_id', String(selectedResident?.room_id || initialData?.room?.id));
+      }
       if (adminNotes.trim()) {
         formData.append('admin_notes', adminNotes.trim());
       }
@@ -451,7 +564,6 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
   };
 
   const purposeOptions = [
-    { label: 'Select Purpose', value: '' },
     { label: 'Meeting', value: 'Meeting' },
     { label: 'Personal Visit', value: 'Personal Visit' },
     { label: 'Delivery', value: 'Delivery' },
@@ -752,12 +864,21 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                 </label>
                 <AppDatePicker
                   value={visitDate}
+                  minDate={minVisitDate}
+                  maxDate={maxVisitDate}
                   onChange={(val) => {
                     setVisitDate(val);
                     if (!validUntil || validUntil === visitDate) {
                       setValidUntil(val);
+                    } else if (val && validUntil) {
+                      const vD = parseDateString(val);
+                      const uD = parseDateString(validUntil);
+                      if (vD && uD && vD > uD) {
+                        setValidUntil(val);
+                      }
                     }
                     if (errors.visit_date) setErrors((prev) => ({ ...prev, visit_date: '' }));
+                    if (errors.valid_until) setErrors((prev) => ({ ...prev, valid_until: '' }));
                   }}
                   placeholder="Select visit date"
                   dateFormat="dd/mm/yy"
@@ -774,10 +895,25 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                 </label>
                 <AppDatePicker
                   value={validUntil}
-                  onChange={(val) => setValidUntil(val)}
+                  minDate={minValidUntilDate}
+                  onChange={(val) => {
+                    setValidUntil(val);
+                    if (val && visitDate) {
+                      const vD = parseDateString(visitDate);
+                      const uD = parseDateString(val);
+                      if (vD && uD && uD < vD) {
+                        setVisitDate(val);
+                      }
+                    }
+                    if (errors.valid_until) setErrors((prev) => ({ ...prev, valid_until: '' }));
+                  }}
                   placeholder="Select valid until"
                   dateFormat="dd/mm/yy"
+                  hasError={!!errors.valid_until}
                 />
+                {errors.valid_until && (
+                  <p className="text-[11px] text-rose-500 mt-0.5">{errors.valid_until}</p>
+                )}
               </div>
             </div>
 
