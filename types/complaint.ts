@@ -43,6 +43,9 @@ export interface ComplaintAttachment {
   size?: string | number;
   file_size?: string | number;
   mime_type?: string;
+  file_type?: string;
+  is_video?: boolean;
+  created_at?: string;
 }
 
 export interface ComplaintTimelineItem {

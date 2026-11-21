@@ -26,6 +26,7 @@ import {
   formatFileSize,
   isImageFile,
   isPdfFile,
+  isVideoFile,
   getFileExtension,
 } from '@/lib/file-utils';
 import { toast } from '@/lib/toast';
@@ -330,25 +331,31 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
     }
   };
 
-  // Handle File Upload from screenshot dropzone
+  // Handle File Upload from screenshot / video dropzone
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !complaintId) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds 5MB limit.');
+    const isVideo =
+      file.type.startsWith('video/') ||
+      /\.(mp4|webm|mov|m4v|mkv|avi|3gp)$/i.test(file.name);
+    const maxSizeBytes = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxSizeLabel = isVideo ? '50MB' : '10MB';
+
+    if (file.size > maxSizeBytes) {
+      toast.error(`File size exceeds ${maxSizeLabel} limit.`);
       return;
     }
 
     try {
       setIsUploadingFile(true);
       const fd = new FormData();
-      fd.append('notes', `Attached screenshot: ${file.name}`);
+      fd.append('notes', isVideo ? `Attached video: ${file.name}` : `Attached file: ${file.name}`);
       fd.append('attachments', file);
       await complaintService.addUpdate(complaintId, fd);
       await fetchComplaintData();
     } catch (err) {
-      console.warn('Failed to upload screenshot:', err);
+      console.warn('Failed to upload attachment:', err);
     } finally {
       setIsUploadingFile(false);
       if (fileInputRef.current) {
@@ -569,6 +576,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                     const fullUrl = resolveFileUrl(rawUrl);
                     const isImage = isImageFile(fileName, fullUrl);
                     const isPdf = isPdfFile(fileName, fullUrl);
+                    const isVideo = isVideoFile(fileName, fullUrl, att.mime_type || att.file_type, att.is_video);
                     const ext = getFileExtension(fileName, fullUrl);
 
                     return (
@@ -586,6 +594,23 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             loading="lazy"
                           />
+                        ) : isVideo && fullUrl ? (
+                          <div className="w-full h-full bg-slate-950 relative flex items-center justify-center overflow-hidden">
+                            <video
+                              src={`${fullUrl}#t=0.5`}
+                              preload="metadata"
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover opacity-85 group-hover:opacity-100 transition-opacity"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/15 transition-colors">
+                              <div className="w-10 h-10 rounded-full bg-black/60 text-white flex items-center justify-center shadow-lg backdrop-blur-xs group-hover:scale-110 transition-transform">
+                                <svg className="w-4 h-4 fill-current ml-0.5" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
                         ) : isPdf ? (
                           <div className="w-full h-full bg-rose-50 flex flex-col items-center justify-center gap-1 text-rose-600">
                             <i className="pi pi-file-pdf text-2xl" />
@@ -600,8 +625,9 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
 
                         {/* Top File Extension Badge */}
                         <div className="absolute top-2 left-2 pointer-events-none">
-                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-xs shadow-xs">
-                            {ext}
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-black/60 text-white backdrop-blur-xs shadow-xs flex items-center gap-1">
+                            {isVideo && <i className="pi pi-video text-[9px]" />}
+                            <span>{ext}</span>
                           </span>
                         </div>
 
@@ -648,6 +674,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                     const fileSize = formatFileSize(att.size || att.file_size);
                     const isImage = isImageFile(fileName, fullUrl);
                     const isPdf = isPdfFile(fileName, fullUrl);
+                    const isVideo = isVideoFile(fileName, fullUrl, att.mime_type || att.file_type, att.is_video);
                     const ext = getFileExtension(fileName, fullUrl);
 
                     return (
@@ -670,6 +697,21 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                 loading="lazy"
                               />
+                            ) : isVideo && fullUrl ? (
+                              <div className="w-full h-full bg-slate-950 text-white flex items-center justify-center relative overflow-hidden">
+                                <video
+                                  src={`${fullUrl}#t=0.5`}
+                                  preload="metadata"
+                                  muted
+                                  playsInline
+                                  className="w-full h-full object-cover opacity-75"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                  <svg className="w-3.5 h-3.5 fill-white ml-0.5" viewBox="0 0 24 24">
+                                    <path d="M8 5v14l11-7z" />
+                                  </svg>
+                                </div>
+                              </div>
                             ) : isPdf ? (
                               <div className="w-full h-full bg-rose-50 text-rose-600 flex items-center justify-center">
                                 <i className="pi pi-file-pdf text-base" />
@@ -688,8 +730,9 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                               {fileName}
                             </p>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gray-100 text-gray-600">
-                                {ext}
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-gray-100 text-gray-600 flex items-center gap-1">
+                                {isVideo && <i className="pi pi-video text-[8px]" />}
+                                <span>{ext}</span>
                               </span>
                               <span className="text-[11px] text-gray-400">{fileSize || 'Attached file'}</span>
                             </div>
@@ -733,11 +776,11 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                 </div>
               ) : null}
 
-              {/* Tap to Upload Screenshot Dropzone */}
+              {/* Tap to Upload Photo or Video Dropzone */}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.pdf"
+                accept="image/*,video/*,.pdf,.mp4,.webm,.mov,.m4v,.mkv"
                 className="hidden"
                 onChange={handleFileUpload}
               />
@@ -752,15 +795,20 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                   </div>
                 ) : (
                   <>
-                    <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </div>
                     <span className="text-xs font-semibold text-gray-700">
-                      Tap to upload screenshot
+                      Tap to upload photo or video
                     </span>
                     <span className="text-[11px] text-gray-400">
-                      JPG, PNG • Max 5MB
+                      JPG, PNG, MP4, WebM, PDF • Max 50MB
                     </span>
                   </>
                 )}

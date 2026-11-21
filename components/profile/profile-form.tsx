@@ -110,11 +110,6 @@ const PG_TYPE_OPTIONS = [
   { label: 'Other', value: 'other' },
 ];
 
-const PG_STATUS_OPTIONS = [
-  { label: 'Active', value: 'active' },
-  { label: 'Inactive', value: 'inactive' },
-];
-
 export const ProfileForm: React.FC = () => {
   const [formData, setFormData] = useState<ProfileFormData>(DEFAULT_PROFILE_FORM_DATA);
   const [initialData, setInitialData] = useState<ProfileFormData | null>(null);
@@ -685,9 +680,9 @@ export const ProfileForm: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Fields Column (7 cols) */}
-              <div className="lg:col-span-7 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {/* Left Fields Column (Equal 50% width) */}
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <TextInput
                     label="Owner Full Name"
@@ -716,6 +711,7 @@ export const ProfileForm: React.FC = () => {
                   <TextInput
                     label="Phone Number"
                     name="phone"
+                    disabled
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="e.g. 9876543220"
@@ -746,8 +742,8 @@ export const ProfileForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Photo Column (5 cols) */}
-              <div className="lg:col-span-5">
+              {/* Right Photo Column (Equal 50% width) */}
+              <div>
                 <PhotoUpload
                   label="Owner Profile Photo"
                   shape="rounded"
@@ -790,14 +786,15 @@ export const ProfileForm: React.FC = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Fields Column (7 cols) */}
-              <div className="lg:col-span-7 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {/* Left Fields Column (Equal 50% width) */}
+              <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <TextInput
                     label="PG Name"
                     name="pg_name"
                     required
+                    disabled
                     value={formData.pg_name}
                     onChange={handleChange}
                     placeholder="e.g. HouseNest Sunshine PG"
@@ -819,6 +816,7 @@ export const ProfileForm: React.FC = () => {
                   <TextInput
                     label="PG Phone Number"
                     name="pg_phone"
+                    disabled
                     value={formData.pg_phone}
                     onChange={handleChange}
                     placeholder="e.g. 9876543221"
@@ -866,7 +864,8 @@ export const ProfileForm: React.FC = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                {/* Total Rooms & Total Beds (Status removed, 2 equal columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <TextInput
                     label="Total Rooms"
                     name="total_rooms"
@@ -885,14 +884,6 @@ export const ProfileForm: React.FC = () => {
                     value={formData.total_beds}
                     onChange={handleChange}
                     placeholder="e.g. 50"
-                  />
-
-                  <RadioGroup
-                    label="Status"
-                    name="status"
-                    options={PG_STATUS_OPTIONS}
-                    value={formData.status}
-                    onChange={(val) => handleFieldChange('status', val as ProfileFormData['status'])}
                   />
                 </div>
 
@@ -954,25 +945,10 @@ export const ProfileForm: React.FC = () => {
                     </button>
                   </div>
                 </div>
-
-                {/* Rules & Policies */}
-                <div className="pt-2">
-                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
-                    Rules, Curfew &amp; Policies
-                  </label>
-                  <textarea
-                    name="rules"
-                    rows={3}
-                    value={formData.rules}
-                    onChange={handleChange}
-                    placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
-                    className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs"
-                  />
-                </div>
               </div>
 
-              {/* Right Logo Column (5 cols) */}
-              <div className="lg:col-span-5">
+              {/* Right Column (Equal 50% width): Logo and Rules */}
+              <div className="space-y-5">
                 <PhotoUpload
                   label="PG Facility Brand Logo"
                   shape="rounded"
@@ -995,6 +971,24 @@ export const ProfileForm: React.FC = () => {
                     }));
                   }}
                 />
+
+                {/* Rules, Curfew & Policies (Moved below logo field) */}
+                <div>
+                  <label className="text-xs sm:text-sm font-semibold text-gray-800 block mb-1.5">
+                    Rules, Curfew &amp; Policies
+                  </label>
+                  <textarea
+                    name="rules"
+                    rows={4}
+                    value={formData.rules}
+                    onChange={handleChange}
+                    placeholder="e.g. Curfew at 10:30 PM. No loud music after 11 PM."
+                    className="w-full text-xs sm:text-sm rounded-xl border border-gray-200/90 bg-white p-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] transition-colors shadow-2xs resize-y"
+                  />
+                  <p className="text-[11px] text-gray-400 mt-1">
+                    Specify entry curfew timings, visitor guidelines, and general property policies.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -1015,62 +1009,119 @@ export const ProfileForm: React.FC = () => {
               </p>
             </div>
 
-            <div className="max-w-4xl space-y-4">
-              <div className="p-3.5 bg-emerald-50/60 border border-emerald-100/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700">
-                <svg className="w-4 h-4 text-[#175C46] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>
-                  The UPI ID and bank account details below are used for collecting resident rent and utility payments online.
-                </span>
+            <div className="p-3.5 bg-emerald-50/60 border border-emerald-100/80 rounded-xl flex items-start gap-2.5 text-xs text-gray-700">
+              <svg className="w-4 h-4 text-[#175C46] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>
+                The UPI ID and bank account details below are used for collecting resident rent and utility payments online.
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+              {/* Left Column: Bank Account Details */}
+              <div className="space-y-4 p-5 rounded-2xl border border-gray-200/80 bg-gray-50/40">
+                <div className="pb-2 border-b border-gray-200/70 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#175C46]" />
+                      Bank Account Details
+                    </h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      Direct settlement account for IMPS, NEFT &amp; RTGS payouts
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white text-gray-600 border border-gray-200">
+                    IMPS / NEFT
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <TextInput
+                    label="Account Holder Name"
+                    name="pg_account_holder_name"
+                    value={formData.pg_account_holder_name}
+                    onChange={handleChange}
+                    placeholder="e.g. Jasmin Patel"
+                  />
+
+                  <TextInput
+                    label="Bank Name"
+                    name="pg_bank_name"
+                    value={formData.pg_bank_name}
+                    onChange={handleChange}
+                    placeholder="e.g. State Bank of India"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <TextInput
+                    label="Account Number"
+                    name="pg_account_number"
+                    value={formData.pg_account_number}
+                    onChange={handleChange}
+                    placeholder="e.g. 38291048592"
+                  />
+
+                  <TextInput
+                    label="IFSC Code"
+                    name="pg_ifsc_code"
+                    value={formData.pg_ifsc_code}
+                    onChange={(e) => {
+                      handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
+                    }}
+                    placeholder="e.g. SBIN0001234"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Right Column: UPI & Digital Settlement */}
+              <div className="space-y-4 p-5 rounded-2xl border border-gray-200/80 bg-gray-50/40">
+                <div className="pb-2 border-b border-gray-200/70 flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#175C46]" />
+                      UPI Settlement &amp; QR
+                    </h3>
+                    <p className="text-[11px] text-gray-500 mt-0.5">
+                      Online collections via UPI apps and dynamic QR codes
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-[#175C46] border border-emerald-200">
+                    UPI Auto-Pay
+                  </span>
+                </div>
+
                 <TextInput
                   label="PG UPI ID (VPA)"
                   name="pg_upi_id"
                   value={formData.pg_upi_id}
                   onChange={handleChange}
                   placeholder="e.g. jasminkorat204@oksbi"
+                  helperText="Enter your official business or personal UPI VPA (e.g. name@okaxis)."
                 />
 
-                <TextInput
-                  label="Bank Name"
-                  name="pg_bank_name"
-                  value={formData.pg_bank_name}
-                  onChange={handleChange}
-                  placeholder="e.g. State Bank of India"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <TextInput
-                  label="Account Number"
-                  name="pg_account_number"
-                  value={formData.pg_account_number}
-                  onChange={handleChange}
-                  placeholder="e.g. 38291048592"
-                />
-
-                <TextInput
-                  label="IFSC Code"
-                  name="pg_ifsc_code"
-                  value={formData.pg_ifsc_code}
-                  onChange={(e) => {
-                    handleFieldChange('pg_ifsc_code', e.target.value.toUpperCase());
-                  }}
-                  placeholder="e.g. SBIN0001234"
-                />
-              </div>
-
-              <div className="max-w-md">
-                <TextInput
-                  label="Account Holder Name"
-                  name="pg_account_holder_name"
-                  value={formData.pg_account_holder_name}
-                  onChange={handleChange}
-                  placeholder="e.g. Jasmin Patel"
-                />
+                {/* UPI Live Status / Info Box */}
+                <div className="p-3.5 bg-white rounded-xl border border-gray-200/90 shadow-2xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-gray-600">Configured Collection VPA</span>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        formData.pg_upi_id.trim()
+                          ? 'text-emerald-700 bg-emerald-50 border border-emerald-200/60'
+                          : 'text-amber-700 bg-amber-50 border border-amber-200/60'
+                      }`}
+                    >
+                      {formData.pg_upi_id.trim() ? 'Configured' : 'Not Set'}
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono font-medium text-gray-900 truncate bg-gray-50 p-2 rounded-lg border border-gray-100">
+                    {formData.pg_upi_id.trim() || 'No UPI ID specified'}
+                  </p>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    This UPI ID will appear on printed invoices and resident app screens to receive instant UPI payments via Google Pay, PhonePe, Paytm, and BHIM.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -9,6 +9,7 @@ import {
   formatFileSize,
   isImageFile,
   isPdfFile,
+  isVideoFile,
   getFileExtension,
   getAttachmentDisplayName,
 } from '@/lib/file-utils';
@@ -18,6 +19,7 @@ export {
   formatFileSize,
   isImageFile,
   isPdfFile,
+  isVideoFile,
   getFileExtension,
   getAttachmentDisplayName,
 };
@@ -156,6 +158,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
   const fileSize = formatFileSize(current?.size || current?.file_size);
   const isImage = isImageFile(fileName, fileUrl);
   const isPdf = isPdfFile(fileName, fileUrl);
+  const isVideo = isVideoFile(fileName, fileUrl, current?.mime_type || current?.file_type, current?.is_video);
   const ext = getFileExtension(fileName, fileUrl);
 
   const handlePrev = () => {
@@ -220,7 +223,9 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
           <div className="w-9 h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
             <i
               className={
-                isImage
+                isVideo
+                  ? 'pi pi-video text-[#175C46] text-sm'
+                  : isImage
                   ? 'pi pi-image text-sm'
                   : isPdf
                   ? 'pi pi-file-pdf text-rose-500 text-sm'
@@ -403,6 +408,20 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                 loading="eager"
               />
             </div>
+          ) : isVideo ? (
+            <div className="w-full h-full max-h-[68vh] flex items-center justify-center bg-black/95 rounded-xl overflow-hidden shadow-2xl p-1 sm:p-2">
+              <video
+                key={fileUrl}
+                src={fileUrl}
+                controls
+                autoPlay
+                playsInline
+                className="max-h-[64vh] max-w-full w-auto h-auto rounded-lg object-contain bg-black shadow-lg focus:outline-none"
+              >
+                <source src={fileUrl} type={current?.mime_type || current?.file_type || 'video/mp4'} />
+                Your browser does not support the video tag.
+              </video>
+            </div>
           ) : isPdf ? (
             <PdfPreviewViewer key={fileUrl} fileUrl={fileUrl} fileName={fileName} />
           ) : (
@@ -436,6 +455,12 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                 attItem.name || attItem.file_name || `attachment_${idx + 1}`;
               const itemUrl = resolveFileUrl(attItem.url || attItem.file_url);
               const itemIsImage = isImageFile(itemFileName, itemUrl);
+              const itemIsVideo = isVideoFile(
+                itemFileName,
+                itemUrl,
+                attItem.mime_type || attItem.file_type,
+                attItem.is_video
+              );
               const isActive = idx === currentIndex;
 
               return (
@@ -457,6 +482,21 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                       className="w-full h-full object-cover"
                       loading="lazy"
                     />
+                  ) : itemIsVideo ? (
+                    <div className="w-full h-full bg-slate-900 text-white flex items-center justify-center relative overflow-hidden">
+                      <video
+                        src={`${itemUrl}#t=0.5`}
+                        preload="metadata"
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover opacity-75"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                        <svg className="w-3.5 h-3.5 fill-white ml-0.5" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </div>
+                    </div>
                   ) : (
                     <div className="w-full h-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center">
                       <i className="pi pi-file text-sm" />
