@@ -21,10 +21,10 @@ export default function ResetPasswordPage() {
       </section>
 
       {/* Right Column: Reset Password Form wrapped in Suspense for searchParams */}
-      <section className="w-full lg:w-[55%] xl:w-[56%] min-h-screen lg:h-screen flex flex-col bg-white">
+      <section className="w-full lg:w-[55%] xl:w-[56%] flex-1 lg:h-screen flex flex-col bg-white">
         <Suspense
           fallback={
-            <div className="w-full h-full min-h-screen flex items-center justify-center">
+            <div className="w-full flex-1 min-h-[300px] flex items-center justify-center">
               <div className="w-8 h-8 border-3 border-[#175c46] border-t-transparent rounded-full animate-spin" />
             </div>
           }

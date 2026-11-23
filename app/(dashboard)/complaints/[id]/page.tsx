@@ -41,14 +41,6 @@ const STATUS_OPTIONS: {
   icon: string;
 }[] = [
   {
-    value: 'PENDING',
-    label: 'Pending',
-    description: 'Awaiting initial review or staff assignment',
-    activeBorder: 'border-amber-500',
-    activeBg: 'bg-amber-50/50',
-    icon: 'pi pi-clock text-amber-600',
-  },
-  {
     value: 'IN_PROGRESS',
     label: 'In Progress',
     description: 'Staff assigned and issue is actively being addressed',
@@ -198,8 +190,15 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
 
   // Open Status Dialog
   const handleOpenStatusDialog = () => {
-    if (complaint?.status) {
-      setTargetStatus(complaint.status as ComplaintStatus);
+    if (complaint?.status && complaint.status.toUpperCase() !== 'PENDING') {
+      const s = complaint.status.toUpperCase();
+      if (s === 'RESOLVED') {
+        setTargetStatus('RESOLVED');
+      } else {
+        setTargetStatus('IN_PROGRESS');
+      }
+    } else {
+      setTargetStatus('IN_PROGRESS');
     }
     setResolutionNotes('');
     setIsStatusDialogOpen(true);
@@ -911,8 +910,8 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               <AppDatePicker
                 value={dueDate}
                 onChange={(val) => setDueDate(val)}
-                dateFormat="dd/mm/yy"
-                placeholder="dd/mm/yyyy"
+                dateFormat="dd-mm-yy"
+                placeholder="dd-mm-yyyy"
                 disabled={isAssigning}
               />
             </div>
@@ -1127,11 +1126,11 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           </div>
 
           {/* Dialog Action Buttons */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
             <button
               type="button"
               onClick={() => setIsStatusDialogOpen(false)}
-              className="h-10 px-4 text-xs font-semibold text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+              className="w-full sm:w-auto h-10 px-5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer text-center"
             >
               Cancel
             </button>
@@ -1139,7 +1138,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               type="button"
               onClick={handleUpdateStatus}
               disabled={isUpdatingStatus}
-              className="h-10 px-5 text-xs font-semibold text-white bg-[#175C46] hover:bg-[#124b38] rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto h-10 px-6 text-xs sm:text-sm font-semibold text-white bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] active:scale-[0.99] rounded-xl shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isUpdatingStatus && <i className="pi pi-spin pi-spinner text-xs" />}
               <span>Update Status</span>

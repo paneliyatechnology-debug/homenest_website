@@ -246,9 +246,12 @@ export default function StaffManagementPage() {
 
         <Link
           href="/settings/staff/new"
-          className="px-6 py-2.5 bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors shrink-0 self-start sm:self-auto inline-flex items-center justify-center cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer"
         >
-          Add staff
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Add Staff</span>
         </Link>
       </div>
 
@@ -256,7 +259,7 @@ export default function StaffManagementPage() {
       <StaffStatsCards stats={stats} />
 
       {/* Filter Controls Row matching Figma: Branches, Roles, Status, Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 items-end">
         {/* Branches Filter */}
         <Dropdown
           label="Branches"
@@ -300,11 +303,12 @@ export default function StaffManagementPage() {
             });
           }}
           options={STATUS_FILTER_OPTIONS}
+          containerClassName="col-span-2 sm:col-span-1"
         />
 
         {/* Search Input & Clear Filter Button matching Figma */}
-        <div className="space-y-1">
-          <label className="text-xs font-normal text-gray-500 block opacity-0 pointer-events-none select-none">
+        <div className="space-y-1 col-span-2 sm:col-span-1 lg:col-span-1">
+          <label className="hidden lg:block text-xs font-normal text-gray-500 opacity-0 pointer-events-none select-none">
             Search
           </label>
           <div className="flex items-center gap-2">

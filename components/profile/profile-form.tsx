@@ -667,14 +667,9 @@ export const ProfileForm: React.FC = () => {
           {/* STEP 1: OWNER INFORMATION */}
           <div className={activeStep === 0 ? 'block space-y-6' : 'hidden'}>
             <div className="border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-                  Step 1 of 3
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-                  Owner Information
-                </h2>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                Owner Information
+              </h2>
               <p className="text-xs text-gray-500 mt-1">
                 Personal identification and administrator account credentials.
               </p>
@@ -773,14 +768,9 @@ export const ProfileForm: React.FC = () => {
           {/* STEP 2: PG FACILITY CONFIGURATION */}
           <div className={activeStep === 1 ? 'block space-y-6' : 'hidden'}>
             <div className="border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-                  Step 2 of 3
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-                  PG Facility Configuration
-                </h2>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                PG Facility Configuration
+              </h2>
               <p className="text-xs text-gray-500 mt-1">
                 Property identity, contact number, capacity, amenities, and resident rules.
               </p>
@@ -996,14 +986,9 @@ export const ProfileForm: React.FC = () => {
           {/* STEP 3: BANK & UPI SETTLEMENT DETAILS */}
           <div className={activeStep === 2 ? 'block space-y-6' : 'hidden'}>
             <div className="border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-                  Step 3 of 3
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-                  Bank &amp; UPI Settlement Details
-                </h2>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                Bank &amp; UPI Settlement Details
+              </h2>
               <p className="text-xs text-gray-500 mt-1">
                 Payout account and UPI VPA used for resident collections and invoice receipts.
               </p>
@@ -1127,13 +1112,14 @@ export const ProfileForm: React.FC = () => {
           </div>
 
           {/* Action Footer Navigation Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-100">
-            <div className="flex items-center gap-2 w-full sm:w-auto">
+          {/* Desktop Navigation Row */}
+          <div className="hidden sm:flex items-center justify-between gap-3 pt-6 border-t border-gray-100">
+            <div className="flex items-center gap-2.5">
               {activeStep > 0 && (
                 <button
                   type="button"
                   onClick={handlePrevStep}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                  className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -1146,19 +1132,19 @@ export const ProfileForm: React.FC = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+                className="px-4 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
               >
                 Reset
               </button>
             </div>
 
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-3">
               {/* Quick Save Option */}
               {activeStep < 2 && (
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
+                  className="px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
                 >
                   Save Changes
                 </button>
@@ -1168,7 +1154,7 @@ export const ProfileForm: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleNextStep}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                  className="px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>Continue</span>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1179,7 +1165,7 @@ export const ProfileForm: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -1197,6 +1183,125 @@ export const ProfileForm: React.FC = () => {
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Mobile Navigation Rows (Equal 50/50 balance & 44px touch targets) */}
+          <div className="flex sm:hidden flex-col gap-2.5 pt-5 border-t border-gray-100">
+            {activeStep === 0 ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="w-full h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <span>Continue</span>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                <div className="flex items-center gap-2.5 w-full">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isSubmitting}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </>
+            ) : activeStep === 1 ? (
+              <>
+                <div className="flex items-center gap-2.5 w-full">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="flex-1 h-11 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Back</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="flex-1 h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Continue</span>
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex items-center gap-2.5 w-full">
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isSubmitting}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center cursor-pointer"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Save Profile &amp; PG Details</span>
+                    </>
+                  )}
+                </button>
+                <div className="flex items-center gap-2.5 w-full">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="flex-1 h-11 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    <span>Back</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isSubmitting}
+                    className="flex-1 h-11 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 text-xs font-semibold transition-colors disabled:opacity-50 shadow-2xs flex items-center justify-center cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </form>

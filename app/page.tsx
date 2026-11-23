@@ -11,7 +11,7 @@ export default function LoginPage() {
       </section>
 
       {/* Right Column: Admin Login Form (~55% on desktop matching Figma) */}
-      <section className="w-full lg:w-[55%] xl:w-[56%] min-h-screen lg:h-screen flex flex-col bg-white">
+      <section className="w-full lg:w-[55%] xl:w-[56%] flex-1 lg:h-screen flex flex-col bg-white">
         <Suspense fallback={<div className="h-full bg-white" />}>
           <AdminLoginForm className="h-full" />
         </Suspense>

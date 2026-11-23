@@ -420,10 +420,10 @@ export default function ServiceAndLaundryRequestsPage() {
         <LaundryBillingTab branchId={selectedBranch} />
       ) : (
         <div className="space-y-4">
-          {/* Filters Row matching media_1794912289737_961f372f.jpg */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-end">
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+          {/* Filters Row: 2 columns on mobile, 4 on desktop */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
+            <div className="col-span-1">
+              <label className="block text-xs font-semibold text-gray-800 mb-1.5">
                 Branches
               </label>
               <Dropdown
@@ -437,8 +437,8 @@ export default function ServiceAndLaundryRequestsPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+            <div className="col-span-1">
+              <label className="block text-xs font-semibold text-gray-800 mb-1.5">
                 Status
               </label>
               <Dropdown
@@ -452,8 +452,8 @@ export default function ServiceAndLaundryRequestsPage() {
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-semibold text-gray-800 mb-1.5">
                 Types
               </label>
               <Dropdown
@@ -467,22 +467,27 @@ export default function ServiceAndLaundryRequestsPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <SearchInput
-                  value={search}
-                  onChange={(val) => setSearch(val)}
-                  onClear={() => {
-                    setSearch('');
-                    setDebouncedSearch('');
-                    setCurrentPage(1);
-                  }}
-                  placeholder="Search request..."
-                />
+            <div className="col-span-2 sm:col-span-1 lg:col-span-1">
+              <label className="hidden lg:block text-xs font-semibold text-gray-800 mb-1.5 opacity-0 pointer-events-none select-none">
+                Search
+              </label>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <SearchInput
+                    value={search}
+                    onChange={(val) => setSearch(val)}
+                    onClear={() => {
+                      setSearch('');
+                      setDebouncedSearch('');
+                      setCurrentPage(1);
+                    }}
+                    placeholder="Search request..."
+                  />
+                </div>
+                {hasActiveFilters && (
+                  <ClearFilterButton onClick={handleClearAllFilters} />
+                )}
               </div>
-              {hasActiveFilters && (
-                <ClearFilterButton onClick={handleClearAllFilters} />
-              )}
             </div>
           </div>
 

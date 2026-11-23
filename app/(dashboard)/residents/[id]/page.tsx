@@ -17,6 +17,7 @@ import {
   StatusBadge,
   IconButton,
   AttachmentPreviewModal,
+  TablePagination,
 } from '@/components/ui';
 import {
   resolveFileUrl,
@@ -98,10 +99,25 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
   const [residentPayments, setResidentPayments] = useState<PaymentRecord[]>([]);
   const [loadingPayments, setLoadingPayments] = useState<boolean>(true);
   const [paymentsRefreshTrigger, setPaymentsRefreshTrigger] = useState<number>(0);
+  const [paymentsPage, setPaymentsPage] = useState<number>(1);
+  const paymentsPageSize = 10;
 
   // Complaint states for Complaints Tab
   const [residentComplaints, setResidentComplaints] = useState<Complaint[]>([]);
   const [loadingComplaints, setLoadingComplaints] = useState<boolean>(true);
+  const [complaintsPage, setComplaintsPage] = useState<number>(1);
+  const complaintsPageSize = 10;
+
+  // Paginated records
+  const paginatedPayments = useMemo(() => {
+    const start = (paymentsPage - 1) * paymentsPageSize;
+    return residentPayments.slice(start, start + paymentsPageSize);
+  }, [residentPayments, paymentsPage, paymentsPageSize]);
+
+  const paginatedComplaints = useMemo(() => {
+    const start = (complaintsPage - 1) * complaintsPageSize;
+    return residentComplaints.slice(start, start + complaintsPageSize);
+  }, [residentComplaints, complaintsPage, complaintsPageSize]);
 
   // Modals for Payments
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false);
@@ -507,8 +523,8 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
           </div>
 
           {/* Navigation Tabs Bar matching Figma */}
-          <div className="border-b border-gray-200">
-            <nav className="flex items-center gap-8 -mb-[1px]">
+          <div className="border-b border-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0">
+            <nav className="flex items-center gap-6 sm:gap-8 -mb-[1px] overflow-x-auto scrollbar-none whitespace-nowrap">
               {(['Overview', 'Documents', 'Payments', 'Complaints'] as const).map((tab) => {
                 const isActive = activeTab === tab;
                 return (
@@ -520,7 +536,7 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                       if (tab === 'Complaints') setLoadingComplaints(true);
                       setActiveTab(tab);
                     }}
-                    className={`pb-3.5 text-sm transition-colors cursor-pointer relative ${isActive
+                    className={`pb-3.5 text-sm transition-colors cursor-pointer relative shrink-0 ${isActive
                         ? 'text-gray-900 font-bold border-b-2 border-[#175C46]'
                         : 'text-gray-500 font-medium hover:text-gray-800'
                       }`}
@@ -945,16 +961,16 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
             <div className="space-y-6">
               {/* Outstanding Invoices & Bills Table */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
-                <div className="p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="p-4 sm:p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                   <div>
                     <h3 className="text-sm font-bold text-gray-900">Billing History & Dues</h3>
                     <p className="text-xs text-gray-500 mt-0.5">All pending charges and recorded receipts</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-gray-100 bg-gray-50/80">
-                      <span className="text-xs font-medium text-gray-500">Due Amount:</span>
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3 justify-between sm:justify-end">
+                    <div className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-xl border border-gray-100 bg-gray-50/80">
+                      <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Due Amount:</span>
                       <span
-                        className={`text-sm font-bold tracking-tight ${
+                        className={`text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap ${
                           totalDueAmount > 0 ? 'text-red-600' : 'text-[#175C46]'
                         }`}
                       >
@@ -968,9 +984,9 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         setEditingPayment(null);
                         setIsPaymentFormOpen(true);
                       }}
-                      className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all cursor-pointer shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all cursor-pointer whitespace-nowrap"
                     >
-                      <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                       <span>Record Payment</span>
@@ -978,17 +994,18 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-xs">
+                {/* Payments Table View with horizontal scroll */}
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full min-w-[760px] text-left border-collapse text-xs">
                     <thead>
                       <tr className="border-b border-gray-100 text-gray-500 font-semibold bg-gray-50/50">
-                        <th className="py-3.5 px-5">Invoice / Description</th>
-                        <th className="py-3.5 px-4">Due Date</th>
-                        <th className="py-3.5 px-4">Breakdown</th>
-                        <th className="py-3.5 px-4">Due Amount</th>
-                        <th className="py-3.5 px-4">Paid</th>
-                        <th className="py-3.5 px-4">Status</th>
-                        <th className="py-3.5 px-5 text-right">Actions</th>
+                        <th className="py-3.5 px-5 whitespace-nowrap">Invoice / Description</th>
+                        <th className="py-3.5 px-4 whitespace-nowrap">Due Date</th>
+                        <th className="py-3.5 px-4 whitespace-nowrap">Breakdown</th>
+                        <th className="py-3.5 px-4 whitespace-nowrap">Due Amount</th>
+                        <th className="py-3.5 px-4 whitespace-nowrap">Paid</th>
+                        <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                        <th className="py-3.5 px-5 text-right whitespace-nowrap">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -1001,8 +1018,8 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                             </div>
                           </td>
                         </tr>
-                      ) : residentPayments.length > 0 ? (
-                        residentPayments.map((item) => {
+                      ) : paginatedPayments.length > 0 ? (
+                        paginatedPayments.map((item) => {
                           const due = (item.amount || 0) - (item.paid_amount || 0);
                           const isPaid = (item.status || '').toLowerCase() === 'paid';
                           const isPendingOrOverdue =
@@ -1135,6 +1152,18 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                   </table>
                 </div>
               </div>
+
+              {/* Standalone Pagination Footer separated from table card matching Figma */}
+              {residentPayments.length > 0 && (
+                <TablePagination
+                  currentPage={paymentsPage}
+                  totalCount={residentPayments.length}
+                  pageSize={paymentsPageSize}
+                  itemCount={paginatedPayments.length}
+                  itemLabel="records"
+                  onPageChange={(page) => setPaymentsPage(page)}
+                />
+              )}
             </div>
           )}
 
@@ -1159,8 +1188,9 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                             </p>
                           </div>
                         ) : (
-                          /* Complaints Table Card */
-                          <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
+                          <>
+                            {/* Complaints Table Card */}
+                            <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.02)] overflow-hidden">
                             <div className="p-5 border-b border-gray-100">
                               <h3 className="text-sm font-bold text-gray-900">Complaints & Requests</h3>
                               <p className="text-xs text-gray-500 mt-0.5">
@@ -1168,21 +1198,22 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                               </p>
                             </div>
 
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-left border-collapse text-xs">
+                            {/* Complaints Table View with horizontal scroll */}
+                            <div className="overflow-x-auto scrollbar-thin">
+                              <table className="w-full min-w-[760px] text-left border-collapse text-xs">
                                 <thead>
                                   <tr className="border-b border-gray-100 text-gray-500 font-semibold bg-gray-50/50">
-                                    <th className="py-3.5 px-5">Complaint ID</th>
-                                    <th className="py-3.5 px-4">Title / Issue</th>
-                                    <th className="py-3.5 px-4">Category</th>
-                                    <th className="py-3.5 px-4">Assigned To</th>
-                                    <th className="py-3.5 px-4">Created On</th>
-                                    <th className="py-3.5 px-4">Status</th>
-                                    <th className="py-3.5 px-5 text-right">Action</th>
+                                    <th className="py-3.5 px-5 whitespace-nowrap">Complaint ID</th>
+                                    <th className="py-3.5 px-4 whitespace-nowrap">Title / Issue</th>
+                                    <th className="py-3.5 px-4 whitespace-nowrap">Category</th>
+                                    <th className="py-3.5 px-4 whitespace-nowrap">Assigned To</th>
+                                    <th className="py-3.5 px-4 whitespace-nowrap">Created On</th>
+                                    <th className="py-3.5 px-4 whitespace-nowrap">Status</th>
+                                    <th className="py-3.5 px-5 text-right whitespace-nowrap">Action</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 font-normal">
-                                  {residentComplaints.map((item) => {
+                                  {paginatedComplaints.map((item) => {
                                     const complaintNo = item.complaint_number || `CMP-${item.id}`;
                                     const categoryName = item.category?.name || 'General';
                                     const assignedName = item.assigned_to?.name || 'Unassigned';
@@ -1239,9 +1270,22 @@ function ResidentDetailContent({ params }: { params: Promise<{ id: string }> }) 
                               </table>
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
+
+                          {/* Standalone Pagination Footer separated from table card matching Figma */}
+                          {residentComplaints.length > 0 && (
+                            <TablePagination
+                              currentPage={complaintsPage}
+                              totalCount={residentComplaints.length}
+                              pageSize={complaintsPageSize}
+                              itemCount={paginatedComplaints.length}
+                              itemLabel="complaints"
+                              onPageChange={(page) => setComplaintsPage(page)}
+                            />
+                          )}
+                        </>
+                      )}
+                    </div>
+                  )}
 
                     {/* Record / Edit Payment Modal */}
                     <PaymentFormModal

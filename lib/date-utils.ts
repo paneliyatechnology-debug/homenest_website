@@ -93,7 +93,7 @@ export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
     const day = String(dateInput.getDate()).padStart(2, '0');
     const month = String(dateInput.getMonth() + 1).padStart(2, '0');
     const year = dateInput.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${day}-${month}-${year}`;
   }
 
   const clean = String(dateInput).trim();
@@ -106,7 +106,7 @@ export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
     const month = ddmmyyyyMatch[2];
     const year = ddmmyyyyMatch[3];
     const time = ddmmyyyyMatch[4] && ddmmyyyyMatch[5] ? ` ${ddmmyyyyMatch[4]}:${ddmmyyyyMatch[5]}` : '';
-    return `${day}/${month}/${year}${time}`;
+    return `${day}-${month}-${year}${time}`;
   }
 
   // YYYY-MM-DD or YYYY/MM/DD with optional time
@@ -116,7 +116,7 @@ export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
     const month = yyyymmddMatch[2];
     const day = yyyymmddMatch[3];
     const time = yyyymmddMatch[4] && yyyymmddMatch[5] ? ` ${yyyymmddMatch[4]}:${yyyymmddMatch[5]}` : '';
-    return `${day}/${month}/${year}${time}`;
+    return `${day}-${month}-${year}${time}`;
   }
 
   const d = new Date(clean);
@@ -124,7 +124,7 @@ export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
+    return `${day}-${month}-${year}`;
   }
 
   return clean;

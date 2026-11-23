@@ -26,22 +26,10 @@ const STATUS_OPTIONS: {
     badgeStyle: 'bg-[#E8F8F0] text-[#175C46]',
   },
   {
-    value: 'in_office',
-    label: 'In Office',
-    description: 'Visitor is currently verified and checked in on-site.',
-    badgeStyle: 'bg-[#E8F8F0] text-[#175C46]',
-  },
-  {
-    value: 'pending',
-    label: 'Pending',
-    description: 'Awaiting host resident or gate security approval.',
-    badgeStyle: 'bg-[#FEF7E6] text-[#B06000]',
-  },
-  {
-    value: 'left',
-    label: 'Left',
-    description: 'Visitor has exited and departed the building premises.',
-    badgeStyle: 'bg-[#FDF2F2] text-[#DC2626]',
+    value: 'rejected',
+    label: 'Rejected',
+    description: 'Visitor entry or request has been rejected.',
+    badgeStyle: 'bg-[#FFF1F2] text-[#E11D48]',
   },
 ];
 
@@ -52,7 +40,7 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
   onSuccess,
 }) => {
   const [selectedStatus, setSelectedStatus] = useState<string>(() => {
-    return visitor?.status || 'approved';
+    return visitor?.status === 'rejected' ? 'rejected' : 'approved';
   });
   const [adminNotes, setAdminNotes] = useState<string>(() => {
     return visitor?.admin_notes || '';
@@ -61,14 +49,14 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
 
   useEffect(() => {
     if (visible && visitor) {
-      setSelectedStatus(visitor.status || 'approved');
+      setSelectedStatus(visitor.status === 'rejected' ? 'rejected' : 'approved');
       setAdminNotes(visitor.admin_notes || '');
     }
   }, [visible, visitor]);
 
   const handleClose = () => {
     if (visitor) {
-      setSelectedStatus(visitor.status || 'approved');
+      setSelectedStatus(visitor.status === 'rejected' ? 'rejected' : 'approved');
       setAdminNotes(visitor.admin_notes || '');
     }
     onHide();
@@ -87,7 +75,7 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
         ...visitor,
         status: selectedStatus,
         admin_notes: adminNotes.trim(),
-        is_on_site: selectedStatus === 'in_office',
+        is_on_site: selectedStatus === 'approved',
       };
 
       onSuccess(updated);
@@ -153,13 +141,16 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
           <div className="space-y-2">
             {STATUS_OPTIONS.map((opt) => {
               const isSelected = selectedStatus === opt.value;
+              const isRejected = opt.value === 'rejected';
               return (
                 <div
                   key={opt.value}
                   onClick={() => setSelectedStatus(opt.value)}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
                     isSelected
-                      ? 'border-[#175C46] bg-[#E8F8F0]/30 shadow-2xs'
+                      ? isRejected
+                        ? 'border-red-500 bg-red-50/30 shadow-2xs'
+                        : 'border-[#175C46] bg-[#E8F8F0]/30 shadow-2xs'
                       : 'border-gray-200/90 hover:border-gray-300 hover:bg-gray-50/50'
                   }`}
                 >
@@ -167,7 +158,9 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                       isSelected
-                        ? 'border-[#175C46] bg-[#175C46]'
+                        ? isRejected
+                          ? 'border-red-600 bg-red-600'
+                          : 'border-[#175C46] bg-[#175C46]'
                         : 'border-gray-300 bg-white'
                     }`}
                   >
@@ -211,12 +204,12 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
           <button
             type="button"
             onClick={handleClose}
             disabled={loading}
-            className="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-center"
           >
             Cancel
           </button>
@@ -224,7 +217,7 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
             type="button"
             onClick={handleConfirm}
             disabled={loading}
-            className="px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#175C46] hover:bg-[#124B38] active:bg-[#0E3B2C] rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#175C46] hover:bg-[#124B38] active:bg-[#0E3B2C] active:scale-[0.99] rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

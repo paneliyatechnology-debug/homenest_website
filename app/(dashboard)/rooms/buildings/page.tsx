@@ -186,9 +186,12 @@ export default function BuildingsPage() {
 
         <Link
           href="/rooms/buildings/new"
-          className="px-6 py-2.5 bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors shrink-0 self-start sm:self-auto inline-flex items-center justify-center cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer"
         >
-          Add Building
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Add Building</span>
         </Link>
       </div>
 
@@ -196,22 +199,24 @@ export default function BuildingsPage() {
       <BuildingStatsCards stats={stats} />
 
       {/* Filter Row: Branch & Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-end">
-        <Dropdown
-          label="Branch"
-          value={selectedBranchId}
-          onChange={(e) => {
-            const val = e.target.value;
-            startTransition(() => {
-              setSelectedBranchId(val);
-              setCurrentPage(1);
-            });
-          }}
-          options={[
-            { label: 'All Branches', value: 'all' },
-            ...branches.map((b) => ({ label: b.name, value: String(b.id) })),
-          ]}
-        />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 items-end">
+        <div>
+          <Dropdown
+            label="Branch"
+            value={selectedBranchId}
+            onChange={(e) => {
+              const val = e.target.value;
+              startTransition(() => {
+                setSelectedBranchId(val);
+                setCurrentPage(1);
+              });
+            }}
+            options={[
+              { label: 'All Branches', value: 'all' },
+              ...branches.map((b) => ({ label: b.name, value: String(b.id) })),
+            ]}
+          />
+        </div>
 
         <div className="space-y-1">
           <label className="text-xs font-semibold text-gray-800 block">

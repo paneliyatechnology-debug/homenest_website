@@ -51,7 +51,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
   }));
 
   return (
-    <div className={`relative inline-block ${className}`}>
+    <div className={`relative ${className.includes('w-full') ? 'w-full' : 'inline-block'} ${className}`}>
       {/* PrimeReact Popup Menu - consistent with project's global menu theme */}
       <Menu model={menuItems} popup ref={menuRef} id={menuId} />
 
@@ -62,7 +62,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
         disabled={isExporting}
         aria-haspopup="true"
         aria-controls={menuId}
-        className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+        className="w-full inline-flex items-center justify-center gap-2 px-3 sm:px-5 py-2.5 h-10 sm:h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] active:scale-[0.99] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
       >
         {isExporting ? (
           <>

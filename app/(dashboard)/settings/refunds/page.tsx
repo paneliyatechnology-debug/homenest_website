@@ -395,23 +395,24 @@ export default function CheckoutAndRefundApprovalsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
           <ExportDropdown
             label="Export"
             formats={['xlsx', 'pdf']}
             onExport={handleExport}
             isExporting={isExporting}
             exportingFormat={exportingFormat}
+            className="w-full sm:w-auto"
           />
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="inline-flex items-center justify-center gap-1.5 px-4 sm:px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124937] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124937] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-2xs hover:shadow-xs cursor-pointer whitespace-nowrap"
           >
-            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
-            Create Checkout
+            <span>Create Checkout</span>
           </button>
         </div>
       </div>
@@ -451,7 +452,7 @@ export default function CheckoutAndRefundApprovalsPage() {
       </div>
 
       {/* Filter Row: Branches, Search & Date Range Filter */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-end">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-end">
         <div>
           <label className="block text-xs font-semibold text-gray-500 mb-1.5">
             Branches
@@ -467,7 +468,7 @@ export default function CheckoutAndRefundApprovalsPage() {
           />
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="col-span-2 lg:col-span-2 order-last sm:order-none">
           <label className="block text-xs font-semibold text-gray-500 mb-1.5">
             Search Resident or Room
           </label>

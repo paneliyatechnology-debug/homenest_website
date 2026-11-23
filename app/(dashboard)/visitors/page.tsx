@@ -203,6 +203,7 @@ export default function VisitorsPage() {
     { label: 'Left', value: 'left' },
     { label: 'Pending', value: 'pending' },
     { label: 'Approved', value: 'approved' },
+    { label: 'Rejected', value: 'rejected' },
   ];
 
   // Table Columns matching Figma pixel-for-pixel
@@ -210,9 +211,10 @@ export default function VisitorsPage() {
     {
       key: 'sr_no',
       header: 'Sr no.',
-      headerClassName: 'pl-6 w-16',
+      width: '64px',
+      headerClassName: 'pl-4 sm:pl-6',
       cell: (_, index) => (
-        <span className="font-semibold text-gray-800 pl-2">
+        <span className="font-semibold text-gray-800 pl-1 sm:pl-2 whitespace-nowrap">
           {(currentPage - 1) * meta.limit + index + 1}
         </span>
       ),
@@ -220,8 +222,9 @@ export default function VisitorsPage() {
     {
       key: 'visitor_name',
       header: 'Visitor Name',
+      width: '180px',
       cell: (item) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-[140px] whitespace-nowrap">
           <div className="w-8 h-8 rounded-full overflow-hidden bg-[#175C46]/10 text-[#175C46] flex items-center justify-center font-bold text-xs shrink-0 relative">
             {item.visitor_photo_url || item.visitor_photo ? (
               <Image
@@ -235,7 +238,7 @@ export default function VisitorsPage() {
               item.visitor_name ? item.visitor_name.charAt(0).toUpperCase() : 'V'
             )}
           </div>
-          <span className="font-semibold text-gray-900 truncate">
+          <span className="font-semibold text-gray-900 whitespace-nowrap">
             {item.visitor_name}
           </span>
         </div>
@@ -244,6 +247,7 @@ export default function VisitorsPage() {
     {
       key: 'visitor_phone',
       header: 'Phone',
+      width: '120px',
       cell: (item) => (
         <span className="text-gray-600 font-medium whitespace-nowrap">
           {item.visitor_phone}
@@ -253,8 +257,9 @@ export default function VisitorsPage() {
     {
       key: 'purpose',
       header: 'Purpose',
+      width: '120px',
       cell: (item) => (
-        <span className="text-gray-700 font-medium">
+        <span className="text-gray-700 font-medium whitespace-nowrap">
           {item.purpose}
         </span>
       ),
@@ -262,10 +267,11 @@ export default function VisitorsPage() {
     {
       key: 'host_resident',
       header: 'Host Resident',
+      width: '160px',
       cell: (item) => {
         const host = item.host_resident || (item.resident ? `${item.room?.room_no || ''} (${item.resident.name})` : '—');
         return (
-          <span className="text-gray-700 font-medium">
+          <span className="text-gray-700 font-medium whitespace-nowrap">
             {host}
           </span>
         );
@@ -274,6 +280,7 @@ export default function VisitorsPage() {
     {
       key: 'entry_time',
       header: 'Entry Time',
+      width: '130px',
       cell: (item) => (
         <span className="text-gray-600 font-medium whitespace-nowrap">
           {item.entry_time || item.last_entry_time || '—'}
@@ -283,17 +290,21 @@ export default function VisitorsPage() {
     {
       key: 'status',
       header: 'Status',
+      width: '120px',
       cell: (item) => (
-        <StatusBadge status={item.status} />
+        <div className="whitespace-nowrap">
+          <StatusBadge status={item.status} />
+        </div>
       ),
     },
     {
       key: 'action',
       header: 'Action',
+      width: '140px',
       align: 'right',
-      headerClassName: 'pr-6',
+      headerClassName: 'pr-4 sm:pr-6',
       cell: (item) => (
-        <div className="flex items-center justify-end gap-1.5 pr-2">
+        <div className="flex items-center justify-end gap-1.5 pr-1 sm:pr-2 whitespace-nowrap">
           <IconButton
             variant="view"
             title="View Visitor Pass"
@@ -336,7 +347,7 @@ export default function VisitorsPage() {
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-5 bg-[#F7F7F5] min-h-screen">
       {/* Header matching Figma pixel-for-pixel */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
             Visitor Records
@@ -348,9 +359,12 @@ export default function VisitorsPage() {
 
         <Link
           href="/visitors/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124937] text-white text-sm font-semibold transition-colors shadow-2xs shrink-0 self-start sm:self-auto cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124937] text-white text-xs sm:text-sm font-semibold transition-colors shadow-2xs shrink-0 w-full sm:w-auto cursor-pointer"
         >
-          Add Visitor
+          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Add Visitor</span>
         </Link>
       </div>
 
@@ -358,7 +372,7 @@ export default function VisitorsPage() {
       <VisitorStatsCards stats={stats} loading={statsLoading} />
 
       {/* 4 Filters Row covering full width (Branches, Purpose, Status, Date Range) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full items-end pt-1">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 w-full items-end pt-1">
         {/* Branches Dropdown */}
         <div className="flex flex-col gap-1 w-full">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
@@ -390,7 +404,7 @@ export default function VisitorsPage() {
         </div>
 
         {/* Status Dropdown */}
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex flex-col gap-1 w-full col-span-2 sm:col-span-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
             Status
           </label>
@@ -405,7 +419,7 @@ export default function VisitorsPage() {
         </div>
 
         {/* Date Range Filter & Clear Filter Button */}
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex flex-col gap-1 w-full col-span-2 sm:col-span-1 lg:col-span-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
             Date Range
           </label>

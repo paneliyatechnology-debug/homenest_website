@@ -514,11 +514,12 @@ export default function PaymentHistoryPage() {
         </div>
 
         {/* Export Dropdown Button */}
-        <div>
+        <div className="w-full sm:w-auto">
           <ExportDropdown
             onExport={(format) => handleExport(format)}
             isExporting={isExporting}
             exportingFormat={exportingFormat}
+            className="w-full sm:w-auto"
           />
         </div>
       </div>
@@ -526,10 +527,10 @@ export default function PaymentHistoryPage() {
       {/* 4 Summary Stat Cards */}
       <PaymentHistoryStatsCards stats={stats} />
 
-      {/* Filters Row: 4 responsive columns matching Figma layout */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-center">
+      {/* Filters Row: 2 columns on mobile, 4 columns on large screens */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-center">
         {/* Date Range Filter */}
-        <div className="w-full">
+        <div className="w-full col-span-2 sm:col-span-1">
           <DateRangeFilter
             startDate={startDate}
             endDate={endDate}
@@ -543,7 +544,7 @@ export default function PaymentHistoryPage() {
         </div>
 
         {/* Payment Types Dropdown */}
-        <div>
+        <div className="col-span-1">
           <Dropdown
             value={selectedType}
             options={typeOptions}
@@ -556,7 +557,7 @@ export default function PaymentHistoryPage() {
         </div>
 
         {/* Status Dropdown */}
-        <div>
+        <div className="col-span-1">
           <Dropdown
             value={selectedStatus}
             options={statusOptions}
@@ -569,7 +570,7 @@ export default function PaymentHistoryPage() {
         </div>
 
         {/* Search Input & Clear Filter Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 col-span-2 sm:col-span-1 lg:col-span-1">
           <div className="flex-1 min-w-0">
             <SearchInput
               value={searchTerm}

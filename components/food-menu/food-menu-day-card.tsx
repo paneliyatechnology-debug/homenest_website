@@ -161,9 +161,9 @@ export const FoodMenuDayCard: React.FC<FoodMenuDayCardProps> = ({
                   >
                     {/* Item Top Info */}
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-start gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
                         {item.image_url && item.image_url !== 'null' && item.image_url !== 'undefined' && item.image_url.trim() !== '' ? (
-                          <div className="relative w-11 h-11 rounded-lg overflow-hidden shrink-0 border border-black/10 bg-white">
+                          <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-lg overflow-hidden shrink-0 border border-black/10 bg-white">
                             <Image
                               src={item.image_url}
                               alt={item.name}
@@ -173,23 +173,23 @@ export const FoodMenuDayCard: React.FC<FoodMenuDayCardProps> = ({
                             />
                           </div>
                         ) : (
-                          <div className="w-11 h-11 rounded-lg bg-white/80 border border-black/5 flex items-center justify-center shrink-0 text-base shadow-2xs">
+                          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-white/80 border border-black/5 flex items-center justify-center shrink-0 text-base shadow-2xs">
                             {section.icon}
                           </div>
                         )}
 
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <h4 className="text-xs font-bold text-gray-900 leading-snug truncate">
                               {item.name}
                             </h4>
                             {showBranchBadge && item.branch_name && (
-                              <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/90 text-gray-600 border border-black/10 shrink-0">
+                              <span className="text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/90 text-gray-600 border border-black/10 shrink-0">
                                 {item.branch_name}
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] font-medium text-gray-500 flex items-center gap-1 mt-0.5">
+                          <p className="text-[10px] sm:text-[11px] font-medium text-gray-500 flex items-center gap-1 mt-0.5">
                             <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
@@ -200,7 +200,9 @@ export const FoodMenuDayCard: React.FC<FoodMenuDayCardProps> = ({
                         </div>
                       </div>
 
-                      <StatusBadge status={item.is_active ? 'active' : 'inactive'} />
+                      <div className="shrink-0">
+                        <StatusBadge status={item.is_active ? 'active' : 'inactive'} />
+                      </div>
                     </div>
 
                     {/* Description note */}

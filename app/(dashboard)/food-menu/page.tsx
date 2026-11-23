@@ -739,14 +739,14 @@ export default function FoodMenuPage() {
   ], [listCurrentPage, listPageSize]);
 
   return (
-    <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5] min-h-[calc(100vh-80px)]">
+    <main className="flex-1 px-3.5 sm:px-6 lg:px-8 py-3.5 sm:py-5 max-w-[1600px] w-full mx-auto space-y-4 sm:space-y-6 bg-[#F7F7F5] min-h-[calc(100vh-80px)]">
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            Food & Dining Menu
+            Food &amp; Dining Menu
           </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
             Weekly dining schedule, meal timings, included accompaniments, and resident feedback.
           </p>
         </div>
@@ -754,17 +754,17 @@ export default function FoodMenuPage() {
         <button
           type="button"
           onClick={() => handleOpenAddModal()}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#175C46] hover:bg-[#134e3b] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer self-start sm:self-auto shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 bg-[#175C46] hover:bg-[#134e3b] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-2xs hover:shadow-xs transition-all cursor-pointer w-full sm:w-auto shrink-0"
         >
-          <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
           </svg>
           <span>Add Menu Item</span>
         </button>
       </div>
 
-      {/* Tabs Row */}
-      <div className="flex items-center gap-2 border-b border-gray-200">
+      {/* Tabs Row (Responsive with no text wrap) */}
+      <div className="flex items-center gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto custom-scrollbar flex-nowrap scrollbar-none pb-px -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
         {[
           { key: 'schedule', label: 'Weekly Schedule', icon: '📅' },
           { key: 'list', label: 'All Menu Items', icon: '📋' },
@@ -780,7 +780,7 @@ export default function FoodMenuPage() {
                 else setLoading(true);
                 setActiveTab(tab.key as FoodMenuTab);
               }}
-              className={`pb-3 px-3 text-xs sm:text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 pb-3 px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-all border-b-2 flex items-center gap-1.5 cursor-pointer ${
                 active
                   ? 'border-[#175C46] text-[#175C46]'
                   : 'border-transparent text-gray-500 hover:text-gray-900'
@@ -794,12 +794,12 @@ export default function FoodMenuPage() {
       </div>
 
       {/* Filter Bar & Week Navigator */}
-      <div className="p-4 rounded-2xl bg-white border border-gray-100 shadow-xs space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          {/* Left Filters: Branch & Meal Type */}
-          <div className="flex flex-wrap items-center gap-3">
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-white border border-gray-100 shadow-xs space-y-3 sm:space-y-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+          {/* Left Filters: Branch, Meal Type, Date, Search in structured 2-col mobile grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:flex md:flex-wrap md:items-center gap-2.5 sm:gap-3 w-full xl:w-auto">
             {/* Branch Selector */}
-            <div className="w-48">
+            <div className="col-span-1 w-full md:w-44 lg:w-48">
               <Dropdown
                 value={selectedBranchId}
                 onChange={(e) => {
@@ -821,7 +821,7 @@ export default function FoodMenuPage() {
             </div>
 
             {/* Meal Type Filter */}
-            <div className="w-44">
+            <div className="col-span-1 w-full md:w-36 lg:w-44">
               <Dropdown
                 value={selectedMealType}
                 onChange={(e) => {
@@ -842,7 +842,7 @@ export default function FoodMenuPage() {
             </div>
 
             {/* Date-wise Single Date Filter */}
-            <div className="relative w-44">
+            <div className="col-span-2 sm:col-span-1 relative w-full md:w-36 lg:w-44">
               <AppDatePicker
                 value={selectedDate}
                 onChange={(val) => {
@@ -852,8 +852,8 @@ export default function FoodMenuPage() {
                   setListCurrentPage(1);
                   setFeedbackCurrentPage(1);
                 }}
-                placeholder="dd/mm/yyyy"
-                dateFormat="dd/mm/yy"
+                placeholder="dd-mm-yyyy"
+                dateFormat="dd-mm-yy"
                 className="w-full"
               />
               {selectedDate && (
@@ -875,7 +875,7 @@ export default function FoodMenuPage() {
             </div>
 
             {/* Search Input */}
-            <div className="w-64">
+            <div className="col-span-2 sm:col-span-2 md:col-span-1 w-full md:w-56 lg:w-64">
               <SearchInput
                 value={search}
                 onChange={(val) => {
@@ -892,17 +892,19 @@ export default function FoodMenuPage() {
               />
             </div>
 
-            {/* Clear Filters Button (with user's custom red filter-clear icon) */}
+            {/* Clear Filters Button */}
             {hasActiveFilters && (
-              <ClearFilterButton
-                onClick={handleClearFilters}
-                title="Clear all filters"
-              />
+              <div className="flex items-center col-span-2 md:col-span-1">
+                <ClearFilterButton
+                  onClick={handleClearFilters}
+                  title="Clear all filters"
+                />
+              </div>
             )}
           </div>
 
-          {/* Right: Week Navigator */}
-          <div className="flex items-center gap-2 self-start lg:self-auto bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-200/70">
+          {/* Right: Week Navigator (compact & responsive) */}
+          <div className="flex items-center justify-between sm:justify-start gap-1.5 sm:gap-2 bg-gray-50 px-2.5 sm:px-3 py-1.5 rounded-xl border border-gray-200/70 w-full xl:w-auto shrink-0">
             <button
               type="button"
               onClick={() => {
@@ -921,7 +923,7 @@ export default function FoodMenuPage() {
               </svg>
             </button>
 
-            <span className="text-xs font-bold text-gray-800 px-2 select-none">
+            <span className="text-xs font-bold text-gray-800 px-1.5 sm:px-2 select-none text-center truncate">
               {weekRange.displayLabel}
             </span>
 
@@ -953,7 +955,7 @@ export default function FoodMenuPage() {
                 setFeedbackCurrentPage(1);
                 handleThisWeek();
               }}
-              className="text-xs font-semibold text-[#175C46] hover:bg-[#EBF7F2] px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ml-1"
+              className="text-xs font-semibold text-[#175C46] hover:bg-[#EBF7F2] px-2 sm:px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer ml-auto sm:ml-1 whitespace-nowrap"
             >
               This Week
             </button>

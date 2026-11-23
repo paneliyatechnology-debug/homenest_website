@@ -597,7 +597,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
   );
 
   return (
-    <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1400px] w-full mx-auto space-y-6 bg-[#F7F7F5] min-h-screen">
+    <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1400px] w-full mx-auto space-y-5 sm:space-y-6 bg-[#F7F7F5] min-h-[calc(100vh-64px)] pb-12">
       {/* Page Header */}
       <PageHeader
         backHref="/visitors"
@@ -607,9 +607,14 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
         onBackClick={!isEdit ? () => resetFormRef.current() : undefined}
       />
 
-      {/* Main 2-Column Form Card */}
-      <form onSubmit={handleSubmit} noValidate autoComplete="off">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      {/* Main 2-Column Form Card Container */}
+      <form
+        onSubmit={handleSubmit}
+        noValidate
+        autoComplete="off"
+        className="bg-white rounded-2xl border border-gray-200/80 p-4 sm:p-6 lg:p-8 shadow-xs space-y-6"
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
           {/* Left Column: Visitor & Resident Core Information */}
           <div className="space-y-4">
             {/* Visitor name */}
@@ -626,7 +631,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
             />
 
             {/* Resident selection dropdown */}
-            <div className="space-y-2 w-full">
+            <div className="space-y-1.5 w-full">
               <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
                 Resident name <span className="text-[#175C46]">*</span>
               </label>
@@ -643,24 +648,32 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
 
               {/* Read-only Resident Location Details card (Branch, Building, Floor, Room) */}
               {hasResidentDetails && (
-                <div className="p-3.5 rounded-xl border border-gray-100 bg-[#FAFBFB] flex flex-wrap items-center gap-x-6 gap-y-2.5 text-xs shadow-2xs mt-1.5 transition-all animate-in fade-in">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 font-medium">Branch:</span>
-                    <span className="font-semibold text-gray-800">{displayBranchName}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 font-medium">Building:</span>
-                    <span className="font-semibold text-gray-800">{displayBuildingName}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 font-medium">Floor:</span>
-                    <span className="font-semibold text-gray-800">{displayFloorName}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 font-medium">Room:</span>
-                    <span className="font-bold text-[#175C46] bg-[#E8F8F0] px-2 py-0.5 rounded border border-[#C6ECD9]">
-                      {displayRoomNo}
+                <div className="p-3 sm:p-3.5 rounded-xl border border-gray-200/80 bg-gray-50/70 grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs shadow-2xs mt-2 transition-all animate-in fade-in">
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[11px] font-medium text-gray-400">Branch</span>
+                    <span className="text-xs font-semibold text-gray-800 truncate" title={displayBranchName}>
+                      {displayBranchName}
                     </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[11px] font-medium text-gray-400">Building</span>
+                    <span className="text-xs font-semibold text-gray-800 truncate" title={displayBuildingName}>
+                      {displayBuildingName}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[11px] font-medium text-gray-400">Floor</span>
+                    <span className="text-xs font-semibold text-gray-800 truncate" title={displayFloorName}>
+                      {displayFloorName}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <span className="text-[11px] font-medium text-gray-400">Room</span>
+                    <div>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-[#175C46] bg-[#E8F8F0] border border-[#C6ECD9]">
+                        {displayRoomNo}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
@@ -732,16 +745,16 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                     handlePhotoSelect(e.dataTransfer.files[0]);
                   }
                 }}
-                className={`w-full min-h-[175px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-5 text-center cursor-pointer transition-all bg-white ${isDragging
+                className={`w-full min-h-[120px] sm:min-h-[155px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center p-3.5 sm:p-5 text-center cursor-pointer transition-all ${isDragging
                     ? 'border-[#175C46] bg-[#175C46]/5'
                     : photoPreview
-                      ? 'border-gray-200'
-                      : 'border-gray-300 hover:border-[#175C46] hover:bg-gray-50/50'
+                      ? 'border-gray-200 bg-white'
+                      : 'border-gray-300 hover:border-[#175C46] bg-gray-50/40 hover:bg-gray-50/80'
                   }`}
               >
                 {photoPreview ? (
                   <div className="relative w-full flex flex-col items-center">
-                    <div className="w-28 h-28 rounded-xl overflow-hidden relative shadow-sm border border-gray-100">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl overflow-hidden relative shadow-xs border border-gray-100">
                       <Image
                         src={photoPreview}
                         alt="Uploaded visitor photo"
@@ -750,7 +763,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                         unoptimized
                       />
                     </div>
-                    <div className="mt-2.5 flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2">
                       <button
                         type="button"
                         onClick={(e) => {
@@ -775,10 +788,10 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center space-y-2">
-                    <div className="w-11 h-11 rounded-full bg-[#175C46]/10 text-[#175C46] flex items-center justify-center">
+                  <div className="flex flex-col items-center justify-center space-y-1.5 sm:space-y-2">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#175C46]/10 text-[#175C46] flex items-center justify-center">
                       <svg
-                        className="w-5 h-5 stroke-current"
+                        className="w-4 h-4 sm:w-5 sm:h-5 stroke-current"
                         fill="none"
                         viewBox="0 0 24 24"
                         strokeWidth="1.75"
@@ -799,7 +812,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                       <p className="text-xs sm:text-sm font-semibold text-gray-700">
                         Click to upload or drag and drop
                       </p>
-                      <p className="text-[11px] text-gray-400">
+                      <p className="text-[10px] sm:text-[11px] text-gray-400">
                         JPG, PNG • Max 5MB
                       </p>
                     </div>
@@ -837,7 +850,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                     if (errors.valid_until) setErrors((prev) => ({ ...prev, valid_until: '' }));
                   }}
                   placeholder="Select visit date"
-                  dateFormat="dd/mm/yy"
+                  dateFormat="dd-mm-yy"
                   hasError={!!errors.visit_date}
                 />
                 {errors.visit_date && (
@@ -864,7 +877,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
                     if (errors.valid_until) setErrors((prev) => ({ ...prev, valid_until: '' }));
                   }}
                   placeholder="Select valid until"
-                  dateFormat="dd/mm/yy"
+                  dateFormat="dd-mm-yy"
                   hasError={!!errors.valid_until}
                 />
                 {errors.valid_until && (
@@ -896,20 +909,30 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
           </div>
         </div>
 
-        {/* Full-width Save Button spanning the entire container width */}
-        <div className="pt-6 w-full">
+        {/* Form Actions: Cancel & Save Buttons */}
+        <div className="pt-4 border-t border-gray-100 flex flex-col-reverse sm:flex-row items-center justify-end gap-3 w-full">
+          <button
+            type="button"
+            onClick={() => {
+              if (!isEdit) resetFormRef.current();
+              router.push('/visitors');
+            }}
+            className="w-full sm:w-auto px-6 py-3 border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer text-center"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#175C46] hover:bg-[#124937] disabled:opacity-60 text-white font-semibold py-3.5 px-6 rounded-xl transition-all shadow-2xs text-sm cursor-pointer flex items-center justify-center gap-2"
+            className="w-full sm:w-auto min-w-[140px] bg-[#175C46] hover:bg-[#124937] disabled:opacity-60 text-white font-semibold py-3 px-8 rounded-xl transition-all shadow-2xs text-xs sm:text-sm cursor-pointer flex items-center justify-center gap-2"
           >
             {isSubmitting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {isEdit ? 'Updating Visitor...' : 'Save'}
+                <span>{isEdit ? 'Updating Visitor...' : 'Saving...'}</span>
               </>
             ) : (
-              isEdit ? 'Update Visitor' : 'Save'
+              <span>{isEdit ? 'Update Visitor' : 'Save'}</span>
             )}
           </button>
         </div>

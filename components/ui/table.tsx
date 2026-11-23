@@ -271,7 +271,7 @@ export function DataTable<T>({
           ) : data.length === 0 ? (
             <TableEmpty title={emptyTitle} description={emptyDescription} />
           ) : (
-            <table className={`w-full text-left border-collapse text-xs sm:text-sm ${className}`}>
+            <table className={`w-full text-left border-collapse text-xs sm:text-sm ${className.includes('min-w') ? '' : 'min-w-[850px]'} ${className}`}>
               <thead>
                 <tr className="border-b border-gray-100 text-gray-500 font-semibold text-xs">
                   {columns.map((col, idx) => {
@@ -285,7 +285,7 @@ export function DataTable<T>({
                       <th
                         key={col.key || idx}
                         style={col.width ? { width: col.width } : undefined}
-                        className={`py-4 px-4 ${alignClass} ${col.headerClassName || ''}`}
+                        className={`py-3.5 sm:py-4 px-3 sm:px-4 font-semibold whitespace-nowrap ${alignClass} ${col.headerClassName || ''}`}
                       >
                         {col.header}
                       </th>
@@ -313,7 +313,7 @@ export function DataTable<T>({
                         return (
                           <td
                             key={col.key || colIdx}
-                            className={`py-4 px-4 ${alignClass} ${col.className || ''}`}
+                            className={`py-3.5 sm:py-4 px-3 sm:px-4 ${alignClass} ${col.className || ''}`}
                           >
                             {col.cell(item, rowIdx)}
                           </td>

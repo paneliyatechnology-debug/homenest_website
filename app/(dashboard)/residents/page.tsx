@@ -206,17 +206,20 @@ export default function ResidentsListPage() {
 
         <Link
           href="/residents/new"
-          className="px-6 py-2.5 bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold rounded-lg shadow-xs transition-colors cursor-pointer shrink-0 self-start sm:self-auto inline-block text-center"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer"
         >
-          Add Resident
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Add Resident</span>
         </Link>
       </div>
 
       {/* Filter Controls Row: Branch, Status, Room Type, and Search Resident (Full Width Responsive Grid) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-end w-full">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-end w-full">
         {/* Branch Filter */}
         <div className="space-y-1.5">
-          <label className="text-xs font-normal text-gray-500 block">Branch</label>
+          <label className="text-xs font-semibold text-gray-700 block truncate">Branch</label>
           <BranchDropdown
             selectedBranchId={selectedBranchId}
             onSelectBranch={(id) => {
@@ -256,11 +259,12 @@ export default function ResidentsListPage() {
             { label: 'Double', value: 'Double' },
             { label: 'Triple', value: 'Triple' },
           ]}
+          containerClassName="col-span-2 sm:col-span-1"
         />
 
         {/* Search Resident Input & Clear Filter Button */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-normal text-gray-500 block">Search Resident</label>
+        <div className="space-y-1.5 col-span-2 sm:col-span-1 lg:col-span-1">
+          <label className="text-xs font-semibold text-gray-700 block truncate">Search Resident</label>
           <div className="flex items-center gap-2">
             <div className="flex-1 min-w-0">
               <SearchInput

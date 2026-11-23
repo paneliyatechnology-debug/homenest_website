@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Notice } from '@/types/notice';
 import { noticeService } from '@/services/notice.service';
-import { StatusBadge, ModalHeader, AttachmentPreviewModal } from '@/components/ui';
+import { StatusBadge, ModalHeader, AttachmentPreviewModal, formatDateToDDMMYYYY } from '@/components/ui';
 import {
   resolveFileUrl,
   formatFileSize,
@@ -183,13 +183,13 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
             </div>
 
             {/* Schedule / Sent Metadata */}
-            <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-white border border-gray-100 shadow-2xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 rounded-xl bg-white border border-gray-100 shadow-2xs">
               <div>
                 <span className="text-[11px] font-semibold text-gray-400 block uppercase tracking-wider mb-1">
                   Schedule Date
                 </span>
                 <span className="text-gray-800 font-medium">
-                  {current.schedule_date || current.date_time || current.scheduled_at || '—'}
+                  {formatDateToDDMMYYYY(current.schedule_date || current.date_time || current.scheduled_at) || '—'}
                 </span>
               </div>
               <div>
@@ -197,7 +197,11 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
                   Sent At
                 </span>
                 <span className="text-gray-800 font-medium">
-                  {current.sent_at || (current.status === 'sent' ? current.date_time || 'Sent' : 'Not sent yet')}
+                  {current.sent_at
+                    ? formatDateToDDMMYYYY(current.sent_at)
+                    : current.status === 'sent'
+                    ? formatDateToDDMMYYYY(current.date_time) || 'Sent'
+                    : 'Not sent yet'}
                 </span>
               </div>
             </div>

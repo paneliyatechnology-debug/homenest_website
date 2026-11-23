@@ -23,6 +23,7 @@ import {
   Dropdown,
   DeleteConfirmationModal,
   ClearFilterButton,
+  formatDateToDDMMYYYY,
 } from '@/components/ui';
 
 type NoticeTab = 'all' | 'draft' | 'scheduled' | 'sent';
@@ -266,7 +267,7 @@ export default function NoticesPage() {
       {
         key: 'sr_no',
         header: 'Sr no.',
-        width: '70px',
+        width: '60px',
         cell: (item, idx) => (
           <span className="text-gray-500 font-medium">
             {item.sr_no || (currentPage - 1) * meta.limit + idx + 1}
@@ -276,19 +277,32 @@ export default function NoticesPage() {
       {
         key: 'title',
         header: 'Title',
+        width: '220px',
         cell: (item) => (
-          <div className="max-w-xs">
-            <span className="text-gray-900 font-semibold text-xs sm:text-sm line-clamp-1 block">
+          <div className="max-w-[220px]">
+            <span
+              className="text-gray-900 font-semibold text-xs sm:text-sm line-clamp-1 block"
+              title={item.title}
+            >
               {item.title}
             </span>
+            {item.content && (
+              <span
+                className="text-gray-400 text-[11px] line-clamp-1 block mt-0.5 truncate"
+                title={item.content}
+              >
+                {item.content}
+              </span>
+            )}
           </div>
         ),
       },
       {
         key: 'category',
         header: 'Category',
+        width: '120px',
         cell: (item) => (
-          <span className="text-gray-700 font-medium capitalize">
+          <span className="text-gray-700 font-medium capitalize whitespace-nowrap">
             {item.category || 'General'}
           </span>
         ),
@@ -296,8 +310,9 @@ export default function NoticesPage() {
       {
         key: 'audience',
         header: 'Audience',
+        width: '140px',
         cell: (item) => (
-          <span className="text-gray-700 font-medium">
+          <span className="text-gray-700 font-medium whitespace-nowrap">
             {item.audience || (item.audience_type === 'all' ? 'All Residents' : item.branch_name || 'Specific')}
           </span>
         ),
@@ -305,6 +320,7 @@ export default function NoticesPage() {
       {
         key: 'priority',
         header: 'Priority',
+        width: '110px',
         cell: (item) => (
           <StatusBadge status={item.priority} label={item.priority} />
         ),
@@ -312,15 +328,20 @@ export default function NoticesPage() {
       {
         key: 'schedule_date',
         header: 'Schedule Date',
-        cell: (item) => (
-          <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
-            {item.schedule_date || item.date_time || item.scheduled_at || '—'}
-          </span>
-        ),
+        width: '160px',
+        cell: (item) => {
+          const raw = item.schedule_date || item.scheduled_at || item.date_time;
+          return (
+            <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
+              {formatDateToDDMMYYYY(raw) || '—'}
+            </span>
+          );
+        },
       },
       {
         key: 'status',
         header: 'Status',
+        width: '110px',
         cell: (item) => (
           <StatusBadge status={item.status} label={item.status} />
         ),
@@ -328,6 +349,7 @@ export default function NoticesPage() {
       {
         key: 'actions',
         header: 'Action',
+        width: '160px',
         align: 'right',
         cell: (item) => (
           <TableActions>
@@ -365,7 +387,7 @@ export default function NoticesPage() {
         ),
       },
     ],
-    [currentPage, meta.limit, sendingNoticeId, handleEdit, handleSendNotice]
+    [currentPage, meta.limit, sendingNoticeId, handleEdit, handleSendNotice, handleView, handleDeleteClick]
   );
 
   return (
@@ -383,7 +405,7 @@ export default function NoticesPage() {
 
         <Link
           href="/notices/new"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124b38] text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124b38] text-white font-semibold text-xs sm:text-sm shadow-xs transition-colors w-full sm:w-auto shrink-0"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -425,8 +447,8 @@ export default function NoticesPage() {
         </div>
 
         {/* Right Search & Filter Button */}
-        <div className="flex items-center gap-2.5 shrink-0 relative">
-          <div className="w-56 sm:w-64">
+        <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0 relative">
+          <div className="flex-1 sm:w-64 sm:flex-initial">
             <SearchInput
               value={searchTerm}
               onChange={(val) => setSearchTerm(val)}
@@ -462,7 +484,7 @@ export default function NoticesPage() {
 
             {/* Filter Dropdown Popover */}
             {showFilterDropdown && (
-              <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl border border-gray-100 shadow-xl p-4 z-50 space-y-4 font-sans animate-fade-in">
+              <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-32px)] bg-white rounded-2xl border border-gray-100 shadow-xl p-4 z-50 space-y-4 font-sans animate-fade-in">
                 <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                   <span className="text-xs font-bold text-gray-900">Filter Notices</span>
                   {isFilterActive && (

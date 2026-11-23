@@ -367,7 +367,7 @@ export default function PaymentOverviewPage() {
     if (isNaN(d.getTime())) return dateStr;
 
     const day = String(d.getDate()).padStart(2, '0');
-    const month = d.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+    const month = d.toLocaleString('en-US', { month: 'short' });
     const year = d.getFullYear();
     return `${day} ${month} ${year}`;
   };
@@ -406,9 +406,9 @@ export default function PaymentOverviewPage() {
     {
       key: 'sr_no',
       header: 'Sr no.',
-      width: '70px',
+      width: '64px',
       cell: (_, idx) => (
-        <span className="text-gray-500 font-medium">
+        <span className="text-gray-500 font-medium whitespace-nowrap">
           {(currentPage - 1) * meta.limit + idx + 1}
         </span>
       ),
@@ -416,11 +416,12 @@ export default function PaymentOverviewPage() {
     {
       key: 'resident_name',
       header: 'Resident Name',
+      width: '180px',
       cell: (item) => {
         const name = item.resident?.name || 'Resident';
         const initial = name.charAt(0).toUpperCase();
         return (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-[140px] whitespace-nowrap">
             <div className="w-8 h-8 rounded-full bg-[#175C46]/10 text-[#175C46] flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
               {item.resident?.profile_photo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -433,7 +434,7 @@ export default function PaymentOverviewPage() {
                 <span>{initial}</span>
               )}
             </div>
-            <span className="font-medium text-gray-900 truncate">{name}</span>
+            <span className="font-medium text-gray-900 whitespace-nowrap">{name}</span>
           </div>
         );
       },
@@ -441,20 +442,25 @@ export default function PaymentOverviewPage() {
     {
       key: 'room_no',
       header: 'Room no.',
+      width: '95px',
       cell: (item) => (
-        <span className="text-gray-700 font-medium">{item.room_no || '—'}</span>
+        <span className="text-gray-700 font-medium whitespace-nowrap">{item.room_no || '—'}</span>
       ),
     },
     {
       key: 'amount',
       header: 'Amount',
+      width: '110px',
       cell: (item) => (
-        <span className="text-gray-900 font-semibold">{formatCurrency(item.amount)}</span>
+        <span className="text-gray-900 font-semibold whitespace-nowrap tabular-nums">
+          {formatCurrency(item.amount)}
+        </span>
       ),
     },
     {
       key: 'due_date',
       header: 'Due Date',
+      width: '120px',
       cell: (item) => (
         <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
           {formatDisplayDate(item.due_date)}
@@ -464,13 +470,19 @@ export default function PaymentOverviewPage() {
     {
       key: 'payment_status',
       header: 'Payment Status',
-      cell: (item) => <StatusBadge status={item.status} />,
+      width: '130px',
+      cell: (item) => (
+        <div className="whitespace-nowrap">
+          <StatusBadge status={item.status} />
+        </div>
+      ),
     },
     {
       key: 'method',
       header: 'Method',
+      width: '110px',
       cell: (item) => (
-        <span className="text-gray-700 font-medium">
+        <span className="text-gray-700 font-medium whitespace-nowrap">
           {formatPaymentMethod(item.payment_method)}
         </span>
       ),
@@ -478,6 +490,7 @@ export default function PaymentOverviewPage() {
     {
       key: 'actions',
       header: 'Actions',
+      width: '150px',
       align: 'right',
       cell: (item) => {
         const due = (item.amount || 0) - (item.paid_amount || 0);
@@ -493,55 +506,57 @@ export default function PaymentOverviewPage() {
         const showCollectButton = !isPaid && !hasPaymentMethod && isPendingOrOverdue;
 
         return (
-          <TableActions>
-            {showCollectButton && (
-              <button
-                type="button"
+          <div className="whitespace-nowrap flex justify-end">
+            <TableActions>
+              {showCollectButton && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCollectingPayment(item);
+                    setIsCollectModalOpen(true);
+                  }}
+                  className="px-2.5 py-1 bg-[#175C46] text-white rounded-lg text-xs font-semibold hover:bg-[#124B38] transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                  title="Collect Payment"
+                >
+                  Collect
+                </button>
+              )}
+              <IconButton
+                variant="view"
+                title="View Details"
+                onClick={() => handleView(item)}
+              />
+              <IconButton
+                variant="status"
+                title={isPaid ? 'Cannot change status of paid transaction' : 'Update Status'}
+                disabled={isPaid}
                 onClick={() => {
-                  setCollectingPayment(item);
-                  setIsCollectModalOpen(true);
+                  if (isPaid) return;
+                  setStatusPayment(item);
+                  setIsStatusModalOpen(true);
                 }}
-                className="px-2.5 py-1 bg-[#175C46] text-white rounded-lg text-xs font-semibold hover:bg-[#124B38] transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
-                title="Collect Payment"
-              >
-                Collect
-              </button>
-            )}
-            <IconButton
-              variant="view"
-              title="View Details"
-              onClick={() => handleView(item)}
-            />
-            <IconButton
-              variant="status"
-              title={isPaid ? 'Cannot change status of paid transaction' : 'Update Status'}
-              disabled={isPaid}
-              onClick={() => {
-                if (isPaid) return;
-                setStatusPayment(item);
-                setIsStatusModalOpen(true);
-              }}
-            />
-            <IconButton
-              variant="edit"
-              title={isPaid ? 'Cannot edit paid bill' : 'Edit Payment'}
-              disabled={isPaid}
-              onClick={() => {
-                if (isPaid) return;
-                setEditingPayment(item);
-                setIsFormModalOpen(true);
-              }}
-            />
-            <IconButton
-              variant="delete"
-              title={isPaid ? 'Cannot delete paid bill' : 'Delete Payment'}
-              disabled={isPaid}
-              onClick={() => {
-                if (isPaid) return;
-                setDeletingPayment(item);
-              }}
-            />
-          </TableActions>
+              />
+              <IconButton
+                variant="edit"
+                title={isPaid ? 'Cannot edit paid bill' : 'Edit Payment'}
+                disabled={isPaid}
+                onClick={() => {
+                  if (isPaid) return;
+                  setEditingPayment(item);
+                  setIsFormModalOpen(true);
+                }}
+              />
+              <IconButton
+                variant="delete"
+                title={isPaid ? 'Cannot delete paid bill' : 'Delete Payment'}
+                disabled={isPaid}
+                onClick={() => {
+                  if (isPaid) return;
+                  setDeletingPayment(item);
+                }}
+              />
+            </TableActions>
+          </div>
         );
       },
     },
@@ -550,7 +565,7 @@ export default function PaymentOverviewPage() {
   return (
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-6 max-w-[1600px] w-full mx-auto space-y-6 bg-[#F7F7F5] animate-fade-in">
       {/* Top Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
             Payments Overview
@@ -561,7 +576,7 @@ export default function PaymentOverviewPage() {
         </div>
 
         {/* Date Filter, Export Button & Record Payment Button */}
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
           <DateRangeFilter
             startDate={startDate}
             endDate={endDate}
@@ -570,27 +585,31 @@ export default function PaymentOverviewPage() {
               setEndDate(end);
               setCurrentPage(1);
             }}
+            className="w-full sm:w-auto"
           />
 
-          <ExportDropdown
-            onExport={(format) => handleExport(format)}
-            isExporting={isExporting}
-            exportingFormat={exportingFormat}
-          />
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <ExportDropdown
+              onExport={(format) => handleExport(format)}
+              isExporting={isExporting}
+              exportingFormat={exportingFormat}
+              className="w-full sm:w-auto"
+            />
 
-          <button
-            type="button"
-            onClick={() => {
-              setEditingPayment(null);
-              setIsFormModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs hover:shadow-sm transition-all cursor-pointer shrink-0"
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-            <span>Record Payment</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingPayment(null);
+                setIsFormModalOpen(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 px-3.5 sm:px-5 py-2.5 h-10 sm:h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] active:scale-[0.99] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all cursor-pointer whitespace-nowrap w-full sm:w-auto"
+            >
+              <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+              <span>Record Payment</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -598,8 +617,8 @@ export default function PaymentOverviewPage() {
       <PaymentOverviewStatsCards stats={stats} />
 
       {/* Tabs Row matching Figma */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-6 sm:space-x-8 overflow-x-auto scrollbar-none" aria-label="Tabs">
+      <div className="border-b border-gray-200 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <nav className="flex space-x-4 sm:space-x-6 md:space-x-8 overflow-x-auto scrollbar-none whitespace-nowrap" aria-label="Tabs">
           {[
             { key: 'all' as TabKey, label: 'All Payments' },
             { key: 'paid' as TabKey, label: 'Paid' },
@@ -630,7 +649,7 @@ export default function PaymentOverviewPage() {
       </div>
 
       {/* Filters Row: 4 responsive columns matching Figma layout with clean spacing */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 items-center pt-2 sm:pt-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 items-center pt-2 sm:pt-3">
         {/* Branch Dropdown */}
         <div>
           <Dropdown
@@ -658,7 +677,7 @@ export default function PaymentOverviewPage() {
         </div>
 
         {/* Payment Methods Dropdown */}
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <Dropdown
             value={selectedMethod}
             options={methodOptions}
@@ -671,7 +690,7 @@ export default function PaymentOverviewPage() {
         </div>
 
         {/* Search Input & Clear Filter Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 col-span-2 sm:col-span-1 lg:col-span-1">
           <div className="flex-1 min-w-0">
             <SearchInput
               value={searchTerm}

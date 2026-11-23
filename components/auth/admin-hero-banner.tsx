@@ -20,7 +20,7 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
 }) => {
   return (
     <div
-      className={`relative w-full h-full min-h-[500px] lg:h-screen flex flex-col justify-between overflow-hidden p-8 sm:p-10 lg:p-12 xl:p-14 text-white select-none ${className}`}
+      className={`relative w-full h-full min-h-[220px] sm:min-h-[260px] lg:min-h-screen lg:h-screen flex flex-col justify-between overflow-hidden p-5 sm:p-8 lg:p-12 xl:p-14 text-white select-none ${className}`}
     >
       {/* Background Architectural Image */}
       <Image
@@ -37,7 +37,7 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
 
       {/* Top Header: Logo & Sub-Brand */}
       <div className="relative z-10 flex flex-col items-start">
-        <div className="relative w-40 sm:w-44 h-9 sm:h-10">
+        <div className="relative w-32 sm:w-40 lg:w-44 h-7 sm:h-9 lg:h-10">
           <Image
             src={logoSrc}
             alt="HomeNest Logo"
@@ -46,28 +46,28 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
             priority
           />
         </div>
-        <span className="text-xs sm:text-sm font-medium tracking-wide text-white/95 mt-0.5 pl-0.5">
+        <span className="text-[11px] sm:text-xs lg:text-sm font-medium tracking-wide text-white/95 mt-0.5 pl-0.5">
           {portalName}
         </span>
       </div>
 
       {/* Middle Headline Section (placed in upper-middle matching Figma) */}
-      <div className="relative z-10 max-w-sm mt-16 mb-auto py-4">
-        <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-bold text-white tracking-tight leading-snug">
+      <div className="relative z-10 max-w-sm mt-4 sm:mt-8 lg:mt-16 mb-3 sm:mb-6 lg:mb-auto py-1 sm:py-2 lg:py-4">
+        <h1 className="text-xl sm:text-2xl lg:text-[32px] font-bold text-white tracking-tight leading-snug">
           {welcomeTitle}
         </h1>
-        <p className="mt-3 text-xs sm:text-sm text-white/90 leading-relaxed font-normal max-w-xs">
+        <p className="mt-1.5 sm:mt-3 text-xs sm:text-sm text-white/90 leading-relaxed font-normal max-w-xs">
           {welcomeDescription}
         </p>
       </div>
 
       {/* Bottom Section: 3 Community Pillar Badges */}
-      <div className="relative z-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-xs sm:max-w-sm pb-2">
+      <div className="relative z-10 grid grid-cols-3 gap-2 sm:gap-4 max-w-xs sm:max-w-sm pb-1 sm:pb-2">
         {/* Pillar 1: Better Operations */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-10 h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-1.5 sm:mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
             <svg
-              className="w-5 h-5 text-white"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -85,19 +85,19 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
               />
             </svg>
           </div>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Better
           </span>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Operations
           </span>
         </div>
 
         {/* Pillar 2: Happier Residents */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-10 h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-1.5 sm:mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
             <svg
-              className="w-5 h-5 text-white"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -110,19 +110,19 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
               />
             </svg>
           </div>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Happier
           </span>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Residents
           </span>
         </div>
 
         {/* Pillar 3: Stronger Communities */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-10 h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/70 flex items-center justify-center text-white mb-1.5 sm:mb-2 shadow-sm bg-white/5 backdrop-blur-[1px]">
             <svg
-              className="w-5 h-5 text-white"
+              className="w-4 h-4 sm:w-5 sm:h-5 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -135,10 +135,10 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
               />
             </svg>
           </div>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Stronger
           </span>
-          <span className="text-[11px] sm:text-xs font-semibold text-white leading-tight">
+          <span className="text-[10px] sm:text-xs font-semibold text-white leading-tight">
             Communities
           </span>
         </div>

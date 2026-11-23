@@ -58,14 +58,14 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
         ? 'h-9 text-xs pl-9 pr-7'
         : size === 'lg'
         ? 'h-12 text-sm pl-11 pr-9'
-        : 'h-11 text-xs sm:text-sm pl-10 pr-8';
+        : 'h-10 sm:h-11 text-xs sm:text-sm pl-9 sm:pl-10 pr-8';
 
     const iconLeftClass =
       size === 'sm'
         ? 'left-3 w-3.5 h-3.5'
         : size === 'lg'
         ? 'left-4 w-4.5 h-4.5'
-        : 'left-3.5 w-4 h-4';
+        : 'left-3 sm:left-3.5 w-3.5 sm:w-4 h-3.5 sm:h-4';
 
     return (
       <div className={`space-y-1.5 w-full ${containerClassName}`}>

@@ -2287,43 +2287,19 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           </div>
         </div>
 
-      {/* Action Footer Navigation Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-gray-100">
-        <div>
-          {activeStep > 0 && (
-            <button
-              type="button"
-              onClick={handlePrevStep}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Back</span>
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          {/* Quick Save Option */}
-          {activeStep < 3 && (
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-4 sm:px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs sm:text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs"
-            >
-              {mode === 'edit' ? 'Save Changes' : 'Save Resident'}
-            </button>
-          )}
-
+      {/* Action Footer Navigation Bar - Responsive */}
+      <div className="pt-6 border-t border-gray-100">
+        {/* Mobile View (< sm) */}
+        <div className="flex flex-col gap-2.5 sm:hidden">
+          {/* Primary Action Button (Continue or Final Submit) */}
           {activeStep < 3 ? (
             <button
               type="button"
               onClick={handleNextStep}
-              className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap active:scale-[0.99]"
             >
               <span>Continue</span>
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -2331,14 +2307,96 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full sm:w-auto px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.99]"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
               <span>{mode === 'edit' ? 'Save Changes' : 'Create Resident'}</span>
             </button>
           )}
+
+          {/* Secondary Actions Row (Back and/or Save Resident) */}
+          {(activeStep > 0 || activeStep < 3) && (
+            <div className={`grid ${activeStep > 0 && activeStep < 3 ? 'grid-cols-2' : 'grid-cols-1'} gap-2.5 w-full`}>
+              {activeStep > 0 && (
+                <button
+                  type="button"
+                  onClick={handlePrevStep}
+                  className="w-full h-10 px-3 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap active:scale-[0.99]"
+                >
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+              )}
+
+              {activeStep < 3 && (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full h-10 px-3 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs whitespace-nowrap flex items-center justify-center active:scale-[0.99]"
+                >
+                  {mode === 'edit' ? 'Save Changes' : 'Save Resident'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop View (>= sm) */}
+        <div className="hidden sm:flex items-center justify-between gap-3">
+          <div>
+            {activeStep > 0 && (
+              <button
+                type="button"
+                onClick={handlePrevStep}
+                className="px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs whitespace-nowrap"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Back</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {activeStep < 3 && (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold transition-colors cursor-pointer disabled:opacity-50 shadow-2xs whitespace-nowrap"
+              >
+                {mode === 'edit' ? 'Save Changes' : 'Save Resident'}
+              </button>
+            )}
+
+            {activeStep < 3 ? (
+              <button
+                type="button"
+                onClick={handleNextStep}
+                className="px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+              >
+                <span>Continue</span>
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-8 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124B38] text-white text-sm font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{mode === 'edit' ? 'Save Changes' : 'Create Resident'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

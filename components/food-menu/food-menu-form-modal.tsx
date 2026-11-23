@@ -470,8 +470,8 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
                   setMenuDate(val);
                   if (errors.menuDate) setErrors((prev) => ({ ...prev, menuDate: '' }));
                 }}
-                dateFormat="dd/mm/yy"
-                placeholder="dd/mm/yyyy"
+                dateFormat="dd-mm-yy"
+                placeholder="dd-mm-yyyy"
                 hasError={Boolean(errors.menuDate)}
                 appendTo={typeof document !== 'undefined' ? document.body : undefined}
               />
@@ -596,22 +596,22 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
       </div>
 
       {/* Modal Action Buttons */}
-      <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-4 border-t border-gray-100">
         <button
           type="button"
           onClick={onHide}
           disabled={submitting}
-          className="px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 transition-colors cursor-pointer"
+          className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 text-xs sm:text-sm font-semibold text-gray-700 transition-colors cursor-pointer text-center"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={submitting}
-          className="px-5 py-2 rounded-xl bg-[#175C46] hover:bg-[#134e3b] text-white text-xs font-semibold transition-colors flex items-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#134e3b] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
         >
           {submitting && (
-            <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <svg className="w-4 h-4 animate-spin shrink-0" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
             </svg>

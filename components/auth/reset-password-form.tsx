@@ -140,11 +140,11 @@ export const ResetPasswordForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full lg:h-screen flex flex-col justify-between items-center px-6 sm:px-10 lg:px-12 xl:px-16 py-8 sm:py-10 bg-white overflow-y-auto">
+    <div className="w-full flex-1 lg:h-screen flex flex-col justify-between items-center px-4 sm:px-8 lg:px-12 xl:px-16 py-6 sm:py-8 lg:py-10 bg-white overflow-y-auto">
       {/* Centered Form Wrapper matching Figma's exact 420px scale */}
-      <div className="w-full max-w-[420px] mx-auto my-auto flex flex-col justify-center">
+      <div className="w-full max-w-[420px] mx-auto my-0 lg:my-auto flex flex-col justify-center">
         {/* Title Header */}
-        <div className="mb-6">
+        <div className="mb-5 sm:mb-6">
           <h2 className="text-2xl sm:text-[28px] font-bold text-gray-900 tracking-tight leading-tight">
             Reset Password
           </h2>
@@ -282,7 +282,7 @@ export const ResetPasswordForm: React.FC = () => {
       </div>
 
       {/* Support Help Footer */}
-      <div className="w-full max-w-[420px] mx-auto text-center flex items-center justify-center gap-2 text-xs sm:text-[13px] text-gray-600 pt-6">
+      <div className="w-full max-w-[420px] mx-auto text-center flex items-center justify-center gap-2 text-xs sm:text-[13px] text-gray-600 pt-5 pb-2 lg:pb-0 sm:pt-6">
         <svg
           className="w-4 h-4 text-gray-800"
           fill="none"

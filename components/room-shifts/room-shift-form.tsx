@@ -670,7 +670,8 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
                 value={expectedMoveDate}
                 onChange={(val) => setExpectedMoveDate(val)}
                 disabled={submitting}
-                placeholder="dd/mm/yyyy"
+                placeholder="dd-mm-yyyy"
+                dateFormat="dd-mm-yy"
               />
             </div>
 

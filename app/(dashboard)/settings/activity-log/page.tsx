@@ -302,6 +302,7 @@ export default function AdministrativeActivityLogPage() {
           onExport={(format) => handleExport(format as 'pdf' | 'xlsx')}
           isExporting={Boolean(exporting)}
           exportingFormat={exporting as ExportFormat | null}
+          className="w-full sm:w-auto"
         />
       </div>
 
@@ -309,60 +310,66 @@ export default function AdministrativeActivityLogPage() {
       <AuditStatsCards stats={stats} />
 
       {/* Filter Controls Row matching Figma: Modules, Actions, Users, Date Range, Filter Button */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-3 sm:gap-4 w-full">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 flex-1">
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-end gap-2.5 sm:gap-4 w-full">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 flex-1">
           {/* Modules Filter */}
-          <Dropdown
-            label="Modules"
-            value={selectedModule}
-            onChange={(e) => {
-              setSelectedModule(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={[
-              { label: 'All', value: '' },
-              ...moduleOptions.map((mod) => ({ label: mod, value: mod })),
-            ]}
-          />
+          <div className="col-span-1">
+            <Dropdown
+              label="Modules"
+              value={selectedModule}
+              onChange={(e) => {
+                setSelectedModule(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={[
+                { label: 'All', value: '' },
+                ...moduleOptions.map((mod) => ({ label: mod, value: mod })),
+              ]}
+            />
+          </div>
 
           {/* Actions Filter */}
-          <Dropdown
-            label="Actions"
-            value={selectedAction}
-            onChange={(e) => {
-              setSelectedAction(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={[
-              { label: 'All', value: '' },
-              ...actionOptions.map((act) => ({ label: act, value: act })),
-            ]}
-          />
+          <div className="col-span-1">
+            <Dropdown
+              label="Actions"
+              value={selectedAction}
+              onChange={(e) => {
+                setSelectedAction(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={[
+                { label: 'All', value: '' },
+                ...actionOptions.map((act) => ({ label: act, value: act })),
+              ]}
+            />
+          </div>
 
           {/* Users Filter */}
-          <Dropdown
-            label="Users"
-            value={selectedUser}
-            onChange={(e) => {
-              setSelectedUser(e.target.value);
-              setCurrentPage(1);
-            }}
-            options={[
-              { label: 'All', value: '' },
-              ...userOptions.map((usr) => ({ label: usr, value: usr })),
-            ]}
-          />
+          <div className="col-span-1">
+            <Dropdown
+              label="Users"
+              value={selectedUser}
+              onChange={(e) => {
+                setSelectedUser(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={[
+                { label: 'All', value: '' },
+                ...userOptions.map((usr) => ({ label: usr, value: usr })),
+              ]}
+            />
+          </div>
 
           {/* Date Range Picker Dropdown */}
-          <div className="space-y-1 relative" ref={datePickerDropdownRef}>
-            <label className="text-xs font-normal text-gray-500 block opacity-0 pointer-events-none select-none">
+          <div className="space-y-1 relative col-span-2 sm:col-span-1" ref={datePickerDropdownRef}>
+            <label className="hidden sm:block text-xs font-normal text-gray-500 opacity-0 pointer-events-none select-none">
               Date
             </label>
             <div className="relative">
               <button
                 type="button"
                 onClick={() => setIsDatePickerOpen((prev) => !prev)}
-                className="w-full h-11 px-4 pr-10 py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] shadow-2xs text-left cursor-pointer transition-all flex items-center justify-between font-sans"
+                className="w-full h-10 sm:h-11 px-3.5 sm:px-4 pr-10 py-2 sm:py-2.5 bg-white border border-gray-200/90 rounded-xl text-xs sm:text-sm text-gray-700 hover:border-gray-300 focus:outline-none focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] shadow-2xs text-left cursor-pointer transition-all flex items-center justify-between font-sans"
               >
                 <span className={`truncate ${dateRangeText ? 'text-gray-800 font-medium' : 'text-gray-400'}`}>
                   {dateRangeText || 'Select Date Range'}

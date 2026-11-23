@@ -90,12 +90,12 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
           <button
             type="button"
             onClick={onHide}
             disabled={loading}
-            className="px-5 py-2.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 rounded-xl transition-colors cursor-pointer disabled:opacity-50 text-center"
           >
             {cancelLabel}
           </button>
@@ -103,7 +103,7 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className="px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#E11D48] hover:bg-[#BE123C] active:bg-[#9F1239] rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-[#E11D48] hover:bg-[#BE123C] active:bg-[#9F1239] active:scale-[0.99] rounded-xl transition-all shadow-xs cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>

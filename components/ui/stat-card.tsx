@@ -41,31 +41,31 @@ export const StatCard: React.FC<StatCardProps> = React.memo(({
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-2xl border border-gray-100/90 px-4 py-4 sm:px-5 sm:py-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4 hover:shadow-xs transition-all min-w-0 ${
+      className={`bg-white rounded-xl sm:rounded-2xl border border-gray-100/90 px-3 py-2.5 sm:px-5 sm:py-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-2.5 sm:gap-4 hover:shadow-xs transition-all min-w-0 ${
         onClick ? 'cursor-pointer hover:border-gray-200' : ''
       } ${className}`}
     >
       {/* Icon Badge */}
       <div
-        className={`w-11 h-11 sm:w-12 sm:h-12 ${shapeClass} ${badgeClasses} flex items-center justify-center shrink-0 shadow-2xs`}
+        className={`w-9 h-9 sm:w-12 sm:h-12 ${shapeClass} ${badgeClasses} flex items-center justify-center shrink-0 shadow-2xs`}
       >
         {icon}
       </div>
 
       {/* Label, Value & Subtext */}
       <div className="min-w-0 flex flex-col justify-center flex-1">
-        <span className={`text-[12px] sm:text-[13px] font-medium tracking-tight truncate ${labelColor}`}>
+        <span className={`text-[11px] sm:text-[13px] font-medium tracking-tight truncate ${labelColor}`}>
           {label}
         </span>
         {loading ? (
-          <div className="h-6 w-16 bg-gray-100 rounded-md animate-pulse mt-1" />
+          <div className="h-5 sm:h-6 w-14 sm:w-16 bg-gray-100 rounded-md animate-pulse mt-1" />
         ) : (
-          <h3 className={`text-xl sm:text-2xl font-bold tracking-tight mt-0.5 leading-none ${valueColor}`}>
+          <h3 className={`text-base sm:text-2xl font-bold tracking-tight mt-0.5 leading-none truncate ${valueColor}`}>
             {value}
           </h3>
         )}
         {subtext && (
-          <span className="text-[11px] text-gray-400 mt-1 truncate">
+          <span className="text-[10px] sm:text-[11px] text-gray-400 mt-1 truncate">
             {subtext}
           </span>
         )}
@@ -88,15 +88,15 @@ export const StatCardGrid: React.FC<StatCardGridProps> = React.memo(({
 }) => {
   const colClass =
     columns === 2
-      ? 'grid-cols-1 sm:grid-cols-2'
+      ? 'grid-cols-2'
       : columns === 3
-      ? 'grid-cols-1 sm:grid-cols-3'
+      ? 'grid-cols-2 sm:grid-cols-3 [&>*:nth-child(3)]:col-span-2 sm:[&>*:nth-child(3)]:col-span-1'
       : columns === 5
-      ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
-      : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4';
+      ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 [&>*:nth-child(5)]:col-span-2 sm:[&>*:nth-child(5)]:col-span-1'
+      : 'grid-cols-2 lg:grid-cols-4';
 
   return (
-    <div className={`grid ${colClass} gap-3 sm:gap-4 w-full ${className}`}>
+    <div className={`grid ${colClass} gap-2.5 sm:gap-4 w-full ${className}`}>
       {children}
     </div>
   );

@@ -9,7 +9,7 @@ import {
   LaundryRequest,
 } from '@/types/laundry';
 import { laundryService } from '@/services/laundry.service';
-import { DataTable, ColumnDef, StatusBadge, AppDatePicker } from '@/components/ui';
+import { DataTable, ColumnDef, StatusBadge, AppDatePicker, Dropdown, SearchInput } from '@/components/ui';
 import { Dialog } from 'primereact/dialog';
 
 interface LaundryBillingTabProps {
@@ -545,36 +545,38 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
 
       {/* Search & Actions Toolbar */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-gray-100 shadow-2xs">
-        <div className="flex items-center gap-3 flex-1">
-          <div className="relative flex-1 max-w-sm">
-            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input
-              type="text"
+        <div className="grid grid-cols-2 sm:flex sm:items-center gap-2.5 sm:gap-3 flex-1">
+          <div className="col-span-2 sm:flex-1 sm:max-w-sm">
+            <SearchInput
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+              onChange={(val) => {
+                setSearch(val);
+                setCurrentPage(1);
+              }}
+              onClear={() => {
+                setSearch('');
                 setCurrentPage(1);
               }}
               placeholder="Search resident by name or room..."
-              className="w-full h-10 pl-9 pr-3 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder:text-gray-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#175C46]"
             />
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="h-10 px-3 text-xs bg-gray-50 border border-gray-200 rounded-lg text-gray-700 focus:outline-none focus:bg-white focus:ring-1 focus:ring-[#175C46] cursor-pointer"
-          >
-            <option value="all">All Status</option>
-            <option value="has_unbilled">Has Unbilled Dues</option>
-            <option value="has_orders">Has Orders</option>
-            <option value="has_due">Has Payment Due</option>
-          </select>
+          <div className="col-span-2 sm:w-48">
+            <Dropdown
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              options={[
+                { label: 'All Status', value: 'all' },
+                { label: 'Has Unbilled Dues', value: 'has_unbilled' },
+                { label: 'Has Orders', value: 'has_orders' },
+                { label: 'Has Payment Due', value: 'has_due' },
+              ]}
+              placeholder="All Status"
+            />
+          </div>
         </div>
 
         {/* Quick Batch Select Button */}
@@ -582,7 +584,7 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
           <button
             type="button"
             onClick={handleSelectAllUnbilled}
-            className="h-10 px-4 text-xs font-semibold text-[#175C46] bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 rounded-lg transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-2xs"
+            className="h-10 sm:h-11 px-4 text-xs font-semibold text-[#175C46] bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 shrink-0 shadow-2xs"
           >
             <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

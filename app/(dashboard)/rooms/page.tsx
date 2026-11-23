@@ -300,9 +300,12 @@ export default function RoomInventoryPage() {
 
         <Link
           href="/rooms/new"
-          className="px-6 py-2.5 bg-[#175C46] hover:bg-[#124B38] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-colors shrink-0 self-start sm:self-auto inline-flex items-center justify-center cursor-pointer"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124B38] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer"
         >
-          Add Room
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>Add Room</span>
         </Link>
       </div>
 
@@ -310,7 +313,7 @@ export default function RoomInventoryPage() {
       <RoomStatsCards stats={stats} />
 
       {/* Filter Controls Row: Branch, Building, Floor, Status, Room Type, Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 items-end">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3 xl:gap-4 items-end">
         {/* Branch Filter */}
         <Dropdown
           label="Branch"
@@ -386,11 +389,12 @@ export default function RoomInventoryPage() {
             });
           }}
           options={ROOM_TYPE_FILTER_OPTIONS}
+          containerClassName="col-span-2 sm:col-span-1"
         />
 
         {/* Search Room Number & Clear Filters Button */}
-        <div className="space-y-1.5">
-          <label className="text-xs sm:text-sm font-semibold text-gray-800 block opacity-0 pointer-events-none select-none">
+        <div className="space-y-1.5 col-span-2 sm:col-span-1 md:col-span-1 xl:col-span-1">
+          <label className="hidden xl:block text-xs sm:text-sm font-semibold text-gray-800 opacity-0 pointer-events-none select-none">
             Search
           </label>
           <div className="flex items-center gap-2">

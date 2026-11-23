@@ -304,7 +304,7 @@ export default function ComplaintsPage() {
       <ComplaintStatsCards stats={stats} loading={statsLoading} />
 
       {/* Filters Row: Categories, Status, Search */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-center">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-4 items-center">
         {/* Categories Dropdown */}
         <div className="flex flex-col gap-1">
           <label className="text-[11px] font-semibold text-gray-500 tracking-tight">
@@ -336,8 +336,8 @@ export default function ComplaintsPage() {
         </div>
 
         {/* Search Input & Clear Filter Button */}
-        <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-1">
-          <label className="text-[11px] font-semibold text-gray-500 tracking-tight opacity-0 select-none">
+        <div className="flex flex-col gap-1 col-span-2 lg:col-span-1">
+          <label className="hidden lg:block text-[11px] font-semibold text-gray-500 tracking-tight opacity-0 select-none">
             Search
           </label>
           <div className="flex items-center gap-2">

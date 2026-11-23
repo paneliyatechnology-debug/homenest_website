@@ -255,15 +255,16 @@ export default function RoomShiftRequestPage() {
           </p>
         </div>
 
-        <div>
-          <button
-            type="button"
-            onClick={() => router.push('/settings/room-shifts/new')}
-            className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl bg-[#175C46] hover:bg-[#124937] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all shadow-xs cursor-pointer"
-          >
-            New Request
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push('/settings/room-shifts/new')}
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 h-10 sm:h-11 rounded-xl bg-[#175C46] hover:bg-[#124937] active:bg-[#0e3b2c] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold tracking-wide shadow-2xs hover:shadow-xs transition-all shrink-0 cursor-pointer"
+        >
+          <svg className="w-4 h-4 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>New Request</span>
+        </button>
       </div>
 
       {/* KPI Stats Cards matching media_1794916841270_a7110dff.png */}

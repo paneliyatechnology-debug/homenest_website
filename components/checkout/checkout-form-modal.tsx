@@ -327,8 +327,8 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
               setErrors((prev) => ({ ...prev, departureDate: undefined }));
             }
           }}
-          placeholder="dd/mm/yyyy"
-          dateFormat="dd/mm/yy"
+          placeholder="dd-mm-yyyy"
+          dateFormat="dd-mm-yy"
           hasError={Boolean(errors.departureDate)}
           appendTo={typeof document !== 'undefined' ? document.body : undefined}
           className="w-full"
@@ -400,24 +400,24 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
         <button
           type="button"
           onClick={onHide}
           disabled={isSubmitting}
-          className="px-4 py-2 text-xs font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+          className="w-full sm:w-auto px-5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer text-center"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-5 py-2 text-xs font-semibold rounded-lg bg-[#175C46] text-white hover:bg-[#124937] transition-all disabled:opacity-50 shadow-xs cursor-pointer flex items-center gap-1.5"
+          className="w-full sm:w-auto px-6 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-[#175C46] text-white hover:bg-[#124937] active:bg-[#0e3b2c] active:scale-[0.99] transition-all disabled:opacity-50 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
         >
           {isSubmitting ? (
             <>
               <svg
-                className="animate-spin -ml-0.5 h-3.5 w-3.5 text-white"
+                className="animate-spin -ml-0.5 h-4 w-4 text-white"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
