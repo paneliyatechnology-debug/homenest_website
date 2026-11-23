@@ -142,14 +142,14 @@ export const AppDatePicker: React.FC<AppDatePickerProps> = ({
         appendTo={resolvedAppendTo}
         touchUI={false}
         showOnFocus={true}
-        baseZIndex={100000}
-        panelStyle={{ zIndex: 100000 }}
+        baseZIndex={999999}
+        panelStyle={{ zIndex: 999999 }}
         inputClassName={`w-full h-11 px-4 ${showClearIcon ? 'pr-14' : 'pr-10'} py-2.5 bg-white border ${
           hasError
             ? 'border-rose-400 focus:ring-1 focus:ring-rose-500 focus:border-rose-500 text-rose-900'
             : 'border-gray-200/90 hover:border-gray-300 focus:ring-1 focus:ring-[#175C46] focus:border-[#175C46] text-gray-800'
         } rounded-xl text-xs sm:text-sm placeholder-gray-400 focus:outline-none transition-all shadow-2xs cursor-pointer font-sans select-none`}
-        panelClassName="rounded-xl shadow-lg border border-gray-100 font-sans !z-[100000]"
+        panelClassName="font-sans !z-[999999]"
       />
       {showClearIcon && (
         <button

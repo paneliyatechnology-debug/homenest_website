@@ -153,7 +153,6 @@ export const FoodMenuFormModal: React.FC<FoodMenuFormModalProps> = ({
       modal
       className="food-menu-modal"
       dismissableMask
-      baseZIndex={1000}
     >
       {visible && (
         <FoodMenuFormContent

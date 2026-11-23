@@ -9,6 +9,7 @@ interface MetricCardProps {
   icon: React.ReactNode;
   iconBgColor: string;
   iconShape?: 'circle' | 'rounded';
+  className?: string;
 }
 
 export const MetricCard: React.FC<MetricCardProps> = React.memo(({
@@ -17,6 +18,7 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
   icon,
   iconBgColor,
   iconShape = 'circle',
+  className = '',
 }) => {
   const isUp = data.trend === 'up';
 
@@ -41,7 +43,7 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100/90 p-2.5 sm:p-3 xl:p-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between transition-all hover:shadow-sm min-w-0">
+    <div className={`bg-white rounded-2xl border border-gray-100/90 p-2.5 sm:p-3 xl:p-4.5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex flex-col justify-between transition-all hover:shadow-sm min-w-0 ${className}`}>
       {/* Top Header: Circular/Rounded Icon Badge & Title matching Figma */}
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
         <div
@@ -51,7 +53,7 @@ export const MetricCard: React.FC<MetricCardProps> = React.memo(({
         >
           {icon}
         </div>
-        <span className="text-[11px] sm:text-xs xl:text-[13px] font-medium text-gray-700 truncate min-w-0">
+        <span className="text-[11px] sm:text-xs xl:text-[13px] font-medium text-gray-700 leading-snug break-words min-w-0">
           {title}
         </span>
       </div>

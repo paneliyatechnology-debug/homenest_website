@@ -217,49 +217,49 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
   return (
     <div className="flex flex-col">
       {/* Header Bar */}
-      <div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between gap-3 bg-white">
+      <div className="p-3.5 sm:p-5 border-b border-gray-100 flex items-center justify-between gap-2.5 sm:gap-3 bg-white">
         {/* File Title & Meta */}
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
+        <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
             <i
               className={
                 isVideo
-                  ? 'pi pi-video text-[#175C46] text-sm'
+                  ? 'pi pi-video text-[#175C46] text-xs sm:text-sm'
                   : isImage
-                  ? 'pi pi-image text-sm'
+                  ? 'pi pi-image text-xs sm:text-sm'
                   : isPdf
-                  ? 'pi pi-file-pdf text-rose-500 text-sm'
-                  : 'pi pi-file text-sm'
+                  ? 'pi pi-file-pdf text-rose-500 text-xs sm:text-sm'
+                  : 'pi pi-file text-xs sm:text-sm'
               }
             />
           </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
               <h3
-                className="text-sm font-bold text-gray-900 truncate max-w-[260px] sm:max-w-[420px]"
+                className="text-xs sm:text-sm font-bold text-gray-900 truncate max-w-[160px] xs:max-w-[220px] sm:max-w-[420px]"
                 title={fileName}
               >
                 {fileName}
               </h3>
               {hasMultiple && (
-                <span className="text-[11px] font-semibold text-[#175C46] bg-[#E8F8F0] px-2 py-0.5 rounded-full shrink-0">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-[#175C46] bg-[#E8F8F0] px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
                   {currentIndex + 1} / {attachments.length}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <span className="text-[8px] sm:text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 shrink-0">
                 {ext}
               </span>
               {fileSize && (
-                <span className="text-[11px] text-gray-400">{fileSize}</span>
+                <span className="text-[10px] sm:text-[11px] text-gray-400 truncate">{fileSize}</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Quick Action Toolbar */}
-        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        {/* Desktop Quick Action Toolbar */}
+        <div className="hidden sm:flex items-center gap-1 sm:gap-1.5 shrink-0">
           {isImage && (
             <>
               <button
@@ -274,7 +274,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13 10H7" />
                 </svg>
               </button>
-              <span className="text-[11px] font-semibold text-gray-500 px-1 min-w-[36px] text-center select-none">
+              <span className="text-[11px] font-semibold text-gray-500 px-1 min-w-[36px] text-center select-none font-mono">
                 {Math.round(zoom * 100)}%
               </span>
               <button
@@ -304,7 +304,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                 <button
                   type="button"
                   onClick={resetZoom}
-                  className="px-2 py-1 text-[11px] font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                  className="px-2 py-1 text-[11px] font-semibold text-[#175C46] hover:bg-[#E8F8F0] rounded-lg transition-colors cursor-pointer"
                   title="Reset Zoom & Rotation"
                 >
                   Reset
@@ -359,21 +359,68 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
             </svg>
           </button>
         </div>
+
+        {/* Mobile Header Actions (compact, non-colliding) */}
+        <div className="flex sm:hidden items-center gap-0.5 shrink-0">
+          {fileUrl && (
+            <>
+              <a
+                href={fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-[#175C46] hover:bg-gray-100 rounded-lg transition-colors"
+                title="Open original"
+                aria-label="Open original"
+              >
+                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                </svg>
+              </a>
+              <a
+                href={fileUrl}
+                download={fileName}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-[#175C46] hover:bg-gray-100 rounded-lg transition-colors"
+                title="Download"
+                aria-label="Download"
+              >
+                <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </a>
+            </>
+          )}
+
+          <div className="w-[1px] h-4 bg-gray-200 mx-1" />
+
+          <button
+            type="button"
+            onClick={onHide}
+            className="w-7 h-7 flex items-center justify-center text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Close"
+            aria-label="Close"
+          >
+            <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Main Preview Canvas */}
-      <div className="p-4 sm:p-6 bg-gray-50/60">
-        <div className="relative min-h-[380px] max-h-[70vh] flex items-center justify-center overflow-hidden bg-gray-950/95 rounded-2xl shadow-inner p-3 sm:p-5 select-none">
+      <div className="p-3 sm:p-6 bg-gray-50/60">
+        <div className="relative min-h-[280px] sm:min-h-[380px] max-h-[70vh] flex items-center justify-center overflow-hidden bg-gray-950/95 rounded-xl sm:rounded-2xl shadow-inner p-2 sm:p-5 select-none">
           {/* Previous Arrow Button */}
           {hasMultiple && (
             <button
               type="button"
               onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all backdrop-blur-xs cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+              className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all backdrop-blur-xs cursor-pointer shadow-lg hover:scale-105 active:scale-95"
               title="Previous (Left arrow key)"
               aria-label="Previous attachment"
             >
-              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -384,11 +431,11 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
             <button
               type="button"
               onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all backdrop-blur-xs cursor-pointer shadow-lg hover:scale-105 active:scale-95"
+              className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition-all backdrop-blur-xs cursor-pointer shadow-lg hover:scale-105 active:scale-95"
               title="Next (Right arrow key)"
               aria-label="Next attachment"
             >
-              <svg className="w-5 h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -407,6 +454,59 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                 className="max-h-[64vh] max-w-full w-auto h-auto object-contain rounded-lg shadow-2xl transition-all"
                 loading="eager"
               />
+
+              {/* Mobile Floating Zoom / Rotate Controls */}
+              <div className="sm:hidden absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 px-2.5 py-1.5 bg-black/80 backdrop-blur-md rounded-full shadow-xl border border-white/15 text-white">
+                <button
+                  type="button"
+                  onClick={zoomOut}
+                  disabled={zoom <= 0.5}
+                  className="w-7 h-7 flex items-center justify-center text-white/80 hover:text-white rounded-full hover:bg-white/15 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Zoom Out"
+                  aria-label="Zoom Out"
+                >
+                  <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM13 10H7" />
+                  </svg>
+                </button>
+                <span className="text-[11px] font-semibold text-white min-w-[34px] text-center select-none font-mono">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={zoomIn}
+                  disabled={zoom >= 3}
+                  className="w-7 h-7 flex items-center justify-center text-white/80 hover:text-white rounded-full hover:bg-white/15 active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                  title="Zoom In"
+                  aria-label="Zoom In"
+                >
+                  <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10 7v6m3-3H7" />
+                  </svg>
+                </button>
+                <div className="w-[1px] h-3.5 bg-white/20 mx-0.5" />
+                <button
+                  type="button"
+                  onClick={rotateRight}
+                  className="w-7 h-7 flex items-center justify-center text-white/80 hover:text-white rounded-full hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
+                  title="Rotate 90°"
+                  aria-label="Rotate 90 degrees"
+                >
+                  <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                  </svg>
+                </button>
+                {(zoom !== 1 || rotation !== 0) && (
+                  <button
+                    type="button"
+                    onClick={resetZoom}
+                    className="px-2 py-0.5 text-[10px] font-semibold text-emerald-400 hover:text-emerald-300 rounded-full hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
+                    title="Reset Zoom & Rotation"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
             </div>
           ) : isVideo ? (
             <div className="w-full h-full max-h-[68vh] flex items-center justify-center bg-black/95 rounded-xl overflow-hidden shadow-2xl p-1 sm:p-2">
@@ -449,7 +549,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
 
         {/* Thumbnail Carousel for fast multi-file navigation */}
         {hasMultiple && (
-          <div className="pt-3 flex items-center justify-center gap-2.5 overflow-x-auto py-1 custom-scrollbar">
+          <div className="pt-2 sm:pt-3 flex items-center justify-start sm:justify-center gap-2 overflow-x-auto py-1 custom-scrollbar">
             {attachments.map((attItem, idx) => {
               const itemFileName =
                 attItem.name || attItem.file_name || `attachment_${idx + 1}`;
@@ -468,7 +568,7 @@ const AttachmentPreviewContent: React.FC<AttachmentPreviewContentProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => handleSelectIndex(idx)}
-                  className={`w-13 h-13 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 relative bg-gray-100 flex items-center justify-center ${
+                  className={`w-11 h-11 sm:w-13 sm:h-13 rounded-xl overflow-hidden border-2 transition-all cursor-pointer shrink-0 relative bg-gray-100 flex items-center justify-center ${
                     isActive
                       ? 'border-[#175C46] ring-2 ring-emerald-300 scale-105 shadow-xs'
                       : 'border-gray-200/80 opacity-60 hover:opacity-100 hover:border-gray-300'
@@ -528,7 +628,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
       modal
       dismissableMask
       showHeader={false}
-      style={{ width: '92vw', maxWidth: '980px' }}
+      style={{ width: '95vw', maxWidth: '980px' }}
       className="attachment-preview-modal font-sans"
       contentClassName="p-0 rounded-2xl overflow-hidden shadow-2xl border-0"
     >

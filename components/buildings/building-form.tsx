@@ -283,8 +283,8 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
 
           {/* Section: Floor Configuration Builder */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
                   Floors Configuration <span className="text-[#175C46]">*</span>
                 </label>
@@ -296,7 +296,7 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
               <button
                 type="button"
                 onClick={handleAddFloor}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E8F8F0] hover:bg-[#d5f3e5] text-[#175C46] font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#E8F8F0] hover:bg-[#d5f3e5] text-[#175C46] font-semibold rounded-xl text-xs transition-colors cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -309,51 +309,66 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
               <p className="text-xs text-rose-500 font-medium">{errors.floors}</p>
             )}
 
+            {/* Column Headers */}
+            <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 text-[10px] sm:text-[11px] font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="w-7 sm:w-8 text-center shrink-0">#</span>
+              <span className="w-16 sm:w-28 text-center sm:text-left shrink-0">Floor No.</span>
+              <span className="flex-1">Floor Name</span>
+              {formData.floors.length > 1 && (
+                <span className="w-8 sm:w-9 text-center shrink-0">Action</span>
+              )}
+            </div>
+
             {/* Floor List Rows */}
-            <div className="space-y-3 pt-1">
+            <div className="space-y-2.5">
               {formData.floors.map((floor, index) => (
                 <div
                   key={index}
-                  className="p-3.5 bg-gray-50/70 hover:bg-gray-50 rounded-xl border border-gray-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 transition-colors"
+                  className="p-2 sm:p-2.5 bg-gray-50/70 hover:bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-2 sm:gap-3 transition-colors"
                 >
-                  <div className="flex items-center gap-2 sm:w-36 shrink-0">
-                    <span className="w-7 h-7 rounded-lg bg-[#175C46] text-white font-bold text-xs flex items-center justify-center shrink-0">
-                      {index + 1}
-                    </span>
-                    <div className="w-full">
-                      <input
-                        type="number"
-                        min="1"
-                        max="100"
-                        value={floor.floor_number}
-                        onChange={(e) =>
-                          handleFloorChange(index, 'floor_number', e.target.value)
-                        }
-                        className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold text-gray-800 bg-white outline-none focus:border-[#175C46]"
-                        placeholder="Floor #"
-                        title="Floor Number"
-                      />
-                    </div>
+                  {/* Badge */}
+                  <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-[#175C46] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                    {index + 1}
+                  </span>
+
+                  {/* Floor Number Input */}
+                  <div className="w-16 sm:w-28 shrink-0">
+                    <input
+                      type="number"
+                      min="1"
+                      max="100"
+                      value={floor.floor_number}
+                      onChange={(e) =>
+                        handleFloorChange(index, 'floor_number', e.target.value)
+                      }
+                      className="w-full h-9 sm:h-10 px-2 sm:px-3 text-center sm:text-left rounded-lg border border-gray-200 text-xs sm:text-sm font-semibold text-gray-800 bg-white outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-colors"
+                      placeholder="No."
+                      title="Floor Number"
+                    />
                   </div>
 
-                  <div className="flex-1">
+                  {/* Floor Name Input */}
+                  <div className="flex-1 min-w-0">
                     <input
                       type="text"
                       value={floor.name}
                       onChange={(e) =>
                         handleFloorChange(index, 'name', e.target.value)
                       }
-                      className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs font-medium text-gray-800 bg-white outline-none focus:border-[#175C46]"
+                      className="w-full h-9 sm:h-10 px-2.5 sm:px-3 rounded-lg border border-gray-200 text-xs sm:text-sm font-medium text-gray-800 bg-white outline-none focus:border-[#175C46] focus:ring-1 focus:ring-[#175C46] transition-colors truncate"
                       placeholder={`e.g. ${getOrdinalFloorName(floor.floor_number || index + 1)}`}
+                      title="Floor Name"
                     />
                   </div>
 
+                  {/* Remove Floor Button */}
                   {formData.floors.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveFloor(index)}
-                      className="w-9 h-9 shrink-0 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer self-end sm:self-center"
+                      className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-colors cursor-pointer"
                       title="Remove Floor"
+                      aria-label="Remove Floor"
                     >
                       <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

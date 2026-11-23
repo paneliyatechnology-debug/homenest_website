@@ -505,13 +505,42 @@ span.p-password,
 }
 
 /* ==========================================================================
-   Metric Cards 5-in-a-Row Responsive Layout
+   Metric Cards Responsive Layout
    ========================================================================== */
 .metric-cards-row {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.625rem;
   width: 100%;
+}
+
+@media (max-width: 639.98px) {
+  .metric-cards-row > *:last-child {
+    grid-column: span 2 / span 2;
+  }
+}
+
+@media (min-width: 640px) {
+  .metric-cards-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .metric-cards-row > *:last-child {
+    grid-column: span 2 / span 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .metric-cards-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  .metric-cards-row > *:last-child {
+    grid-column: span 1 / span 1;
+  }
 }
 
 @media (min-width: 1200px) {
@@ -534,14 +563,14 @@ span.p-password,
   container-type: inline-size;
 }
 
-@container (min-width: 360px) {
+@container (min-width: 400px) {
   .room-dist-container .room-dist-layout {
     flex-direction: row;
     justify-content: center;
   }
 }
 
-@container (min-width: 440px) {
+@container (min-width: 480px) {
   .room-dist-container .room-dist-layout {
     gap: 1.5rem;
   }
@@ -555,6 +584,7 @@ span.p-password,
   background-color: rgba(17, 24, 39, 0.45) !important;
   backdrop-filter: blur(4px) !important;
   transition: all 0.2s ease-in-out !important;
+  z-index: 1100 !important;
 }
 
 .p-dialog {
@@ -563,6 +593,7 @@ span.p-password,
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
   border: none !important;
   overflow: hidden !important;
+  z-index: 1101 !important;
 }
 
 .p-dialog .p-dialog-header {
@@ -611,48 +642,79 @@ body > .p-datepicker,
 .p-dialog-mask ~ .p-datepicker {
   background: #ffffff !important;
   border-radius: 1rem !important; /* 16px */
-  border: 1px solid #f0f0ee !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.04) !important;
-  padding: 1rem !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  padding: 0.875rem !important;
   font-family: 'Inter', sans-serif !important;
-  z-index: 100000 !important;
+  z-index: 999999 !important;
+}
+
+/* Reset inner containers so nested card styles never bleed into them */
+.p-datepicker .p-datepicker-group-container,
+.p-datepicker .p-datepicker-group,
+.p-datepicker .p-datepicker-calendar-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
 }
 
 /* Header with month/year and prev/next navigation */
 .p-datepicker .p-datepicker-header {
   background: transparent !important;
+  border: none !important;
   border-bottom: 1px solid #f3f4f6 !important;
-  padding: 0 0 0.75rem 0 !important;
-  margin-bottom: 0.75rem !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0.125rem 0.25rem 0.625rem 0.25rem !important;
+  margin-bottom: 0.625rem !important;
   color: #111827 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
 }
 
+/* Month and Year title container */
 .p-datepicker .p-datepicker-title {
-  font-size: 0.9375rem !important; /* 15px */
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 0.875rem !important; /* 14px */
   font-weight: 700 !important;
   color: #111827 !important;
   letter-spacing: -0.01em !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 0.35rem !important;
+  gap: 0.25rem !important;
 }
 
 .p-datepicker .p-datepicker-title .p-datepicker-month,
 .p-datepicker .p-datepicker-title .p-datepicker-year {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   font-weight: 700 !important;
   color: #111827 !important;
-  padding: 0.15rem 0.35rem !important;
+  font-size: 0.875rem !important;
+  padding: 0.2rem 0.4rem !important;
   border-radius: 0.375rem !important;
   transition: all 0.15s ease !important;
+  cursor: pointer !important;
 }
 
 .p-datepicker .p-datepicker-title .p-datepicker-month:hover,
 .p-datepicker .p-datepicker-title .p-datepicker-year:hover {
-  background: #f3f4f6 !important;
+  background: #edf5f1 !important;
   color: #175C46 !important;
 }
 
+/* Navigation buttons (prev / next) */
 .p-datepicker .p-datepicker-prev,
 .p-datepicker .p-datepicker-next {
   width: 2rem !important;
@@ -661,6 +723,11 @@ body > .p-datepicker,
   color: #6b7280 !important;
   border: 1px solid #e5e7eb !important;
   background: #ffffff !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
   transition: all 0.15s ease !important;
 }
 
@@ -673,33 +740,58 @@ body > .p-datepicker,
 
 /* Day table */
 .p-datepicker table {
+  width: 100% !important;
+  border-collapse: collapse !important;
   font-size: 0.8125rem !important;
   margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
 }
 
 .p-datepicker table th {
-  padding: 0.5rem 0.25rem !important;
+  padding: 0.375rem 0.25rem !important;
   color: #6b7280 !important;
   font-size: 0.75rem !important;
   font-weight: 600 !important;
+  text-align: center !important;
   text-transform: capitalize !important;
+  border: none !important;
 }
 
 .p-datepicker table td {
-  padding: 0.2rem !important;
+  padding: 0.15rem !important;
+  text-align: center !important;
+  border: none !important;
 }
 
 .p-datepicker table td > span {
-  width: 2.25rem !important;
-  height: 2.25rem !important;
-  border-radius: 0.625rem !important; /* soft rounded square */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 2.125rem !important;
+  height: 2.125rem !important;
+  border-radius: 0.5rem !important; /* soft rounded square */
   color: #374151 !important;
   font-weight: 500 !important;
   font-size: 0.8125rem !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   transition: all 0.15s ease !important;
+  cursor: pointer !important;
 }
 
-.p-datepicker table td > span:hover {
+/* Remove default Lara teal outline ring on focus */
+.p-datepicker table td > span:focus,
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #175C46 !important;
+}
+
+.p-datepicker table td > span:hover,
+.p-datepicker:not(.p-disabled) table td span:not(.p-highlight):not(.p-disabled):hover {
   background: #edf5f1 !important;
   color: #175C46 !important;
 }
@@ -707,9 +799,9 @@ body > .p-datepicker,
 /* Today highlight */
 .p-datepicker table td.p-datepicker-today > span {
   background: #f3f4f6 !important;
-  color: #111827 !important;
+  color: #175C46 !important;
   font-weight: 700 !important;
-  border: 1px solid #e5e7eb !important;
+  border: 1px solid #d1d5db !important;
 }
 
 /* Selected date: brand green */
@@ -732,15 +824,21 @@ body > .p-datepicker,
 .p-datepicker .p-monthpicker,
 .p-datepicker .p-yearpicker {
   margin: 0.5rem 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .p-datepicker .p-monthpicker .p-monthpicker-month,
 .p-datepicker .p-yearpicker .p-yearpicker-year {
-  border-radius: 0.625rem !important;
+  border-radius: 0.5rem !important;
   padding: 0.5rem 0.25rem !important;
   color: #374151 !important;
   font-weight: 500 !important;
-  font-size: 0.875rem !important;
+  font-size: 0.8125rem !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
   transition: all 0.15s ease !important;
 }
 

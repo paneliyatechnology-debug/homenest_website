@@ -411,26 +411,51 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
   const timelineEvents: ComplaintTimelineItem[] = complaint.timeline || [];
 
   return (
-    <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1600px] w-full mx-auto space-y-5 bg-[#F7F7F5] min-h-screen pb-24">
+    <main className="flex-1 px-3 sm:px-6 lg:px-8 py-4 sm:py-5 max-w-[1600px] w-full mx-auto space-y-4 sm:space-y-5 bg-[#F7F7F5] min-h-screen pb-28 sm:pb-24">
       {/* Top Header matching Figma pixel-for-pixel */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <BackButton
-            href={backHref}
-            title={backHref.includes('/residents/') ? 'Back to Resident Details' : 'Back to Complaints'}
-            onClick={handleBackNavigation}
-          />
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
-            Complaint Details
-          </h1>
-          <span className="bg-[#E8F1FD] text-[#2563EB] px-2.5 py-0.5 rounded-md text-xs font-semibold">
-            {complaint.complaint_number || `CMP-${complaint.id}`}
-          </span>
-          <StatusBadge status={complaint.status} />
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="space-y-1.5">
+          {/* Row 1: Back Link + Title + Mobile Update status button */}
+          <div className="flex items-center justify-between sm:justify-start gap-2.5">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <BackButton
+                href={backHref}
+                title={backHref.includes('/residents/') ? 'Back to Resident Details' : 'Back to Complaints'}
+                onClick={handleBackNavigation}
+              />
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 tracking-tight truncate">
+                Complaint Details
+              </h1>
+            </div>
+
+            {/* Mobile-only compact "Update status" button */}
+            <button
+              type="button"
+              onClick={handleOpenStatusDialog}
+              className="sm:hidden inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs font-semibold shadow-xs transition-colors cursor-pointer shrink-0"
+            >
+              <svg className="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+                />
+              </svg>
+              <span>Update status</span>
+            </button>
+          </div>
+
+          {/* Row 2: CMP Number Badge & Status Badge */}
+          <div className="flex items-center gap-2 pl-9 sm:pl-10 flex-wrap">
+            <span className="bg-[#E8F1FD] text-[#2563EB] px-2.5 py-0.5 rounded-md text-xs font-semibold whitespace-nowrap">
+              {complaint.complaint_number || `CMP-${complaint.id}`}
+            </span>
+            <StatusBadge status={complaint.status} />
+          </div>
         </div>
 
-        {/* Top Right "Update status" Action Button */}
-        <div>
+        {/* Desktop-only Top Right "Update status" Action Button */}
+        <div className="hidden sm:block">
           <button
             type="button"
             onClick={handleOpenStatusDialog}
@@ -442,19 +467,19 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       </div>
 
       {/* Main 2-Column Responsive Layout matching Figma */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
         {/* LEFT COLUMN: (approx 7 of 12 cols = ~58%) */}
         <div className="lg:col-span-7 space-y-4">
           {/* Card 1: Banner Header Card with Category Icon */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-4">
-            <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-center gap-3.5 sm:gap-4">
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
               <ComplaintCategoryIcon categoryKey={categoryKey} size="lg" />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight truncate">
+              <h2 className="text-sm sm:text-lg font-bold text-gray-900 tracking-tight truncate">
                 {complaint.title}
               </h2>
-              <div className="flex items-center gap-2.5 mt-1 flex-wrap">
+              <div className="flex items-center gap-2.5 mt-0.5 sm:mt-1 flex-wrap">
                 <span className="text-xs text-gray-500 font-medium">
                   {categoryName}
                 </span>
@@ -463,22 +488,22 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           </div>
 
           {/* Card 2: Complaint Information Card */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4.5">
-            <h3 className="text-sm font-bold text-gray-900 tracking-tight border-b border-gray-100 pb-3">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4 sm:space-y-4.5">
+            <h3 className="text-xs sm:text-sm font-bold text-gray-900 tracking-tight border-b border-gray-100 pb-2.5 sm:pb-3">
               Complaint Information
             </h3>
 
             {/* Description Row */}
             <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 text-xs">
-              <span className="w-28 text-gray-500 font-medium shrink-0">Description</span>
+              <span className="w-24 sm:w-28 text-gray-400 sm:text-gray-500 font-medium shrink-0">Description</span>
               <p className="text-gray-800 leading-relaxed font-normal flex-1">
                 {complaint.description || 'No description provided.'}
               </p>
             </div>
 
             {/* Resident Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs">
-              <span className="w-28 text-gray-500 font-medium shrink-0">Resident</span>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-4 text-xs">
+              <span className="w-24 sm:w-28 text-gray-400 sm:text-gray-500 font-medium shrink-0">Resident</span>
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-[#175C46] text-white flex items-center justify-center text-xs font-semibold shrink-0">
                   {residentName.charAt(0).toUpperCase()}
@@ -494,7 +519,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
 
             {/* Category Row */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs">
-              <span className="w-28 text-gray-500 font-medium shrink-0">Category</span>
+              <span className="w-24 sm:w-28 text-gray-400 sm:text-gray-500 font-medium shrink-0">Category</span>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-gray-900 font-medium">{categoryName}</span>
               </div>
@@ -502,13 +527,13 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
 
             {/* Location Row */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs">
-              <span className="w-28 text-gray-500 font-medium shrink-0">Location</span>
+              <span className="w-24 sm:w-28 text-gray-400 sm:text-gray-500 font-medium shrink-0">Location</span>
               <span className="text-gray-900 font-medium">{locationText}</span>
             </div>
 
             {/* Attachments Section matching Figma */}
-            <div className="pt-2 border-t border-gray-100 space-y-3.5">
-              <div className="flex items-center justify-between">
+            <div className="pt-2 border-t border-gray-100 space-y-3 sm:space-y-3.5">
+              <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-gray-900 tracking-tight">
                     Attachments
@@ -519,15 +544,15 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                 </div>
 
                 {attachments.length > 0 && (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 sm:gap-1.5">
                     <button
                       type="button"
                       onClick={() => handleOpenPreview(0)}
-                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#175C46] hover:text-[#124b38] hover:bg-[#E8F8F0] px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#175C46] hover:text-[#124b38] hover:bg-[#E8F8F0] px-2 sm:px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
                       title="Preview all in full screen lightbox"
                     >
                       <i className="pi pi-eye text-[11px]" />
-                      <span>Preview all</span>
+                      <span className="hidden sm:inline">Preview all</span>
                     </button>
                     <div className="w-[1px] h-3.5 bg-gray-200 mx-0.5" />
                     {/* Grid view icon */}
@@ -786,7 +811,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               />
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-gray-200 hover:border-[#175C46] rounded-xl p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1.5 bg-gray-50/40 hover:bg-[#E8F8F0]/20"
+                className="border-2 border-dashed border-gray-200 hover:border-[#175C46] rounded-xl p-3.5 sm:p-5 text-center cursor-pointer transition-colors flex flex-col items-center justify-center gap-1 sm:gap-1.5 bg-gray-50/40 hover:bg-[#E8F8F0]/20"
               >
                 {isUploadingFile ? (
                   <div className="flex items-center gap-2 text-xs text-[#175C46] font-medium py-1">
@@ -796,18 +821,18 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
                 ) : (
                   <>
                     <div className="flex items-center gap-2 text-gray-400">
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
+                      <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <span className="text-xs font-semibold text-gray-700">
                       Tap to upload photo or video
                     </span>
-                    <span className="text-[11px] text-gray-400">
+                    <span className="text-[10px] sm:text-[11px] text-gray-400">
                       JPG, PNG, MP4, WebM, PDF • Max 50MB
                     </span>
                   </>
@@ -820,32 +845,32 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
         {/* RIGHT COLUMN: (approx 5 of 12 cols = ~42%) */}
         <div className="lg:col-span-5 space-y-4">
           {/* Card 1: Created on & Last Update Dual Boxes */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
             {/* Created on */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 mt-0.5">
-                <i className="pi pi-calendar text-sm" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-start gap-2.5 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 mt-0.5">
+                <i className="pi pi-calendar text-xs sm:text-sm" />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] font-medium text-gray-500 block truncate">
+                <span className="text-[10px] sm:text-[11px] font-medium text-gray-500 block truncate">
                   Created on
                 </span>
-                <span className="text-xs font-bold text-gray-900 block mt-0.5">
+                <span className="text-[11px] sm:text-xs font-bold text-gray-900 block mt-0.5 leading-tight">
                   {formatDetailDateTime(complaint.created_at)}
                 </span>
               </div>
             </div>
 
             {/* Last update */}
-            <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-start gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 mt-0.5">
-                <i className="pi pi-clock text-sm" />
+            <div className="bg-white rounded-2xl border border-gray-100 p-3 sm:p-4 shadow-[0_1px_3px_rgba(0,0,0,0.02)] flex items-start gap-2.5 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0 mt-0.5">
+                <i className="pi pi-clock text-xs sm:text-sm" />
               </div>
               <div className="min-w-0">
-                <span className="text-[11px] font-medium text-gray-500 block truncate">
+                <span className="text-[10px] sm:text-[11px] font-medium text-gray-500 block truncate">
                   Last update
                 </span>
-                <span className="text-xs font-bold text-gray-900 block mt-0.5">
+                <span className="text-[11px] sm:text-xs font-bold text-gray-900 block mt-0.5 leading-tight">
                   {formatDetailDateTime(complaint.updated_at || complaint.created_at)}
                 </span>
               </div>
@@ -853,7 +878,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           </div>
 
           {/* Card 2: Assignment Card with Staff Dropdown */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <h3 className="text-sm font-bold text-gray-900 tracking-tight">
                 Assignment
@@ -905,7 +930,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           </div>
 
           {/* Card 3: Timeline Card matching Figma */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 sm:p-6 shadow-[0_1px_3px_rgba(0,0,0,0.02)] space-y-4">
             <h3 className="text-sm font-bold text-gray-900 tracking-tight border-b border-gray-100 pb-3">
               Timeline
             </h3>
@@ -967,7 +992,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
       </div>
 
       {/* Bottom Sticky Action Bar matching Figma */}
-      <div className="fixed bottom-0 left-0 right-0 lg:left-[265px] xl:left-[275px] bg-white border-t border-gray-200 px-4 sm:px-8 py-3.5 z-40 shadow-lg flex items-center gap-3">
+      <div className="fixed bottom-0 left-0 right-0 lg:left-[265px] xl:left-[275px] bg-white border-t border-gray-200 px-3 sm:px-8 py-2.5 sm:py-3.5 z-40 shadow-lg flex items-center gap-2 sm:gap-3">
         <input
           type="text"
           placeholder="Add update or resolution notes..."
@@ -978,14 +1003,14 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
               handlePostNotes();
             }
           }}
-          className="flex-1 h-11 px-4 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#175C46] focus:bg-white text-gray-800 transition-colors"
+          className="flex-1 h-10 sm:h-11 px-3.5 sm:px-4 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#175C46] focus:bg-white text-gray-800 transition-colors"
         />
 
         <button
           type="button"
           onClick={handlePostNotes}
           disabled={isSubmittingNotes || !bottomNotes.trim()}
-          className="px-5 sm:px-6 h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="px-4 sm:px-6 h-10 sm:h-11 bg-[#175C46] hover:bg-[#124b38] active:bg-[#0e3b2c] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 sm:gap-2"
         >
           {isSubmittingNotes ? (
             <>

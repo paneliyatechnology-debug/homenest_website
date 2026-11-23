@@ -137,7 +137,6 @@ export const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
         modal
         className="p-fluid rounded-2xl overflow-hidden font-sans"
         dismissableMask
-        baseZIndex={1000}
       >
         {loading ? (
           <div className="py-14 flex flex-col items-center justify-center gap-3">

@@ -15,10 +15,10 @@ export function PrimeProvider({ children }: PrimeProviderProps) {
         ripple: true,
         zIndex: {
           modal: 1100,
-          overlay: 100000,
-          menu: 100000,
-          tooltip: 110000,
-          toast: 120000,
+          overlay: 999999,
+          menu: 999999,
+          tooltip: 1000000,
+          toast: 1000001,
         },
       }}
     >

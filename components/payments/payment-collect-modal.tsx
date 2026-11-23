@@ -60,7 +60,6 @@ export const PaymentCollectModal: React.FC<PaymentCollectModalProps> = ({
       modal
       className="payment-collect-modal font-sans"
       dismissableMask
-      baseZIndex={1000}
     >
       {visible && payment && (
         <PaymentCollectContent

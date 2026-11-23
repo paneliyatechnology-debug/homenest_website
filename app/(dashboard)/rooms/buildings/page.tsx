@@ -255,6 +255,8 @@ export default function BuildingsPage() {
         columns={[
           {
             header: 'Building Name',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             cell: (building) => (
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#E8F8F0] text-[#175C46] flex items-center justify-center shrink-0">
@@ -270,6 +272,8 @@ export default function BuildingsPage() {
           },
           {
             header: 'Branch',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             cell: (building) => (
               <span className="text-gray-700 font-medium whitespace-nowrap">
                 {building.branch_name || building.branch_title || '—'}
@@ -278,10 +282,12 @@ export default function BuildingsPage() {
           },
           {
             header: 'Total Floors',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             cell: (building) => {
               const floorCount = building.total_floors ?? building.floors?.length ?? 0;
               return (
-                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#E8F8F0] text-[#175C46]">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-[#E8F8F0] text-[#175C46] whitespace-nowrap">
                   {floorCount} {floorCount === 1 ? 'Floor' : 'Floors'}
                 </span>
               );
@@ -289,6 +295,8 @@ export default function BuildingsPage() {
           },
           {
             header: 'Floors List',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             cell: (building) => {
               const list = building.floors || [];
               if (list.length === 0) {
@@ -304,14 +312,18 @@ export default function BuildingsPage() {
           },
           {
             header: 'Total Rooms',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             cell: (building) => (
-              <span className="text-gray-700 font-medium">
+              <span className="text-gray-700 font-medium whitespace-nowrap">
                 {building.total_rooms ?? 0}
               </span>
             ),
           },
           {
             header: 'Action',
+            headerClassName: 'whitespace-nowrap',
+            className: 'whitespace-nowrap',
             align: 'right',
             cell: (building) => (
               <TableActions>

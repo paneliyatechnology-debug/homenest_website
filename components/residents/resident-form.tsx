@@ -1316,14 +1316,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           {/* STEP 1: Personal & Profile Info */}
           <div className={activeStep === 0 ? 'block space-y-6' : 'hidden'}>
             <div className="border-b border-gray-100 pb-4">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-                  Step 1 of 4
-                </span>
-                <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-                  Personal Information & Room Allocation
-                </h2>
-              </div>
+              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                Personal Information & Room Allocation
+              </h2>
               <p className="text-xs text-gray-500 mt-1">
                 Enter resident personal details, assign PG branch, and choose a room.
               </p>
@@ -1779,14 +1774,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       {/* STEP 2: Address & Emergency Contacts */}
       <div className={activeStep === 1 ? 'block space-y-6' : 'hidden'}>
         <div className="border-b border-gray-100 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-              Step 2 of 4
-            </span>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Address & Emergency Contacts
-            </h2>
-          </div>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+            Address & Emergency Contacts
+          </h2>
           <p className="text-xs text-gray-500 mt-1">
             Enter permanent residential address and emergency contact details.
           </p>
@@ -1918,14 +1908,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       {/* STEP 3: Room Stay & Financials */}
       <div className={activeStep === 2 ? 'block space-y-6' : 'hidden'}>
         <div className="border-b border-gray-100 pb-4">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-              Step 3 of 4
-            </span>
-            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-              Stay Duration & Financial Agreement
-            </h2>
-          </div>
+          <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+            Stay Duration & Financial Agreement
+          </h2>
           <p className="text-xs text-gray-500 mt-1">
             Confirm bed assignment, monthly rental fee, and refundable deposit terms.
           </p>
@@ -2006,14 +1991,9 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       <div className={activeStep === 3 ? 'block space-y-6' : 'hidden'}>
         <div className="border-b border-gray-100 pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EBF7F2] text-[#175C46]">
-                Step 4 of 4
-              </span>
-              <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
-                Resident Documents & Digital Signature
-              </h2>
-            </div>
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+              Resident Documents & Digital Signature
+            </h2>
             <p className="text-xs text-gray-500 mt-1">
               Upload resident identification proof, tenant agreement, and signature files.
             </p>

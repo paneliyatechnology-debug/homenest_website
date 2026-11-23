@@ -104,14 +104,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* 5 Metrics Summary Cards Row in exact sequence matching Figma in 1 horizontal row */}
-      <div
-        className="metric-cards-row gap-2 sm:gap-2.5 lg:gap-3 xl:gap-4 w-full"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-        }}
-      >
+      {/* 5 Metrics Summary Cards Row: 2 cols on mobile, 3 cols on tablet, 5 cols on desktop */}
+      <div className="metric-cards-row grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 lg:gap-3.5 xl:gap-4 w-full">
         {/* 1. Total Residents */}
         <MetricCard
           title="Total Residents"
@@ -168,6 +162,7 @@ export default function DashboardPage() {
 
         {/* 5. Open Complaints */}
         <MetricCard
+          className="col-span-2 sm:col-span-2 lg:col-span-1"
           title="Open complaints"
           data={metrics.open_complaints}
           iconBgColor="bg-[#FCE8E6] text-[#C5221F]"
