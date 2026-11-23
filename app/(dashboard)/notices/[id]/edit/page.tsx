@@ -27,8 +27,8 @@ export default function EditNoticePage() {
       .getNoticeById(noticeId)
       .then((data) => {
         if (!isMounted) return;
-        if (!data) {
-          router.push('/notices');
+        if (!data || String(data.status || '').toLowerCase() === 'sent') {
+          router.replace('/notices');
           return;
         }
         setNotice(data);

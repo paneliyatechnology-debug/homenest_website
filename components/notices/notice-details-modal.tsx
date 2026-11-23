@@ -393,11 +393,18 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
               {onEditNotice && (
                 <button
                   type="button"
+                  disabled={String(current.status || '').toLowerCase() === 'sent'}
                   onClick={() => {
+                    if (String(current.status || '').toLowerCase() === 'sent') return;
                     onHide();
                     onEditNotice(current);
                   }}
-                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer"
+                  title={
+                    String(current.status || '').toLowerCase() === 'sent'
+                      ? 'Sent notices cannot be edited'
+                      : 'Edit Notice'
+                  }
+                  className="px-4 py-2 text-xs font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white"
                 >
                   Edit Notice
                 </button>

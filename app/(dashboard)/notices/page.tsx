@@ -169,6 +169,7 @@ export default function NoticesPage() {
 
   const handleEdit = useCallback(
     (item: Notice) => {
+      if (String(item.status || '').toLowerCase() === 'sent') return;
       router.push(`/notices/${item.id}/edit`);
     },
     [router]
@@ -352,40 +353,44 @@ export default function NoticesPage() {
         header: 'Action',
         width: '160px',
         align: 'right',
-        cell: (item) => (
-          <TableActions>
-            <IconButton
-              variant="view"
-              title="View Notice Details"
-              onClick={() => handleView(item)}
-            />
-            <IconButton
-              variant="edit"
-              title="Edit Notice"
-              onClick={() => handleEdit(item)}
-            />
-            <button
-              type="button"
-              title={item.status === 'sent' ? 'Resend Notice' : 'Send Notice Now'}
-              disabled={sendingNoticeId === item.id}
-              onClick={() => handleSendNotice(item.id)}
-              className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-[#175C46] hover:border-emerald-300 hover:bg-emerald-50/50 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
-            >
-              {sendingNoticeId === item.id ? (
-                <div className="w-3.5 h-3.5 border-2 border-[#175C46] border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-              )}
-            </button>
-            <IconButton
-              variant="delete"
-              title="Delete Notice"
-              onClick={() => handleDeleteClick(item)}
-            />
-          </TableActions>
-        ),
+        cell: (item) => {
+          const isSent = String(item.status || '').toLowerCase() === 'sent';
+          return (
+            <TableActions>
+              <IconButton
+                variant="view"
+                title="View Notice Details"
+                onClick={() => handleView(item)}
+              />
+              <IconButton
+                variant="edit"
+                title={isSent ? 'Sent notices cannot be edited' : 'Edit Notice'}
+                disabled={isSent}
+                onClick={isSent ? undefined : () => handleEdit(item)}
+              />
+              <button
+                type="button"
+                title={item.status === 'sent' ? 'Resend Notice' : 'Send Notice Now'}
+                disabled={sendingNoticeId === item.id}
+                onClick={() => handleSendNotice(item.id)}
+                className="w-8 h-8 rounded-lg border border-gray-200 bg-white text-gray-600 hover:text-[#175C46] hover:border-emerald-300 hover:bg-emerald-50/50 flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {sendingNoticeId === item.id ? (
+                  <div className="w-3.5 h-3.5 border-2 border-[#175C46] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )}
+              </button>
+              <IconButton
+                variant="delete"
+                title="Delete Notice"
+                onClick={() => handleDeleteClick(item)}
+              />
+            </TableActions>
+          );
+        },
       },
     ],
     [currentPage, meta.limit, sendingNoticeId, handleEdit, handleSendNotice, handleView, handleDeleteClick]
@@ -581,7 +586,10 @@ export default function NoticesPage() {
         }}
         notice={selectedNotice}
         onNoticeSent={() => setRefreshKey((k) => k + 1)}
-        onEditNotice={(n) => router.push(`/notices/${n.id}/edit`)}
+        onEditNotice={(n) => {
+          if (String(n.status || '').toLowerCase() === 'sent') return;
+          router.push(`/notices/${n.id}/edit`);
+        }}
       />
 
       {/* Delete Confirmation Modal */}
