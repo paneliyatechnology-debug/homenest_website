@@ -551,7 +551,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
       }
 
       // Successfully saved! Note: apiClient automatically displays backend response toast message.
-      router.push('/dashboard/visitors');
+      router.push('/visitors');
     } catch (err) {
       console.warn('Visitor form submission failed:', err);
       // apiClient handles toast error display automatically
@@ -600,7 +600,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
     <main className="flex-1 px-4 sm:px-6 lg:px-8 py-5 max-w-[1400px] w-full mx-auto space-y-6 bg-[#F7F7F5] min-h-screen">
       {/* Page Header */}
       <PageHeader
-        backHref="/dashboard/visitors"
+        backHref="/visitors"
         backTitle="Back to Visitor Records"
         title={isEdit ? 'Edit Visitor' : 'Add Visitor'}
         subtitle={isEdit ? 'Update visitor details and access pass.' : 'Add a new visitor.'}

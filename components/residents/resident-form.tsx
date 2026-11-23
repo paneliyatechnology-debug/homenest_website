@@ -1190,11 +1190,11 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       if (mode === 'create') {
         await residentService.createResident(fd);
         resetAllFields();
-        router.push('/dashboard/residents');
+        router.push('/residents');
       } else if (residentId) {
         await residentService.updateResident(residentId, fd);
         resetAllFields();
-        router.push('/dashboard/residents');
+        router.push('/residents');
       }
     } catch (err: unknown) {
       console.error('Failed to save resident:', err);
@@ -1222,7 +1222,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       <PageHeader
         title={mode === 'edit' ? 'Edit Resident Profile' : 'Create New Resident'}
         subtitle={mode === 'edit' ? 'Update resident information and room allocation.' : 'Create a new resident.'}
-        backHref="/dashboard/residents"
+        backHref="/residents"
         onBackClick={() => {
           if (mode === 'create') {
             resetAllFields();

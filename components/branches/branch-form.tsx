@@ -174,7 +174,7 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
         resetForm();
       }
 
-      router.push('/dashboard/settings/branches');
+      router.push('/settings/branches');
       router.refresh();
     } catch {
       // Backend error toast is handled automatically by apiClient; input data is preserved
@@ -197,7 +197,7 @@ export const BranchForm: React.FC<BranchFormProps> = ({ initialData, mode }) => 
       <PageHeader
         title={isEdit ? 'Edit Branch' : 'Add Branch'}
         subtitle={isEdit ? 'Update branch details.' : 'Add a new Branch.'}
-        backHref="/dashboard/settings/branches"
+        backHref="/settings/branches"
         backTitle="Back to Branch Management"
         onBackClick={() => {
           if (!isEdit) resetForm();

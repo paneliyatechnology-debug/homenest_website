@@ -221,7 +221,7 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
         resetForm();
       }
 
-      router.push('/dashboard/rooms/buildings');
+      router.push('/rooms/buildings');
       router.refresh();
     } catch {
       // Handled by apiClient toast
@@ -243,7 +243,7 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
       <PageHeader
         title={isEdit ? 'Edit Building' : 'Add new building'}
         subtitle={isEdit ? 'Update building and floor configuration.' : 'Create a new building and configure its floors.'}
-        backHref="/dashboard/rooms/buildings"
+        backHref="/rooms/buildings"
         backTitle="Back to Buildings"
         onBackClick={() => {
           if (!isEdit) resetForm();

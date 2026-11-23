@@ -314,7 +314,7 @@ export default function ServiceAndLaundryRequestsPage() {
             <IconButton
               variant="edit"
               title="Edit Request"
-              onClick={() => router.push(`/dashboard/settings/services/${item.id}/edit`)}
+              onClick={() => router.push(`/settings/services/${item.id}/edit`)}
             />
             <button
               type="button"
@@ -379,7 +379,7 @@ export default function ServiceAndLaundryRequestsPage() {
           </button>
 
           <Link
-            href="/dashboard/settings/services/new"
+            href="/settings/services/new"
             className="h-11 px-5 rounded-xl bg-[#175C46] hover:bg-[#124b38] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -514,7 +514,7 @@ export default function ServiceAndLaundryRequestsPage() {
           setSelectedRequest(null);
         }}
         request={selectedRequest}
-        onEdit={(req) => router.push(`/dashboard/settings/services/${req.id}/edit`)}
+        onEdit={(req) => router.push(`/settings/services/${req.id}/edit`)}
         onUpdateStatus={(req) => handleOpenStatusModal(req)}
         onAssignStaff={(req) => handleOpenAssignModal(req)}
       />

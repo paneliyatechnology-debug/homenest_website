@@ -352,7 +352,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
         resetForm();
       }
 
-      router.push('/dashboard/settings/staff');
+      router.push('/settings/staff');
       router.refresh();
     } catch {
       // Backend error toast is handled automatically by apiClient; input data is preserved
@@ -375,7 +375,7 @@ export const StaffForm: React.FC<StaffFormProps> = ({ initialData, mode }) => {
       <PageHeader
         title={isEdit ? 'Edit Staff' : 'Add Staff'}
         subtitle={isEdit ? 'Update staff details.' : 'Add a new staff.'}
-        backHref="/dashboard/settings/staff"
+        backHref="/settings/staff"
         backTitle="Back to Staff Management"
         onBackClick={() => {
           if (!isEdit) resetForm();

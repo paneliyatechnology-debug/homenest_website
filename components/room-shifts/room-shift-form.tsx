@@ -393,7 +393,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
         await roomShiftService.createShift(payload);
       }
 
-      router.push('/dashboard/settings/room-shifts');
+      router.push('/settings/room-shifts');
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'message' in err
@@ -409,7 +409,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <BackButton href="/dashboard/settings/room-shifts" />
+        <BackButton href="/settings/room-shifts" />
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
             {isEdit ? 'Edit Room Shift Request' : 'Add New Room Shift Request'}

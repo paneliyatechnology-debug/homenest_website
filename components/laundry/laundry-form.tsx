@@ -371,7 +371,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
         });
       }
 
-      router.push('/dashboard/settings/services');
+      router.push('/settings/services');
     } catch {
       // apiClient handles backend error alerts
     } finally {
@@ -412,7 +412,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
       {/* Top Header matching Figma pixel-for-pixel */}
       <div className="flex items-center gap-3">
         <Link
-          href="/dashboard/settings/services"
+          href="/settings/services"
           className="w-9 h-9 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-700 transition-colors shadow-2xs"
           title="Back to Requests"
         >

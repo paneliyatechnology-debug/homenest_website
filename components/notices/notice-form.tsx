@@ -397,7 +397,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
         }
       }
 
-      router.push('/dashboard/notices');
+      router.push('/notices');
     } catch {
       // apiClient handles backend errors automatically
     } finally {
@@ -420,7 +420,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
       {/* Top Header */}
       <div className="flex items-center gap-3">
         <Link
-          href="/dashboard/notices"
+          href="/notices"
           className="w-9 h-9 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 flex items-center justify-center text-gray-700 transition-colors shadow-2xs"
           title="Back to Notices"
         >

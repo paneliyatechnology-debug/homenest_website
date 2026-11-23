@@ -37,12 +37,12 @@ function isSubmenuItemActive(
   // 1. Exact match is always active
   if (currentPath === subHref) return true;
 
-  // 2. Settings root /dashboard/settings defaults to staff management
-  if (subHref === '/dashboard/settings/staff' && currentPath === '/dashboard/settings') {
+  // 2. Settings root /settings defaults to staff management
+  if (subHref === '/settings/staff' && currentPath === '/settings') {
     return true;
   }
 
-  // 3. Sub-route prefix matching (e.g. /dashboard/residents/123 under /dashboard/residents)
+  // 3. Sub-route prefix matching (e.g. /residents/123 under /residents)
   // Must match with a trailing slash to avoid partial string matches
   if (!currentPath.startsWith(subHref + '/')) {
     return false;
@@ -50,10 +50,10 @@ function isSubmenuItemActive(
 
   // 4. If another sibling in the same group is a more specific match, this one is not active.
   // For example:
-  // - subHref = '/dashboard/payments'
-  // - currentPath = '/dashboard/payments/history'
-  // - Sibling '/dashboard/payments/history' is longer and matches currentPath.
-  // Therefore, '/dashboard/payments' is NOT active.
+  // - subHref = '/payments'
+  // - currentPath = '/payments/history'
+  // - Sibling '/payments/history' is longer and matches currentPath.
+  // Therefore, '/payments' is NOT active.
   const hasMoreSpecificSibling = siblings.some(
     (sibling) =>
       sibling.href !== subHref &&
@@ -111,7 +111,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Residents',
-      href: '/dashboard/residents',
+      href: '/residents',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -120,34 +120,34 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Rooms',
-      href: '/dashboard/rooms',
+      href: '/rooms',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v11m0-4h18m0-7v11M3 11a3 3 0 013-3h3a3 3 0 013 3v3H3v-3z" />
         </svg>
       ),
       children: [
-        { label: 'Buildings & Floors', href: '/dashboard/rooms/buildings' },
-        { label: 'Room Inventory', href: '/dashboard/rooms' },
-        { label: 'Room Details & Allocation', href: '/dashboard/rooms/allocation' },
+        { label: 'Buildings & Floors', href: '/rooms/buildings' },
+        { label: 'Room Inventory', href: '/rooms' },
+        { label: 'Room Details & Allocation', href: '/rooms/allocation' },
       ],
     },
     {
       label: 'Payments',
-      href: '/dashboard/payments',
+      href: '/payments',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 14h6m-6-4h6m-9 9l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14z" />
         </svg>
       ),
       children: [
-        { label: 'Payment Overview', href: '/dashboard/payments' },
-        { label: 'Payment History & Receipts', href: '/dashboard/payments/history' },
+        { label: 'Payment Overview', href: '/payments' },
+        { label: 'Payment History & Receipts', href: '/payments/history' },
       ],
     },
     {
       label: 'Complaints',
-      href: '/dashboard/complaints',
+      href: '/complaints',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6-4h6m-9 14h6.5M16 20.5l4-4a2.121 2.121 0 00-3-3l-4 4v3h3zM5 20V4a2 2 0 012-2h10a2 2 0 012 2v7" />
@@ -156,7 +156,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Visitors',
-      href: '/dashboard/visitors',
+      href: '/visitors',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <circle cx="12" cy="4" r="2" />
@@ -166,7 +166,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Notices',
-      href: '/dashboard/notices',
+      href: '/notices',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -175,7 +175,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Food Menu',
-      href: '/dashboard/food-menu',
+      href: '/food-menu',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
@@ -184,7 +184,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
     },
     {
       label: 'Settings',
-      href: '/dashboard/settings',
+      href: '/settings',
       icon: (
         <svg className="w-[18px] h-[18px] shrink-0 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -192,20 +192,20 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         </svg>
       ),
       children: [
-        { label: 'Staff Management', href: '/dashboard/settings/staff' },
-        { label: 'Branch Management', href: '/dashboard/settings/branches' },
-        { label: 'Administrative Activity Log', href: '/dashboard/settings/activity-log' },
-        { label: 'Checkout & Refund Approvals', href: '/dashboard/settings/refunds' },
-        { label: 'Room Shift Request', href: '/dashboard/settings/room-shifts' },
+        { label: 'Staff Management', href: '/settings/staff' },
+        { label: 'Branch Management', href: '/settings/branches' },
+        { label: 'Administrative Activity Log', href: '/settings/activity-log' },
+        { label: 'Checkout & Refund Approvals', href: '/settings/refunds' },
+        { label: 'Room Shift Request', href: '/settings/room-shifts' },
       ],
     },
   ];
 
   // Determine which menu is automatically open based on the current pathname
   const getActiveParentMenu = (path: string): string | null => {
-    if (path.startsWith('/dashboard/rooms')) return 'Rooms';
-    if (path.startsWith('/dashboard/payments')) return 'Payments';
-    if (path.startsWith('/dashboard/settings')) return 'Settings';
+    if (path.startsWith('/rooms')) return 'Rooms';
+    if (path.startsWith('/payments')) return 'Payments';
+    if (path.startsWith('/settings')) return 'Settings';
     return null;
   };
 
@@ -244,7 +244,7 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       label: 'Admin Profile',
       icon: 'pi pi-user',
       command: () => {
-        router.push('/dashboard/profile');
+        router.push('/profile');
       },
     },
     {

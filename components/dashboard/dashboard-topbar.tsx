@@ -63,7 +63,7 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
       label: 'Admin Profile',
       icon: 'pi pi-user',
       command: () => {
-        router.push('/dashboard/profile');
+        router.push('/profile');
       },
     },
     {

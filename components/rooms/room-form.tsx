@@ -390,7 +390,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
         resetForm();
       }
 
-      router.push('/dashboard/rooms');
+      router.push('/rooms');
       router.refresh();
     } catch {
       // Backend error toast handled automatically by apiClient
@@ -431,7 +431,7 @@ export const RoomForm: React.FC<RoomFormProps> = ({ initialData, mode }) => {
       <PageHeader
         title={isEdit ? 'Edit Room' : 'Add new room'}
         subtitle={isEdit ? 'Update room details.' : 'Add a new room.'}
-        backHref="/dashboard/rooms"
+        backHref="/rooms"
         backTitle="Back to Room Inventory"
         onBackClick={() => {
           if (!isEdit) resetForm();
