@@ -457,9 +457,8 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                 if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
               }}
               placeholder="Enter notice title"
-              className={`w-full h-11 px-3.5 rounded-xl border text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] ${
-                errors.title ? 'border-red-400 bg-red-50/20' : 'border-gray-200'
-              }`}
+              className={`w-full h-11 px-3.5 rounded-xl border text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-all focus:outline-none focus:ring-2 focus:ring-[#175C46]/20 focus:border-[#175C46] ${errors.title ? 'border-red-400 bg-red-50/20' : 'border-gray-200'
+                }`}
             />
             {errors.title && (
               <p className="text-[11px] text-red-500 mt-1 font-medium">{errors.title}</p>
@@ -667,9 +666,8 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
               Content <span className="text-red-500">*</span>
             </label>
             <div
-              className={`rounded-xl border transition-all overflow-hidden ${
-                errors.content ? 'border-red-400 bg-red-50/20' : 'border-gray-200'
-              }`}
+              className={`rounded-xl border transition-all overflow-hidden ${errors.content ? 'border-red-400 bg-red-50/20' : 'border-gray-200'
+                }`}
             >
               {/* Toolbar */}
               <div className="flex items-center gap-1 px-3 py-2 border-b border-gray-100 bg-gray-50/60 text-gray-600">
