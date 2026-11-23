@@ -6,6 +6,7 @@ import {
   parseDateString,
   formatDateForApi,
   formatDateToDDMMYYYY,
+  formatDateTimeToDDMMYYYY,
   toInputDate,
   isDateValid,
 } from '@/lib/date-utils';
@@ -14,6 +15,7 @@ export {
   parseDateString,
   formatDateForApi,
   formatDateToDDMMYYYY,
+  formatDateTimeToDDMMYYYY,
   toInputDate,
   isDateValid,
 };

@@ -24,6 +24,7 @@ import {
   DeleteConfirmationModal,
   ClearFilterButton,
   formatDateToDDMMYYYY,
+  formatDateTimeToDDMMYYYY,
 } from '@/components/ui';
 
 type NoticeTab = 'all' | 'draft' | 'scheduled' | 'sent';
@@ -328,12 +329,12 @@ export default function NoticesPage() {
       {
         key: 'schedule_date',
         header: 'Schedule Date',
-        width: '160px',
+        width: '190px',
         cell: (item) => {
-          const raw = item.schedule_date || item.scheduled_at || item.date_time;
+          const raw = item.schedule_date || item.scheduled_at || item.sent_at || item.date_time || item.created_at;
           return (
-            <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
-              {formatDateToDDMMYYYY(raw) || '—'}
+            <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap font-medium">
+              {formatDateTimeToDDMMYYYY(raw, (item as any).schedule_time)}
             </span>
           );
         },

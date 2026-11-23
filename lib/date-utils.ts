@@ -131,6 +131,90 @@ export function formatDateToDDMMYYYY(dateInput?: string | Date | null): string {
 }
 
 /**
+ * Formats any date string or Date object to DD-MM-YYYY, hh:mm A with time if available,
+ * or DD-MM-YYYY if no time component exists.
+ */
+export function formatDateTimeToDDMMYYYY(
+  dateInput?: string | Date | null,
+  timeInput?: string | null
+): string {
+  if (!dateInput && !timeInput) return '—';
+
+  let str = (
+    dateInput instanceof Date
+      ? dateInput.toISOString()
+      : dateInput
+      ? String(dateInput)
+      : ''
+  ).trim();
+
+  if (str === '-' || str === '—' || !str) {
+    if (!timeInput) return '—';
+    str = '';
+  }
+
+  // Replace bullet points or separator characters
+  str = str.replace(/•/g, ' ').trim();
+
+  // If timeInput is provided separately and not already in str
+  if (timeInput && !str.includes(':')) {
+    str = `${str} ${timeInput.trim()}`.trim();
+  }
+
+  // Check if string has explicit time part with AM/PM (e.g. "23 Nov 2026, 04:09 PM" or "23-11-2026 04:09 PM")
+  const ampmMatch = str.match(/(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)/i);
+  let timeStr = '';
+  if (ampmMatch) {
+    const hh = ampmMatch[1].padStart(2, '0');
+    const mm = ampmMatch[2];
+    const ampm = ampmMatch[3].toUpperCase();
+    timeStr = `${hh}:${mm} ${ampm}`;
+  } else {
+    // Check for 24-hour time e.g. 16:09 or 16:09:00 (avoid matching timezone Z)
+    const time24Match = str.match(/(?:[T\s,]|^)(\d{1,2}):(\d{2})(?::\d{2})?(?:\s|$)/);
+    if (time24Match && !str.includes('Z')) {
+      let hours = parseInt(time24Match[1], 10);
+      const mm = time24Match[2];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      timeStr = `${String(hours).padStart(2, '0')}:${mm} ${ampm}`;
+    }
+  }
+
+  // Check if starts with DD-MM-YYYY or DD/MM/YYYY
+  const ddmmyyyy = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (ddmmyyyy) {
+    const day = ddmmyyyy[1].padStart(2, '0');
+    const month = ddmmyyyy[2].padStart(2, '0');
+    const year = ddmmyyyy[3];
+    return timeStr ? `${day}-${month}-${year}, ${timeStr}` : `${day}-${month}-${year}`;
+  }
+
+  // Try Date parsing (for ISO strings, standard formats like '23 Nov 2026, 04:09 PM', etc.)
+  const d = new Date(str.includes(',') && !str.match(/[a-zA-Z]/) ? str.replace(',', '') : str);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    if (!timeStr) {
+      const hasTime = str.includes('T') || str.match(/\d{1,2}:\d{2}/);
+      if (hasTime) {
+        let hours = d.getHours();
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        timeStr = `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
+      }
+    }
+    return timeStr ? `${day}-${month}-${year}, ${timeStr}` : `${day}-${month}-${year}`;
+  }
+
+  return str;
+}
+
+/**
  * Checks whether a given Date or date string is valid.
  */
 export function isDateValid(dateInput?: string | Date | null): boolean {

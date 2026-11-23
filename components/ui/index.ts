@@ -47,6 +47,7 @@ export type { BrandLoaderProps } from './brand-loader';
 export {
   AppDatePicker,
   formatDateToDDMMYYYY,
+  formatDateTimeToDDMMYYYY,
   formatDateForApi,
   parseDateString,
   toInputDate,

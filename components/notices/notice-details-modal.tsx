@@ -4,7 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { Dialog } from 'primereact/dialog';
 import { Notice } from '@/types/notice';
 import { noticeService } from '@/services/notice.service';
-import { StatusBadge, ModalHeader, AttachmentPreviewModal, formatDateToDDMMYYYY } from '@/components/ui';
+import {
+  StatusBadge,
+  ModalHeader,
+  AttachmentPreviewModal,
+  formatDateToDDMMYYYY,
+  formatDateTimeToDDMMYYYY,
+} from '@/components/ui';
 import {
   resolveFileUrl,
   formatFileSize,
@@ -189,7 +195,9 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
                   Schedule Date
                 </span>
                 <span className="text-gray-800 font-medium">
-                  {formatDateToDDMMYYYY(current.schedule_date || current.date_time || current.scheduled_at) || '—'}
+                  {formatDateTimeToDDMMYYYY(
+                    current.schedule_date || current.scheduled_at || current.date_time || current.created_at
+                  )}
                 </span>
               </div>
               <div>
@@ -198,9 +206,9 @@ export const NoticeDetailsModal: React.FC<NoticeDetailsModalProps> = ({
                 </span>
                 <span className="text-gray-800 font-medium">
                   {current.sent_at
-                    ? formatDateToDDMMYYYY(current.sent_at)
+                    ? formatDateTimeToDDMMYYYY(current.sent_at)
                     : current.status === 'sent'
-                    ? formatDateToDDMMYYYY(current.date_time) || 'Sent'
+                    ? formatDateTimeToDDMMYYYY(current.date_time || current.schedule_date) || 'Sent'
                     : 'Not sent yet'}
                 </span>
               </div>
