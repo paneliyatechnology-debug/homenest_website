@@ -281,12 +281,12 @@ export const DashboardSidebar: React.FC<SidebarProps> = React.memo(({
         {/* Top Header with Brand Logo */}
         <div className="pt-6 px-5 pb-5">
           <div className="flex items-center gap-2.5">
-            <div className="relative w-7 h-7 shrink-0">
+            <div className="relative w-8 h-7 shrink-0">
               <Image
                 src="/images/mypgpms-icon.png"
                 alt="MYPGPMS Logo"
                 fill
-                className="object-contain brightness-0 invert"
+                className="object-contain"
                 priority
               />
             </div>

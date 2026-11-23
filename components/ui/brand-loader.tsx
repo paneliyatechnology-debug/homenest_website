@@ -38,7 +38,7 @@ export const BrandLoader: React.FC<BrandLoaderProps> = ({
           className={`relative ${containerSize} rounded-2xl bg-white shadow-md border border-gray-100/90 flex items-center justify-center p-2.5 transition-transform`}
         >
           <Image
-            src="/images/mypgpms-icon.png"
+            src="/images/mypgpms-icon-green.png"
             alt="MYPGPMS Logo"
             width={iconDimension}
             height={iconDimension}

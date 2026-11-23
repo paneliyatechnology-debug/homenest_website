@@ -38,12 +38,12 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
       {/* Top Header: Logo & Sub-Brand */}
       <div className="relative z-10 flex flex-col items-start">
         <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0">
+          <div className="relative w-9 h-8 sm:w-10 sm:h-9 shrink-0">
             <Image
               src="/images/mypgpms-icon.png"
               alt="MYPGPMS Logo"
               fill
-              className="object-contain brightness-0 invert"
+              className="object-contain"
               priority
             />
           </div>
