@@ -37,16 +37,21 @@ export const AdminHeroBanner: React.FC<AdminHeroBannerProps> = ({
 
       {/* Top Header: Logo & Sub-Brand */}
       <div className="relative z-10 flex flex-col items-start">
-        <div className="relative w-32 sm:w-40 lg:w-44 h-7 sm:h-9 lg:h-10">
-          <Image
-            src={logoSrc}
-            alt="HomeNest Logo"
-            fill
-            className="object-contain object-left"
-            priority
-          />
+        <div className="flex items-center gap-2.5">
+          <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0">
+            <Image
+              src="/images/mypgpms-icon.png"
+              alt="MYPGPMS Logo"
+              fill
+              className="object-contain brightness-0 invert"
+              priority
+            />
+          </div>
+          <span className="text-2xl sm:text-[26px] font-bold tracking-tight text-white font-sans">
+            MYPGPMS
+          </span>
         </div>
-        <span className="text-[11px] sm:text-xs lg:text-sm font-medium tracking-wide text-white/95 mt-0.5 pl-0.5">
+        <span className="text-[11px] sm:text-xs lg:text-sm font-medium tracking-wide text-white/95 mt-1 pl-0.5">
           {portalName}
         </span>
       </div>

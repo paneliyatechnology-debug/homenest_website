@@ -4,8 +4,8 @@ import { AdminHeroBanner } from '@/components/auth/admin-hero-banner';
 import { ForgotPasswordForm } from '@/components/auth/forgot-password-form';
 
 export const metadata: Metadata = {
-  title: 'HomeNest',
-  description: 'Recover your HomeNest Admin account password.',
+  title: 'MYPGPMS',
+  description: 'Recover your MYPGPMS Admin account password.',
 };
 
 export default function ForgotPasswordPage() {

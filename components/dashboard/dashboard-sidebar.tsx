@@ -278,16 +278,21 @@ export const DashboardSidebar: React.FC<SidebarProps> = React.memo(({
           isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
-        {/* Top Header with HomeNest Brand Logo */}
+        {/* Top Header with Brand Logo */}
         <div className="pt-6 px-5 pb-5">
-          <div className="relative w-36 h-8">
-            <Image
-              src="/images/logo-white.png"
-              alt="HomeNest Logo"
-              fill
-              className="object-contain object-left"
-              priority
-            />
+          <div className="flex items-center gap-2.5">
+            <div className="relative w-7 h-7 shrink-0">
+              <Image
+                src="/images/mypgpms-icon.png"
+                alt="MYPGPMS Logo"
+                fill
+                className="object-contain brightness-0 invert"
+                priority
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white font-sans">
+              MYPGPMS
+            </span>
           </div>
           <span className="text-[11px] font-medium tracking-wide text-white/80 block mt-1 pl-0.5">
             Admin Portal

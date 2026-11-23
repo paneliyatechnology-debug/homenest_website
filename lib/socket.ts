@@ -5,7 +5,7 @@ import { getAccessToken } from '@/lib/cookies';
 import { config } from '@/lib/config';
 
 /**
- * Socket.IO Event Constants matching the HomeNest Backend Event Catalog
+ * Socket.IO Event Constants matching the MYPGPMS Backend Event Catalog
  */
 export const SOCKET_EVENTS = {
   // Maintenance & Complaints
@@ -90,7 +90,7 @@ let currentToken: string | null = null;
 
 /**
  * Initialize and establish a WebSocket connection via Socket.IO
- * Adheres strictly to the HomeNest WebSocket documentation.
+ * Adheres strictly to the MYPGPMS WebSocket documentation.
  */
 export const initializeSocket = (token?: string): Socket | null => {
   if (typeof window === 'undefined') return null;

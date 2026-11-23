@@ -4,8 +4,8 @@ import { AdminHeroBanner } from '@/components/auth/admin-hero-banner';
 import { ResetPasswordForm } from '@/components/auth/reset-password-form';
 
 export const metadata: Metadata = {
-  title: 'HomeNest',
-  description: 'Set a new password for your HomeNest Admin account.',
+  title: 'MYPGPMS',
+  description: 'Set a new password for your MYPGPMS Admin account.',
 };
 
 export default function ResetPasswordPage() {

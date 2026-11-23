@@ -1,5 +1,5 @@
 /**
- * HomeNest Core Date Utilities
+ * MYPGPMS Core Date Utilities
  * Centralized date parsing, formatting, and conversion functions.
  */
 

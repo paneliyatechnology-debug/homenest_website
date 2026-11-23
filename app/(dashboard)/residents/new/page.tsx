@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { ResidentForm } from '@/components/residents/resident-form';
 
 export const metadata: Metadata = {
-  title: 'Create Resident | HomeNest Admin',
+  title: 'Create Resident | MYPGPMS Admin',
   description: 'Add a new resident profile and assign room details.',
 };
 

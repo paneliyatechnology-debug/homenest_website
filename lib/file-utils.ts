@@ -1,5 +1,5 @@
 /**
- * HomeNest Core File Utilities
+ * MYPGPMS Core File Utilities
  * Centralized file url resolution, size formatting, and MIME/extension checkers.
  */
 
@@ -99,10 +99,10 @@ export function getAttachmentDisplayName(fileName?: string, index?: number): str
     const typeLabel = ['PNG', 'JPG', 'JPEG', 'WEBP', 'GIF', 'SVG'].includes(ext)
       ? 'Screenshot'
       : ['MP4', 'WEBM', 'MOV', 'M4V', 'MKV', 'OGG', 'AVI', '3GP'].includes(ext)
-      ? 'Video'
-      : ext === 'PDF'
-      ? 'Document'
-      : 'Attachment';
+        ? 'Video'
+        : ext === 'PDF'
+          ? 'Document'
+          : 'Attachment';
     return `${typeLabel} ${(index ?? 0) + 1}`;
   }
 

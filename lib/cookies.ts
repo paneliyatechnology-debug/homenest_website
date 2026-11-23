@@ -1,8 +1,8 @@
 import { AuthData, User } from '@/types/auth';
 
-const ACCESS_TOKEN_KEY = 'homenest_access_token';
-const REFRESH_TOKEN_KEY = 'homenest_refresh_token';
-const USER_KEY = 'homenest_user';
+const ACCESS_TOKEN_KEY = 'mypgpms_access_token';
+const REFRESH_TOKEN_KEY = 'mypgpms_refresh_token';
+const USER_KEY = 'mypgpms_user';
 
 export function setCookie(name: string, value: string, days = 7): void {
   if (typeof document === 'undefined') return;
@@ -58,15 +58,15 @@ export function setAuthCookies(data: AuthData, rememberMe = true): void {
 }
 
 export function getAccessToken(): string | null {
-  return getCookie(ACCESS_TOKEN_KEY);
+  return getCookie(ACCESS_TOKEN_KEY) || getCookie('homenest_access_token');
 }
 
 export function getRefreshToken(): string | null {
-  return getCookie(REFRESH_TOKEN_KEY);
+  return getCookie(REFRESH_TOKEN_KEY) || getCookie('homenest_refresh_token');
 }
 
 export function getUser(): User | null {
-  const userStr = getCookie(USER_KEY);
+  const userStr = getCookie(USER_KEY) || getCookie('homenest_user');
   if (!userStr) return null;
   try {
     return JSON.parse(userStr) as User;
@@ -83,5 +83,8 @@ export function clearAuthCookies(): void {
   deleteCookie(ACCESS_TOKEN_KEY);
   deleteCookie(REFRESH_TOKEN_KEY);
   deleteCookie(USER_KEY);
+  deleteCookie('homenest_access_token');
+  deleteCookie('homenest_refresh_token');
+  deleteCookie('homenest_user');
 }
 

@@ -38,8 +38,8 @@ export const BrandLoader: React.FC<BrandLoaderProps> = ({
           className={`relative ${containerSize} rounded-2xl bg-white shadow-md border border-gray-100/90 flex items-center justify-center p-2.5 transition-transform`}
         >
           <Image
-            src="/images/homenest-icon.png"
-            alt="HomeNest Logo"
+            src="/images/mypgpms-icon.png"
+            alt="MYPGPMS Logo"
             width={iconDimension}
             height={iconDimension}
             className="object-contain"
@@ -50,7 +50,7 @@ export const BrandLoader: React.FC<BrandLoaderProps> = ({
 
       {/* Brand title & Dynamic Message */}
       <div className="text-center space-y-1">
-        <h4 className="text-sm font-bold text-gray-900 tracking-tight">HomeNest</h4>
+        <h4 className="text-sm font-bold text-gray-900 tracking-tight">MYPGPMS</h4>
         {message && (
           <p className="text-xs text-gray-500 font-medium animate-pulse">{message}</p>
         )}

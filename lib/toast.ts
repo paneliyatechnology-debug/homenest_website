@@ -66,7 +66,7 @@ class ToastManager {
     // If no active listeners (e.g. before mount or during page transition), save flash message
     if (this.listeners.size === 0 && typeof window !== 'undefined') {
       try {
-        sessionStorage.setItem('homenest_flash_toast', JSON.stringify(payload));
+        sessionStorage.setItem('mypgpms_flash_toast', JSON.stringify(payload));
       } catch {
         // ignore storage errors
       }

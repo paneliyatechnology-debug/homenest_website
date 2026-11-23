@@ -122,7 +122,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       />
 
       {previewUrl ? (
-        /* Card state when photo is attached - cleanly styled matching HomeNest UI */
+        /* Card state when photo is attached - cleanly styled matching MYPGPMS UI */
         <div className="h-[260px] border border-gray-200 bg-gradient-to-b from-[#F7FAF8] to-white rounded-2xl p-5 flex flex-col items-center justify-between shadow-[0_1px_3px_rgba(0,0,0,0.03)] relative">
           {/* Top Status Tag */}
           <div className="w-full flex items-center justify-between">
@@ -153,11 +153,10 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           {/* Centered Preview with hover change effect */}
           <div
             onClick={() => fileInputRef.current?.click()}
-            className={`relative overflow-hidden border-4 border-white shadow-md ring-2 ring-[#175C46]/20 cursor-pointer group transition-transform hover:scale-[1.02] ${
-              shape === 'circle'
-                ? 'w-28 h-28 rounded-full'
-                : 'w-44 h-28 rounded-xl'
-            }`}
+            className={`relative overflow-hidden border-4 border-white shadow-md ring-2 ring-[#175C46]/20 cursor-pointer group transition-transform hover:scale-[1.02] ${shape === 'circle'
+              ? 'w-28 h-28 rounded-full'
+              : 'w-44 h-28 rounded-xl'
+              }`}
             title="Click to change photo"
           >
             <Image
@@ -247,11 +246,10 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
           }}
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`h-[260px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer transition-all bg-gray-50/40 text-center relative overflow-hidden group ${
-            isDragging
-              ? 'border-[#175C46] bg-emerald-50/30'
-              : 'border-gray-200 hover:border-[#175C46] hover:bg-emerald-50/10'
-          }`}
+          className={`h-[260px] border-2 border-dashed rounded-2xl flex flex-col items-center justify-center p-4 cursor-pointer transition-all bg-gray-50/40 text-center relative overflow-hidden group ${isDragging
+            ? 'border-[#175C46] bg-emerald-50/30'
+            : 'border-gray-200 hover:border-[#175C46] hover:bg-emerald-50/10'
+            }`}
         >
           <div className="flex flex-col items-center">
             <div className="w-12 h-12 rounded-full bg-[#EBF7F2] text-[#175C46] flex items-center justify-center mb-2.5 transition-transform group-hover:scale-110">

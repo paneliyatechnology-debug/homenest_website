@@ -21,9 +21,12 @@ export function GlobalToastContainer() {
     // 2. Consume any stored flash toast (e.g. from hard page reload)
     if (typeof window !== 'undefined') {
       try {
-        const stored = sessionStorage.getItem('homenest_flash_toast');
+        const stored =
+          sessionStorage.getItem('mypgpms_flash_toast') ||
+          sessionStorage.getItem('homenest_flash_toast');
         if (stored) {
           const parsed = JSON.parse(stored) as ToastMessage;
+          sessionStorage.removeItem('mypgpms_flash_toast');
           sessionStorage.removeItem('homenest_flash_toast');
           if (parsed && parsed.detail) {
             // Small timeout to allow UI to settle after render

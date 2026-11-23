@@ -18,7 +18,9 @@ export function proxy(request: NextRequest) {
   }
 
   // Check for the access token cookie
-  const token = request.cookies.get('homenest_access_token')?.value;
+  const token =
+    request.cookies.get('mypgpms_access_token')?.value ||
+    request.cookies.get('homenest_access_token')?.value;
 
   const isPublicPath = PUBLIC_PATHS.some(
     (path) => pathname === path || (path !== '/' && pathname.startsWith(path))
