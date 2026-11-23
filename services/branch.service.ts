@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient, invalidateApiCache } from '@/lib/api-client';
 import { Branch, BranchStats, BranchMeta, BranchFilterParams } from '@/types/branch';
 
 export const INITIAL_BRANCH_STATS: BranchStats = {
@@ -18,7 +18,7 @@ class BranchService {
         success?: boolean;
         message?: string;
         data?: BranchStats;
-      }>('/branches/stats');
+      }>('/branches/stats', { cacheTtlMs: 15_000 });
       return res?.data ?? INITIAL_BRANCH_STATS;
     } catch {
       return INITIAL_BRANCH_STATS;
@@ -52,7 +52,9 @@ class BranchService {
       message?: string;
       data?: Branch[];
       meta?: BranchMeta;
-    }>(`/branches${qs ? `?${qs}` : ''}`);
+    }>(`/branches${qs ? `?${qs}` : ''}`, {
+      cacheTtlMs: params.search ? 15_000 : 60_000,
+    });
 
     const items = Array.isArray(res?.data) ? res.data : [];
     const totalCount = res?.meta?.total_records ?? items.length;
@@ -160,6 +162,13 @@ class BranchService {
       success: res?.success ?? true,
       message: res?.message ?? 'Branch deleted successfully',
     };
+  }
+
+  /**
+   * Clear cached branches
+   */
+  clearCache(): void {
+    invalidateApiCache('/branches');
   }
 }
 

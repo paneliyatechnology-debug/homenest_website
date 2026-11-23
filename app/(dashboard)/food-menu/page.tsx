@@ -271,18 +271,6 @@ export default function FoodMenuPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load branches
-  useEffect(() => {
-    branchService
-      .getBranches({ limit: 100 })
-      .then((res) => {
-        if (res?.data) {
-          setBranches(res.data);
-        }
-      })
-      .catch((err) => console.warn('Failed to load branches:', err));
-  }, []);
-
   // Fetch data on parameters or refresh change
   useEffect(() => {
     let isMounted = true;
@@ -295,6 +283,7 @@ export default function FoodMenuPage() {
           const bRes = await branchService.getBranches({ limit: 100 });
           if (bRes?.data && bRes.data.length > 0) {
             currentBranches = bRes.data;
+            if (isMounted) setBranches(bRes.data);
           }
         } catch (err) {
           console.warn('Failed to load branches in loadData:', err);
@@ -474,7 +463,7 @@ export default function FoodMenuPage() {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, selectedBranchId, weekRange.startDateStr, weekRange.endDateStr, selectedMealType, refreshTrigger, branches, selectedDate]);
+  }, [activeTab, selectedBranchId, weekRange.startDateStr, weekRange.endDateStr, selectedMealType, refreshTrigger, selectedDate]);
 
   // Week navigation handlers
   const handlePrevWeek = () => {

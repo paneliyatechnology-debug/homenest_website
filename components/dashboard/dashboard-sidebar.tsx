@@ -64,7 +64,7 @@ function isSubmenuItemActive(
   return !hasMoreSpecificSibling;
 }
 
-export const DashboardSidebar: React.FC<SidebarProps> = ({
+export const DashboardSidebar: React.FC<SidebarProps> = React.memo(({
   isOpen,
   onClose,
   adminName = 'Admin',
@@ -445,4 +445,5 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
       </aside>
     </>
   );
-};
+});
+DashboardSidebar.displayName = 'DashboardSidebar';

@@ -14,7 +14,7 @@ interface TopbarProps {
   onLogout?: () => void | Promise<void>;
 }
 
-export const DashboardTopbar: React.FC<TopbarProps> = ({
+export const DashboardTopbar: React.FC<TopbarProps> = React.memo(({
   onToggleSidebar,
   adminName = 'Admin',
   adminRole = 'Admin',
@@ -135,4 +135,5 @@ export const DashboardTopbar: React.FC<TopbarProps> = ({
       </div>
     </header>
   );
-};
+});
+DashboardTopbar.displayName = 'DashboardTopbar';

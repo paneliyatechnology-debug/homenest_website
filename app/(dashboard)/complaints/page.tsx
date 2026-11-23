@@ -69,8 +69,18 @@ export default function ComplaintsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [refreshKey, setRefreshKey] = useState<number>(0);
+
+  // Debounce search query by 350ms to prevent duplicate/keystroke API calls
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Real-time WebSocket updates for Complaints module
   useSocketEvent(SOCKET_EVENTS.COMPLAINT_NEW, () => {
@@ -102,6 +112,7 @@ export default function ComplaintsPage() {
     setSelectedCategory('all');
     setSelectedStatus('all');
     setSearchTerm('');
+    setDebouncedSearch('');
     setCurrentPage(1);
   };
 
@@ -146,7 +157,7 @@ export default function ComplaintsPage() {
         limit: 10,
         status: selectedStatus !== 'all' ? selectedStatus : undefined,
         category_id: selectedCategory !== 'all' ? selectedCategory : undefined,
-        search: searchTerm.trim() || undefined,
+        search: debouncedSearch || undefined,
       })
       .then((res) => {
         if (!isMounted) return;
@@ -164,7 +175,7 @@ export default function ComplaintsPage() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, selectedCategory, selectedStatus, searchTerm, refreshKey]);
+  }, [currentPage, selectedCategory, selectedStatus, debouncedSearch, refreshKey]);
 
   // Dropdown options
   const categoryOptions = useMemo(() => {

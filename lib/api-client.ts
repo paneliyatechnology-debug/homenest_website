@@ -50,6 +50,29 @@ export interface RequestOptions extends RequestInit {
   _retry?: boolean;
   showSuccessToast?: boolean;
   showErrorToast?: boolean;
+  cacheTtlMs?: number;
+  skipCache?: boolean;
+}
+
+// In-flight GET request deduplication: cacheKey -> Promise<unknown>
+const inFlightRequests = new Map<string, Promise<unknown>>();
+
+// In-memory cache for GET requests: cacheKey -> { data: unknown; expiresAt: number }
+const apiCache = new Map<string, { data: unknown; expiresAt: number }>();
+
+/**
+ * Invalidate cached GET responses matching an endpoint prefix or pattern.
+ */
+export function invalidateApiCache(prefix?: string | RegExp): void {
+  if (!prefix) {
+    apiCache.clear();
+    return;
+  }
+  for (const key of apiCache.keys()) {
+    if (typeof prefix === 'string' ? key.includes(prefix) : prefix.test(key)) {
+      apiCache.delete(key);
+    }
+  }
 }
 
 /**
@@ -226,174 +249,218 @@ export async function apiClient<T>(
     _retry = false,
     showSuccessToast,
     showErrorToast = true,
+    cacheTtlMs,
+    skipCache = false,
     ...fetchOptions
   } = options;
+
+  const method = (fetchOptions.method || 'GET').toUpperCase();
+  const isGet = method === 'GET';
   const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+  const cacheKey = `${method}:${url}`;
 
-  const headers = new Headers(fetchOptions.headers || {});
-  if (!headers.has('Content-Type') && !(fetchOptions.body instanceof FormData)) {
-    headers.set('Content-Type', 'application/json');
-  }
-  if (!headers.has('Accept')) {
-    headers.set('Accept', 'application/json');
-  }
-
-  // Attach access token if auth is not skipped
-  if (!skipAuth) {
-    const token = getAccessToken();
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`);
+  // 1. Check in-memory cache for GET requests
+  if (isGet && !skipCache && cacheTtlMs && cacheTtlMs > 0) {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data as T;
     }
   }
 
-  try {
-    const response = await fetch(url, {
-      ...fetchOptions,
-      headers,
-    });
+  // 2. Check in-flight duplicate GET requests
+  if (isGet && !skipCache) {
+    const existingPromise = inFlightRequests.get(cacheKey);
+    if (existingPromise) {
+      return existingPromise as Promise<T>;
+    }
+  }
 
-    // Handle 401 Unauthorized - Attempt Token Refresh
-    if (response.status === 401 && !skipAuth && !_retry) {
-      const refreshToken = getRefreshToken();
+  const executeRequest = async (): Promise<T> => {
+    const headers = new Headers(fetchOptions.headers || {});
+    if (!headers.has('Content-Type') && !(fetchOptions.body instanceof FormData)) {
+      headers.set('Content-Type', 'application/json');
+    }
+    if (!headers.has('Accept')) {
+      headers.set('Accept', 'application/json');
+    }
 
-      // No refresh token available -> session expired
-      if (!refreshToken) {
-        clearAuthCookies();
-        redirectToLogin();
-        const msg = 'Session expired. Please log in again.';
-        if (showErrorToast) {
-          toast.error(msg);
-        }
-        throw new ApiError(msg, 401);
+    // Attach access token if auth is not skipped
+    if (!skipAuth) {
+      const token = getAccessToken();
+      if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
       }
+    }
 
-      // If already refreshing, wait for new token
-      if (isRefreshing) {
-        return new Promise<string>((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        }).then((newToken) => {
-          headers.set('Authorization', `Bearer ${newToken}`);
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        headers,
+      });
+
+      // Handle 401 Unauthorized - Attempt Token Refresh
+      if (response.status === 401 && !skipAuth && !_retry) {
+        const refreshToken = getRefreshToken();
+
+        // No refresh token available -> session expired
+        if (!refreshToken) {
+          clearAuthCookies();
+          redirectToLogin();
+          const msg = 'Session expired. Please log in again.';
+          if (showErrorToast) {
+            toast.error(msg);
+          }
+          throw new ApiError(msg, 401);
+        }
+
+        // If already refreshing, wait for new token
+        if (isRefreshing) {
+          return new Promise<string>((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          }).then((newToken) => {
+            headers.set('Authorization', `Bearer ${newToken}`);
+            return apiClient<T>(endpoint, {
+              ...options,
+              _retry: true,
+              headers,
+            });
+          });
+        }
+
+        isRefreshing = true;
+
+        try {
+          const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+          });
+
+          if (!refreshResponse.ok) {
+            throw new Error('Refresh token invalid or expired');
+          }
+
+          const refreshResult = (await refreshResponse.json()) as AuthResponse;
+
+          if (!refreshResult.success || !refreshResult.data?.access_token) {
+            throw new Error(refreshResult.message || 'Token refresh failed');
+          }
+
+          // Store refreshed tokens
+          setAuthCookies(refreshResult.data);
+
+          const newAccessToken = refreshResult.data.access_token;
+          processQueue(null, newAccessToken);
+
+          // Retry original request with new access token
+          headers.set('Authorization', `Bearer ${newAccessToken}`);
           return apiClient<T>(endpoint, {
             ...options,
             _retry: true,
             headers,
           });
-        });
+        } catch (refreshErr) {
+          processQueue(refreshErr, null);
+          clearAuthCookies();
+          redirectToLogin();
+          const msg = 'Session expired. Please log in again.';
+          if (showErrorToast) {
+            toast.error(msg);
+          }
+          throw new ApiError(msg, 401, refreshErr);
+        } finally {
+          isRefreshing = false;
+        }
       }
 
-      isRefreshing = true;
-
-      try {
-        const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-
-        if (!refreshResponse.ok) {
-          throw new Error('Refresh token invalid or expired');
+      // Parse response body (JSON or text)
+      let data: unknown = null;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch {
+          data = null;
         }
-
-        const refreshResult = (await refreshResponse.json()) as AuthResponse;
-
-        if (!refreshResult.success || !refreshResult.data?.access_token) {
-          throw new Error(refreshResult.message || 'Token refresh failed');
+      } else {
+        try {
+          data = await response.text();
+        } catch {
+          data = null;
         }
+      }
 
-        // Store refreshed tokens
-        setAuthCookies(refreshResult.data);
-
-        const newAccessToken = refreshResult.data.access_token;
-        processQueue(null, newAccessToken);
-
-        // Retry original request with new access token
-        headers.set('Authorization', `Bearer ${newAccessToken}`);
-        return apiClient<T>(endpoint, {
-          ...options,
-          _retry: true,
-          headers,
-        });
-      } catch (refreshErr) {
-        processQueue(refreshErr, null);
-        clearAuthCookies();
-        redirectToLogin();
-        const msg = 'Session expired. Please log in again.';
+      if (!response.ok) {
+        const errorMessage = extractErrorMessage(data, response.status);
         if (showErrorToast) {
-          toast.error(msg);
+          toast.error(errorMessage);
         }
-        throw new ApiError(msg, 401, refreshErr);
-      } finally {
-        isRefreshing = false;
+        throw new ApiError(errorMessage, response.status, data);
       }
-    }
 
-    // Parse response body (JSON or text)
-    let data: unknown = null;
-    const contentType = response.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      try {
-        data = await response.json();
-      } catch {
-        data = null;
+      // Check for explicit success: false payload even on 200 OK
+      if (data && typeof data === 'object' && (data as Record<string, unknown>).success === false) {
+        const errorMessage = extractErrorMessage(data, response.status);
+        if (showErrorToast) {
+          toast.error(errorMessage);
+        }
+        throw new ApiError(errorMessage, response.status, data);
       }
-    } else {
-      try {
-        data = await response.text();
-      } catch {
-        data = null;
-      }
-    }
 
-    if (!response.ok) {
-      const errorMessage = extractErrorMessage(data, response.status);
+      // Success Toast Notification handling:
+      // Display backend response message for mutations (POST, PUT, PATCH, DELETE) or when explicitly requested
+      const isMutation = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
+      const isSilentEndpoint =
+        endpoint.includes('/auth/refresh') ||
+        endpoint.includes('/auth/me') ||
+        endpoint.includes('/auth/logout');
+
+      const shouldShowSuccess =
+        showSuccessToast !== undefined ? showSuccessToast : isMutation && !isSilentEndpoint;
+
+      if (shouldShowSuccess) {
+        const backendSuccessMessage =
+          extractSuccessMessage(data) || getDefaultSuccessMessage(method, endpoint);
+        if (backendSuccessMessage) {
+          toast.success(backendSuccessMessage);
+        }
+      }
+
+      // Save to cache on successful GET
+      if (isGet && cacheTtlMs && cacheTtlMs > 0) {
+        apiCache.set(cacheKey, { data, expiresAt: Date.now() + cacheTtlMs });
+      } else if (!isGet) {
+        // Invalidate relevant cache on mutations
+        const resourceMatch = endpoint.match(/^\/([a-zA-Z0-9_-]+)/);
+        if (resourceMatch) {
+          invalidateApiCache(`/${resourceMatch[1]}`);
+        }
+      }
+
+      return data as T;
+    } catch (error) {
+      if (error instanceof ApiError) {
+        throw error;
+      }
+
+      const networkMsg = extractErrorMessage(null, 0);
       if (showErrorToast) {
-        toast.error(errorMessage);
+        toast.error(networkMsg);
       }
-      throw new ApiError(errorMessage, response.status, data);
+      throw new ApiError(networkMsg, 0, error);
     }
+  };
 
-    // Check for explicit success: false payload even on 200 OK
-    if (data && typeof data === 'object' && (data as Record<string, unknown>).success === false) {
-      const errorMessage = extractErrorMessage(data, response.status);
-      if (showErrorToast) {
-        toast.error(errorMessage);
-      }
-      throw new ApiError(errorMessage, response.status, data);
-    }
-
-    // Success Toast Notification handling:
-    // Display backend response message for mutations (POST, PUT, PATCH, DELETE) or when explicitly requested
-    const method = (fetchOptions.method || 'GET').toUpperCase();
-    const isMutation = method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE';
-    const isSilentEndpoint =
-      endpoint.includes('/auth/refresh') ||
-      endpoint.includes('/auth/me') ||
-      endpoint.includes('/auth/logout');
-
-    const shouldShowSuccess =
-      showSuccessToast !== undefined ? showSuccessToast : isMutation && !isSilentEndpoint;
-
-    if (shouldShowSuccess) {
-      const backendSuccessMessage =
-        extractSuccessMessage(data) || getDefaultSuccessMessage(method, endpoint);
-      if (backendSuccessMessage) {
-        toast.success(backendSuccessMessage);
-      }
-    }
-
-    return data as T;
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    const networkMsg = extractErrorMessage(null, 0);
-    if (showErrorToast) {
-      toast.error(networkMsg);
-    }
-    throw new ApiError(networkMsg, 0, error);
+  if (isGet && !skipCache) {
+    const promise = executeRequest().finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
+    inFlightRequests.set(cacheKey, promise);
+    return promise;
   }
+
+  return executeRequest();
 }

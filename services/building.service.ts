@@ -24,7 +24,7 @@ class BuildingService {
         success?: boolean;
         message?: string;
         data?: BuildingStats;
-      }>(`/buildings/stats${query}`);
+      }>(`/buildings/stats${query}`, { cacheTtlMs: 15_000 });
       return res?.data ?? INITIAL_BUILDING_STATS;
     } catch {
       return INITIAL_BUILDING_STATS;
@@ -54,7 +54,7 @@ class BuildingService {
       message?: string;
       data?: Building[];
       meta?: BuildingMeta;
-    }>(`/buildings?${query.toString()}`);
+    }>(`/buildings?${query.toString()}`, { cacheTtlMs: 30_000 });
 
     const items = Array.isArray(res?.data) ? res.data : [];
     const totalCount = res?.meta?.total_records ?? items.length;

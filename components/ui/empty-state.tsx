@@ -10,7 +10,7 @@ export interface EmptyStateProps {
   className?: string;
 }
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
+export const EmptyState: React.FC<EmptyStateProps> = React.memo(({
   title = 'No Records Found',
   description,
   icon,
@@ -44,5 +44,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
-};
+});
+EmptyState.displayName = 'EmptyState';
 

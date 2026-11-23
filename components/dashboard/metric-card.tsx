@@ -11,7 +11,7 @@ interface MetricCardProps {
   iconShape?: 'circle' | 'rounded';
 }
 
-export const MetricCard: React.FC<MetricCardProps> = ({
+export const MetricCard: React.FC<MetricCardProps> = React.memo(({
   title,
   data,
   icon,
@@ -81,6 +81,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
     </div>
   );
-};
+});
+MetricCard.displayName = 'MetricCard';
 
 

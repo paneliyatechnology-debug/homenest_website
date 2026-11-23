@@ -20,7 +20,7 @@ class ComplaintService {
         success?: boolean;
         message?: string;
         data?: ComplaintCategory[];
-      }>('/complaints/categories');
+      }>('/complaints/categories', { cacheTtlMs: 300_000 });
       return Array.isArray(res?.data) ? res.data : [];
     } catch (err) {
       console.warn('Failed to fetch complaint categories:', err);

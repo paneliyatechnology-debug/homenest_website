@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api-client';
+import { apiClient, invalidateApiCache } from '@/lib/api-client';
 import {
   ApiResponse,
   AuthResponse,
@@ -117,6 +117,7 @@ export const authService = {
       console.warn('Backend logout API request failed or unreachable:', err);
     } finally {
       clearAuthCookies();
+      invalidateApiCache('/auth');
       if (typeof window !== 'undefined') {
         window.location.replace(new URL(redirectUrl, window.location.origin).href);
       }
@@ -132,14 +133,17 @@ export const authService = {
 
   /**
    * Fetch live authenticated user profile from backend API:
-   * GET /auth/me
+   * GET /auth/me (cached for 30s; pass forceRefresh=true to bypass)
    */
-  async getMe(): Promise<User> {
+  async getMe(forceRefresh = false): Promise<User> {
     const response = await apiClient<{
       success: boolean;
       message: string;
       data: User;
-    }>('/auth/me');
+    }>('/auth/me', {
+      cacheTtlMs: 30_000,
+      skipCache: forceRefresh,
+    });
 
     if (response.success && response.data) {
       setUserCookie(response.data);
@@ -169,6 +173,7 @@ export const authService = {
       method: 'PUT',
       body: isFormData ? payload : JSON.stringify(payload),
     });
+    invalidateApiCache('/auth');
     return response.data;
   },
 };

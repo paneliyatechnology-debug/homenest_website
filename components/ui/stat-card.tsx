@@ -17,7 +17,7 @@ export interface StatCardProps {
   onClick?: () => void;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({
+export const StatCard: React.FC<StatCardProps> = React.memo(({
   label,
   value,
   icon,
@@ -72,7 +72,8 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
     </div>
   );
-};
+});
+StatCard.displayName = 'StatCard';
 
 export interface StatCardGridProps {
   children: React.ReactNode;
@@ -80,7 +81,7 @@ export interface StatCardGridProps {
   className?: string;
 }
 
-export const StatCardGrid: React.FC<StatCardGridProps> = ({
+export const StatCardGrid: React.FC<StatCardGridProps> = React.memo(({
   children,
   columns = 4,
   className = '',
@@ -99,4 +100,5 @@ export const StatCardGrid: React.FC<StatCardGridProps> = ({
       {children}
     </div>
   );
-};
+});
+StatCardGrid.displayName = 'StatCardGrid';

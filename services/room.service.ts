@@ -45,7 +45,7 @@ class RoomService {
         success?: boolean;
         message?: string;
         data?: RoomBuilding[];
-      }>(`/rooms/buildings${query}`);
+      }>(`/rooms/buildings${query}`, { cacheTtlMs: 30_000 });
       return Array.isArray(res?.data) ? res.data : [];
     } catch {
       return [];
@@ -62,7 +62,7 @@ class RoomService {
         success?: boolean;
         message?: string;
         data?: BuildingItem[];
-      }>(`/buildings?page=1&limit=50&search=&branch_id=${branchId}`);
+      }>(`/buildings?page=1&limit=50&search=&branch_id=${branchId}`, { cacheTtlMs: 30_000 });
       return Array.isArray(res?.data) ? res.data : [];
     } catch {
       return [];
@@ -79,7 +79,7 @@ class RoomService {
         success?: boolean;
         message?: string;
         data?: { floors?: FloorItem[] };
-      }>(`/buildings/${buildingId}`);
+      }>(`/buildings/${buildingId}`, { cacheTtlMs: 30_000 });
       return Array.isArray(res?.data?.floors) ? res.data.floors : [];
     } catch {
       return [];
