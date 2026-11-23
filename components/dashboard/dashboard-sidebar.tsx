@@ -197,7 +197,6 @@ export const DashboardSidebar: React.FC<SidebarProps> = ({
         { label: 'Administrative Activity Log', href: '/dashboard/settings/activity-log' },
         { label: 'Checkout & Refund Approvals', href: '/dashboard/settings/refunds' },
         { label: 'Room Shift Request', href: '/dashboard/settings/room-shifts' },
-        { label: 'Subscription Plans', href: '/dashboard/settings/subscriptions' },
       ],
     },
   ];
