@@ -1,8 +1,5 @@
-import { AuthResponse } from '@/types/auth';
 import {
   getAccessToken,
-  getRefreshToken,
-  setAuthCookies,
   clearAuthCookies,
 } from '@/lib/cookies';
 import { config } from '@/lib/config';
@@ -10,26 +7,18 @@ import { toast } from '@/lib/toast';
 
 const API_BASE_URL = config.api.baseUrl;
 
-let isRefreshing = false;
-let failedQueue: Array<{
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-}> = [];
-
-const processQueue = (error: unknown, token: string | null = null) => {
-  failedQueue.forEach((promise) => {
-    if (error) {
-      promise.reject(error);
-    } else if (token) {
-      promise.resolve(token);
-    }
-  });
-  failedQueue = [];
-};
+let isHandling401 = false;
 
 function redirectToLogin(): void {
-  if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-    window.location.replace(new URL('/?toast=session_expired', window.location.origin).href);
+  if (typeof window !== 'undefined') {
+    if (window.location.pathname !== '/') {
+      window.location.replace(new URL('/?toast=session_expired', window.location.origin).href);
+    } else {
+      toast.warn('Your session has expired. Please sign in again.', 'Session Expired');
+    }
+    setTimeout(() => {
+      isHandling401 = false;
+    }, 2500);
   }
 }
 
@@ -298,84 +287,6 @@ export async function apiClient<T>(
         headers,
       });
 
-      // Handle 401 Unauthorized - Attempt Token Refresh
-      if (response.status === 401 && !skipAuth && !_retry) {
-        const refreshToken = getRefreshToken();
-
-        // No refresh token available -> session expired
-        if (!refreshToken) {
-          clearAuthCookies();
-          redirectToLogin();
-          const msg = 'Session expired. Please log in again.';
-          if (showErrorToast) {
-            toast.error(msg);
-          }
-          throw new ApiError(msg, 401);
-        }
-
-        // If already refreshing, wait for new token
-        if (isRefreshing) {
-          return new Promise<string>((resolve, reject) => {
-            failedQueue.push({ resolve, reject });
-          }).then((newToken) => {
-            headers.set('Authorization', `Bearer ${newToken}`);
-            return apiClient<T>(endpoint, {
-              ...options,
-              _retry: true,
-              headers,
-            });
-          });
-        }
-
-        isRefreshing = true;
-
-        try {
-          const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-          });
-
-          if (!refreshResponse.ok) {
-            throw new Error('Refresh token invalid or expired');
-          }
-
-          const refreshResult = (await refreshResponse.json()) as AuthResponse;
-
-          if (!refreshResult.success || !refreshResult.data?.access_token) {
-            throw new Error(refreshResult.message || 'Token refresh failed');
-          }
-
-          // Store refreshed tokens
-          setAuthCookies(refreshResult.data);
-
-          const newAccessToken = refreshResult.data.access_token;
-          processQueue(null, newAccessToken);
-
-          // Retry original request with new access token
-          headers.set('Authorization', `Bearer ${newAccessToken}`);
-          return apiClient<T>(endpoint, {
-            ...options,
-            _retry: true,
-            headers,
-          });
-        } catch (refreshErr) {
-          processQueue(refreshErr, null);
-          clearAuthCookies();
-          redirectToLogin();
-          const msg = 'Session expired. Please log in again.';
-          if (showErrorToast) {
-            toast.error(msg);
-          }
-          throw new ApiError(msg, 401, refreshErr);
-        } finally {
-          isRefreshing = false;
-        }
-      }
-
       // Parse response body (JSON or text)
       let data: unknown = null;
       const contentType = response.headers.get('content-type') || '';
@@ -391,6 +302,21 @@ export async function apiClient<T>(
         } catch {
           data = null;
         }
+      }
+
+      // Handle 401 Unauthorized: Auto logout, clear all token/auth cookies, and redirect to login
+      if (response.status === 401 && !skipAuth) {
+        clearAuthCookies();
+        invalidateApiCache();
+
+        if (!isHandling401) {
+          isHandling401 = true;
+          redirectToLogin();
+        }
+
+        const backendMsg = extractErrorMessage(data, response.status);
+        const errorMessage = backendMsg || 'Session expired. Please log in again.';
+        throw new ApiError(errorMessage, 401, data);
       }
 
       if (!response.ok) {

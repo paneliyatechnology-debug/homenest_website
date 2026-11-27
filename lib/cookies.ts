@@ -44,9 +44,23 @@ export function getCookie(name: string): string | null {
 
 export function deleteCookie(name: string): void {
   if (typeof document === 'undefined') return;
-  document.cookie = `${encodeURIComponent(
-    name
-  )}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Lax`;
+  const pastDate = 'Thu, 01 Jan 1970 00:00:00 UTC';
+  const encodedName = encodeURIComponent(name);
+
+  // Clear for root path
+  document.cookie = `${encodedName}=; expires=${pastDate}; path=/; SameSite=Lax`;
+  document.cookie = `${encodedName}=; expires=${pastDate}; path=/; SameSite=Lax; Secure`;
+  document.cookie = `${encodedName}=; max-age=0; path=/; SameSite=Lax`;
+
+  // Clear without explicit path
+  document.cookie = `${encodedName}=; expires=${pastDate}; path=; SameSite=Lax`;
+  document.cookie = `${encodedName}=; max-age=0; path=; SameSite=Lax`;
+
+  // Clear with host domain if window is available
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    document.cookie = `${encodedName}=; expires=${pastDate}; path=/; domain=${window.location.hostname}; SameSite=Lax`;
+    document.cookie = `${encodedName}=; max-age=0; path=/; domain=${window.location.hostname}; SameSite=Lax`;
+  }
 }
 
 // Specialized helpers for Authentication
@@ -80,11 +94,55 @@ export function setUserCookie(user: User, days = 7): void {
 }
 
 export function clearAuthCookies(): void {
-  deleteCookie(ACCESS_TOKEN_KEY);
-  deleteCookie(REFRESH_TOKEN_KEY);
-  deleteCookie(USER_KEY);
-  deleteCookie('homenest_access_token');
-  deleteCookie('homenest_refresh_token');
-  deleteCookie('homenest_user');
+  const keysToDelete = [
+    ACCESS_TOKEN_KEY,
+    REFRESH_TOKEN_KEY,
+    USER_KEY,
+    'mypgpms_access_token',
+    'mypgpms_refresh_token',
+    'mypgpms_user',
+    'homenest_access_token',
+    'homenest_refresh_token',
+    'homenest_user',
+    'token',
+    'access_token',
+    'refresh_token',
+    'user',
+  ];
+
+  keysToDelete.forEach((key) => deleteCookie(key));
+
+  // Also iterate document.cookie to clear any remaining auth-related cookies
+  if (typeof document !== 'undefined') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie;
+      if (
+        name.includes('token') ||
+        name.includes('mypgpms') ||
+        name.includes('homenest') ||
+        name.includes('auth') ||
+        name.includes('user')
+      ) {
+        deleteCookie(name);
+      }
+    }
+  }
+
+  // Also remove token from localStorage / sessionStorage if any legacy scripts stored it
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('mypgpms_user');
+      localStorage.removeItem('homenest_user');
+    } catch {
+      // Ignore storage access errors
+    }
+  }
 }
 
