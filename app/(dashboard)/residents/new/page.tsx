@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Metadata } from 'next';
-import { ResidentForm } from '@/components/residents/resident-form';
+import { ResidentCreateView } from '@/components/residents/resident-create-view';
 
 export const metadata: Metadata = {
   title: 'Create Resident | MYPGPMS Admin',
@@ -8,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function CreateResidentPage() {
-  return <ResidentForm mode="create" />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#F7F7F5]" />}>
+      <ResidentCreateView />
+    </Suspense>
+  );
 }

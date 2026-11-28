@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AppDatePicker, toInputDate, parseDateString } from '@/components/ui/app-date-picker';
 import { PageHeader, Dropdown, PhotoUpload, BrandLoader } from '@/components/ui';
 import { residentService } from '@/services/resident.service';
@@ -122,11 +122,11 @@ function buildInitialFormData(initialData?: ResidentDetail | null): FormState {
       name: '',
       email: '',
       phone: '',
-      gender: 'male',
-      status: 'active',
+      gender: '',
+      status: '',
       date_of_birth: '',
-      nationality: 'Indian',
-      marital_status: 'single',
+      nationality: '',
+      marital_status: '',
       occupation: '',
       branch_id: '',
       building_id: '',
@@ -233,6 +233,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   initialData,
 }) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // File input refs
   const aadharInputRef = useRef<HTMLInputElement>(null);
@@ -241,7 +242,65 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   const agreementFileInputRef = useRef<HTMLInputElement>(null);
   const signatureInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<FormState>(() => buildInitialFormData(initialData));
+  const [formData, setFormData] = useState<FormState>(() => {
+    const base = buildInitialFormData(initialData);
+    if (mode === 'create' && searchParams) {
+      const qBranchId = searchParams.get('branch_id');
+      const qBuildingId = searchParams.get('building_id');
+      const qFloorId = searchParams.get('floor_id');
+      const qRoomId = searchParams.get('room_id');
+      const qRoomNo = searchParams.get('room_no');
+      const qRoomType = searchParams.get('room_type');
+      const qRent = searchParams.get('monthly_rent') || searchParams.get('rent');
+      const qDeposit = searchParams.get('security_deposit');
+
+      if (qBranchId) base.branch_id = qBranchId;
+      if (qBuildingId) base.building_id = qBuildingId;
+      if (qFloorId) base.floor_id = qFloorId;
+      if (qRoomId) base.room_id = qRoomId;
+      if (qRoomNo) base.room_no = qRoomNo;
+      if (qRoomType) base.room_type = qRoomType.toLowerCase();
+      if (qRent) base.monthly_rent = qRent;
+      if (qDeposit) base.security_deposit = qDeposit;
+    }
+    return base;
+  });
+
+  // Synchronize URL search parameters into formData on mount or whenever query params update
+  useEffect(() => {
+    if (mode !== 'create') return;
+
+    const qBranchId = searchParams?.get('branch_id');
+    const qBuildingId = searchParams?.get('building_id');
+    const qFloorId = searchParams?.get('floor_id');
+    const qRoomId = searchParams?.get('room_id');
+    const qRoomNo = searchParams?.get('room_no');
+    const qRoomType = searchParams?.get('room_type');
+    const qRent = searchParams?.get('monthly_rent') || searchParams?.get('rent');
+    const qDeposit = searchParams?.get('security_deposit');
+
+    const hasRoomQueryParams = Boolean(
+      qBranchId || qBuildingId || qFloorId || qRoomId || qRoomType || qRent || qDeposit
+    );
+
+    if (hasRoomQueryParams) {
+      setFormData((prev) => ({
+        ...prev,
+        branch_id: qBranchId || '',
+        building_id: qBuildingId || '',
+        floor_id: qFloorId || '',
+        room_id: qRoomId || '',
+        room_no: qRoomNo || '',
+        room_type: (qRoomType || '').toLowerCase(),
+        monthly_rent: qRent || '',
+        security_deposit: qDeposit || '',
+      }));
+    } else {
+      // If there are no room query parameters (e.g. creating a new resident from resident list page),
+      // ensure all fields start completely blank without any prefilled or default values.
+      resetAllFields();
+    }
+  }, [searchParams, mode]);
 
   // Cascading dropdown lists
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -599,6 +658,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   // 1. Fetch Branches on mount
   useEffect(() => {
     let isMounted = true;
+    setLoadingBranches(true);
     residentService
       .getBranches({ limit: 50 })
       .then((res) => {
@@ -625,8 +685,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   // 2. Fetch Buildings when branch_id changes
   useEffect(() => {
     let isMounted = true;
-    if (!formData.branch_id) return;
+    if (!formData.branch_id) {
+      setBuildings([]);
+      setLoadingBuildings(false);
+      return;
+    }
 
+    setLoadingBuildings(true);
     residentService
       .getBuildings(formData.branch_id)
       .then((data) => {
@@ -647,8 +712,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   // 3. Fetch Floors when building_id changes
   useEffect(() => {
     let isMounted = true;
-    if (!formData.building_id) return;
+    if (!formData.building_id) {
+      setFloors([]);
+      setLoadingFloors(false);
+      return;
+    }
 
+    setLoadingFloors(true);
     residentService
       .getFloors(formData.building_id)
       .then((data) => {
@@ -669,8 +739,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
   // 4. Fetch Rooms when building_id, floor_id, and branch_id are available
   useEffect(() => {
     let isMounted = true;
-    if (!formData.branch_id || !formData.building_id || !formData.floor_id) return;
+    if (!formData.branch_id || !formData.building_id || !formData.floor_id) {
+      setRooms([]);
+      setLoadingRooms(false);
+      return;
+    }
 
+    setLoadingRooms(true);
     residentService
       .getRooms({
         branch_id: formData.branch_id,
@@ -681,6 +756,21 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
         if (isMounted) {
           setRooms(data);
           setLoadingRooms(false);
+          setFormData((prev) => {
+            const currentRoomId = prev.room_id;
+            if (!currentRoomId) return prev;
+            const matched = data.find((r) => String(r.id) === String(currentRoomId));
+            if (matched) {
+              return {
+                ...prev,
+                room_no: prev.room_no || matched.room_no || matched.room_number || '',
+                room_type: prev.room_type || (matched.room_type || matched.type || '').toLowerCase(),
+                monthly_rent: prev.monthly_rent || matched.monthly_rent || matched.rent || '',
+                security_deposit: prev.security_deposit || matched.security_deposit || '',
+              };
+            }
+            return prev;
+          });
         }
       })
       .catch(() => {
@@ -690,7 +780,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [formData.branch_id, formData.building_id, formData.floor_id]);
+  }, [formData.branch_id, formData.building_id, formData.floor_id, formData.room_id]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -836,11 +926,11 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
       name: '',
       email: '',
       phone: '',
-      gender: 'male',
-      status: 'active',
+      gender: '',
+      status: '',
       date_of_birth: '',
-      nationality: 'Indian',
-      marital_status: 'single',
+      nationality: '',
+      marital_status: '',
       occupation: '',
       branch_id: '',
       building_id: '',
@@ -883,26 +973,6 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
     if (agreementFileInputRef.current) agreementFileInputRef.current.value = '';
     if (signatureInputRef.current) signatureInputRef.current.value = '';
   };
-
-  // Clean all fields when navigating away or unmounting in create mode
-  useEffect(() => {
-    return () => {
-      if (mode === 'create') {
-        resetAllFields();
-      }
-    };
-  }, [mode]);
-
-  // Reset fields on browser back/forward bfcache restoration
-  useEffect(() => {
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted && mode === 'create') {
-        resetAllFields();
-      }
-    };
-    window.addEventListener('pageshow', handlePageShow);
-    return () => window.removeEventListener('pageshow', handlePageShow);
-  }, [mode]);
 
 
   const validateForm = (): boolean => {
@@ -1361,7 +1431,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   options={[
                     ...(formData.branch_id && !branches.some((b) => String(b.id) === String(formData.branch_id))
                       ? [{
-                          label: initialData?.room_info?.branch_name || (initialData as FormInitialDataSource)?.branch_name || `Branch ${formData.branch_id}`,
+                          label: searchParams?.get('branch_name') || initialData?.room_info?.branch_name || (initialData as FormInitialDataSource)?.branch_name || `Branch ${formData.branch_id}`,
                           value: formData.branch_id,
                         }]
                       : []),
@@ -1379,13 +1449,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   name="building_id"
                   value={formData.building_id}
                   onChange={handleBuildingChange}
-                  disabled={!formData.branch_id || loadingBuildings}
+                  disabled={!formData.branch_id}
                   error={errors.building_id}
                   placeholder={
-                    loadingBuildings
-                      ? 'Loading buildings...'
-                      : !formData.branch_id
-                        ? 'Select branch first'
+                    !formData.branch_id
+                      ? 'Select branch first'
+                      : loadingBuildings && buildings.length === 0
+                        ? 'Loading buildings...'
                         : 'Select building'
                   }
                   rightBadge={
@@ -1396,7 +1466,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   options={[
                     ...(formData.building_id && !buildings.some((b) => String(b.id) === String(formData.building_id))
                       ? [{
-                          label: initialData?.room_info?.building_name || (initialData as FormInitialDataSource)?.building_name || `Building ${formData.building_id}`,
+                          label: searchParams?.get('building_name') || initialData?.room_info?.building_name || (initialData as FormInitialDataSource)?.building_name || `Building ${formData.building_id}`,
                           value: formData.building_id,
                         }]
                       : []),
@@ -1417,13 +1487,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   name="floor_id"
                   value={formData.floor_id}
                   onChange={handleFloorChange}
-                  disabled={!formData.building_id || loadingFloors}
+                  disabled={!formData.building_id}
                   error={errors.floor_id}
                   placeholder={
-                    loadingFloors
-                      ? 'Loading floors...'
-                      : !formData.building_id
-                        ? 'Select building first'
+                    !formData.building_id
+                      ? 'Select building first'
+                      : loadingFloors && floors.length === 0
+                        ? 'Loading floors...'
                         : 'Select floor'
                   }
                   rightBadge={
@@ -1434,7 +1504,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   options={[
                     ...(formData.floor_id && !floors.some((f) => String(f.id) === String(formData.floor_id))
                       ? [{
-                          label: initialData?.room_info?.floor_name || (initialData as FormInitialDataSource)?.floor_name || `Floor ${formData.floor_id}`,
+                          label: searchParams?.get('floor_name') || initialData?.room_info?.floor_name || (initialData as FormInitialDataSource)?.floor_name || `Floor ${formData.floor_id}`,
                           value: formData.floor_id,
                         }]
                       : []),
@@ -1452,13 +1522,13 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                   name="room_id"
                   value={formData.room_id}
                   onChange={handleRoomChange}
-                  disabled={!formData.floor_id || loadingRooms}
+                  disabled={!formData.floor_id}
                   error={errors.room_id}
                   placeholder={
-                    loadingRooms
-                      ? 'Loading rooms...'
-                      : !formData.floor_id
-                        ? 'Select floor first'
+                    !formData.floor_id
+                      ? 'Select floor first'
+                      : loadingRooms && rooms.length === 0
+                        ? 'Loading rooms...'
                         : 'Select room no.'
                   }
                   rightBadge={

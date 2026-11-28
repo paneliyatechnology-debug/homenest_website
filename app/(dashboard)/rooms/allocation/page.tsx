@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Room, RoomStats, RoomBuilding } from '@/types/room';
 import { Branch } from '@/types/branch';
 import { roomService, INITIAL_ROOM_STATS } from '@/services/room.service';
@@ -11,6 +12,8 @@ import { Dropdown, ClearFilterButton } from '@/components/ui';
 import { useResetOnNavigation } from '@/hooks';
 
 export default function RoomDetailsAllocationPage() {
+  const router = useRouter();
+
   // Master Branches State
   const [branches, setBranches] = useState<Branch[]>([]);
 
@@ -206,6 +209,46 @@ export default function RoomDetailsAllocationPage() {
       return `${baseColors} ring-2 ring-[#2563EB] shadow-xs font-bold scale-[1.02] border-transparent`;
     }
     return `${baseColors} hover:opacity-90 transition-all hover:scale-[1.01]`;
+  };
+
+  const handleAddResidentToRoom = (room: Room) => {
+    const query = new URLSearchParams();
+    const branchId = room.branch_id || (selectedBranchId !== 'all' ? selectedBranchId : '');
+    const buildingId = room.building_id || (selectedBuildingId !== 'all' ? selectedBuildingId : '');
+    const floorId = room.floor_id || (selectedFloorId !== 'all' ? selectedFloorId : '');
+
+    if (branchId) query.set('branch_id', String(branchId));
+    if (buildingId) query.set('building_id', String(buildingId));
+    if (floorId) query.set('floor_id', String(floorId));
+    if (room.id) query.set('room_id', String(room.id));
+    if (room.room_no) query.set('room_no', room.room_no);
+    if (room.room_type) query.set('room_type', room.room_type);
+
+    const bObj = buildings.find((b) => String(b.building_id) === String(buildingId));
+    const buildingName = room.building_name || bObj?.building_name || '';
+    if (buildingName) query.set('building_name', buildingName);
+
+    const fObj = bObj?.floor_details?.find(
+      (f) => String(f.floor_id) === String(floorId) || f.floor_number === room.floor_number
+    );
+    const floorName = room.floor_name || fObj?.name || '';
+    if (floorName) query.set('floor_name', floorName);
+
+    const branchName =
+      room.branch_name ||
+      branches.find((br) => String(br.id) === String(branchId))?.name ||
+      '';
+    if (branchName) query.set('branch_name', branchName);
+
+    const rentVal = (room as any).monthly_rent || (room as any).rent;
+    if (rentVal) {
+      query.set('monthly_rent', String(rentVal));
+    }
+    const depositVal = (room as any).security_deposit;
+    if (depositVal) {
+      query.set('security_deposit', String(depositVal));
+    }
+    router.push(`/residents/new?${query.toString()}`);
   };
 
   return (
@@ -575,21 +618,33 @@ export default function RoomDetailsAllocationPage() {
                 <h3 className="text-sm sm:text-base font-bold text-gray-900 tracking-tight">
                   Room Details
                 </h3>
-                {activeSelectedRoom.status && (
-                  <span
-                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
-                      String(activeSelectedRoom.status).toLowerCase() === 'occupied'
-                        ? 'bg-[#E8F8F0] text-[#175C46]'
-                        : String(activeSelectedRoom.status).toLowerCase() === 'vacant'
-                        ? 'bg-[#EFF6FF] text-[#2563EB]'
-                        : String(activeSelectedRoom.status).toLowerCase() === 'maintenance'
-                        ? 'bg-[#FEF9C3] text-[#854D0E]'
-                        : 'bg-[#FFF1F2] text-[#E11D48]'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAddResidentToRoom(activeSelectedRoom)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#175C46] hover:bg-[#134e3b] active:scale-[0.98] text-white text-xs font-semibold transition-all shadow-xs cursor-pointer"
                   >
-                    {String(activeSelectedRoom.status).replace(/_/g, ' ')}
-                  </span>
-                )}
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    <span>Add Resident</span>
+                  </button>
+                  {activeSelectedRoom.status && (
+                    <span
+                      className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full capitalize ${
+                        String(activeSelectedRoom.status).toLowerCase() === 'occupied'
+                          ? 'bg-[#E8F8F0] text-[#175C46]'
+                          : String(activeSelectedRoom.status).toLowerCase() === 'vacant'
+                          ? 'bg-[#EFF6FF] text-[#2563EB]'
+                          : String(activeSelectedRoom.status).toLowerCase() === 'maintenance'
+                          ? 'bg-[#FEF9C3] text-[#854D0E]'
+                          : 'bg-[#FFF1F2] text-[#E11D48]'
+                      }`}
+                    >
+                      {String(activeSelectedRoom.status).replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 p-3.5 sm:p-4 rounded-xl bg-gray-50/70 border border-gray-100">
@@ -662,24 +717,49 @@ export default function RoomDetailsAllocationPage() {
 
                       <div className="flex flex-wrap items-center gap-1.5">
                         {activeSelectedRoom.current_occupant_name && activeSelectedRoom.current_occupant_name.trim() ? (
-                          activeSelectedRoom.current_occupant_name
-                            .split(',')
-                            .map((name) => name.trim())
-                            .filter(Boolean)
-                            .map((residentName, idx) => (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#E8F8F0] text-[#175C46] border border-[#175C46]/10 truncate max-w-[220px]"
-                                title={residentName}
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-[#175C46] shrink-0" />
-                                <span className="truncate">{residentName}</span>
-                              </span>
-                            ))
+                          <>
+                            {activeSelectedRoom.current_occupant_name
+                              .split(',')
+                              .map((name) => name.trim())
+                              .filter(Boolean)
+                              .map((residentName, idx) => (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#E8F8F0] text-[#175C46] border border-[#175C46]/10 truncate max-w-[220px]"
+                                  title={residentName}
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-[#175C46] shrink-0" />
+                                  <span className="truncate">{residentName}</span>
+                                </span>
+                              ))}
+                            <button
+                              type="button"
+                              onClick={() => handleAddResidentToRoom(activeSelectedRoom)}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold text-[#175C46] hover:bg-[#E8F8F0] transition-colors cursor-pointer border border-dashed border-[#175C46]/30"
+                              title="Add another resident to this room"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              <span>Add</span>
+                            </button>
+                          </>
                         ) : (
-                          <span className="text-xs text-gray-400 font-medium italic">
-                            No resident assigned (Vacant)
-                          </span>
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-xs text-gray-400 font-medium italic">
+                              No resident assigned (Vacant)
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleAddResidentToRoom(activeSelectedRoom)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-[#175C46] bg-[#E8F8F0] hover:bg-[#d5f3e4] transition-colors cursor-pointer"
+                            >
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                              </svg>
+                              <span>Assign Resident</span>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
