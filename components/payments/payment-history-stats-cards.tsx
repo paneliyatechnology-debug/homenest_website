@@ -22,7 +22,7 @@ export const PaymentHistoryStatsCards: React.FC<PaymentHistoryStatsCardsProps> =
       ),
     },
     {
-      label: 'TotalCollected',
+      label: 'Total Collected',
       value: formatCurrency(stats.collected),
       iconBg: 'bg-[#E8F8F0] text-[#175C46]',
       icon: (

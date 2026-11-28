@@ -450,9 +450,10 @@ export default function PaymentOverviewPage() {
     {
       key: 'amount',
       header: 'Amount',
-      width: '110px',
+      width: '120px',
+      className: 'whitespace-nowrap',
       cell: (item) => (
-        <span className="text-gray-900 font-semibold whitespace-nowrap tabular-nums">
+        <span className="text-gray-900 font-semibold whitespace-nowrap tabular-nums inline-block">
           {formatCurrency(item.amount)}
         </span>
       ),

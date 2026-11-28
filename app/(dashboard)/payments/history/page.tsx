@@ -380,6 +380,7 @@ export default function PaymentHistoryPage() {
     {
       key: 'branch',
       header: 'Branch',
+      width: '180px',
       cell: (item) => {
         const branchDisplay =
           item.branch_name ||
@@ -396,6 +397,7 @@ export default function PaymentHistoryPage() {
     {
       key: 'building',
       header: 'Building',
+      width: '110px',
       cell: (item) => (
         <span className="text-gray-800 font-medium whitespace-nowrap">
           {item.building_name || '—'}
@@ -405,6 +407,7 @@ export default function PaymentHistoryPage() {
     {
       key: 'floor',
       header: 'Floor',
+      width: '100px',
       cell: (item) => {
         const floorDisplay =
           item.floor_name ||
@@ -422,15 +425,17 @@ export default function PaymentHistoryPage() {
     {
       key: 'room_no',
       header: 'Room No.',
+      width: '95px',
       cell: (item) => (
-        <span className="text-gray-700 font-medium">{item.room_no || '—'}</span>
+        <span className="text-gray-700 font-medium whitespace-nowrap">{item.room_no || '—'}</span>
       ),
     },
     {
       key: 'payment_type',
       header: 'Payment type',
+      width: '120px',
       cell: (item) => (
-        <span className="text-gray-700 font-medium">
+        <span className="text-gray-700 font-medium whitespace-nowrap">
           {formatPaymentType(item.payment_type)}
         </span>
       ),
@@ -438,13 +443,18 @@ export default function PaymentHistoryPage() {
     {
       key: 'amount',
       header: 'Amount',
+      width: '120px',
+      className: 'whitespace-nowrap',
       cell: (item) => (
-        <span className="text-gray-900 font-semibold">{formatCurrency(item.amount)}</span>
+        <span className="text-gray-900 font-semibold whitespace-nowrap tabular-nums inline-block">
+          {formatCurrency(item.amount)}
+        </span>
       ),
     },
     {
       key: 'date_time',
       header: 'Date & Time',
+      width: '160px',
       cell: (item) => (
         <span className="text-gray-600 text-xs sm:text-sm whitespace-nowrap">
           {formatDateTime(item.paid_at || item.created_at || item.due_date)}
@@ -454,11 +464,13 @@ export default function PaymentHistoryPage() {
     {
       key: 'status',
       header: 'Status',
+      width: '110px',
       cell: (item) => <StatusBadge status={item.status} />,
     },
     {
       key: 'actions',
       header: 'Actions',
+      width: '120px',
       align: 'right',
       cell: (item) => {
         const isPaid = (item.status || '').toLowerCase() === 'paid';
@@ -591,6 +603,7 @@ export default function PaymentHistoryPage() {
 
       {/* Data Table */}
       <DataTable
+        className="min-w-[1050px]"
         columns={columns}
         data={payments}
         loading={loading}

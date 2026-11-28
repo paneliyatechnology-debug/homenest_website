@@ -84,8 +84,8 @@ export function formatPaymentMethod(method?: string | null): string {
 }
 
 export function formatCurrency(amount?: number | null): string {
-  if (amount === undefined || amount === null || isNaN(amount)) return '₹ 0';
-  return '₹ ' + Number(amount).toLocaleString('en-IN');
+  if (amount === undefined || amount === null || isNaN(Number(amount))) return '₹\u00A00';
+  return '₹\u00A0' + Number(amount).toLocaleString('en-IN');
 }
 
 export interface PaymentResident {
