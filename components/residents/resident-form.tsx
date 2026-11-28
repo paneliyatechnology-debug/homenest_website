@@ -1399,7 +1399,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
               {/* Resident name */}
               <div>
                 <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                  Resident name <span className="text-[#175C46] font-bold">*</span>
+                  Resident name <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -1580,7 +1580,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
                 {/* Phone */}
                 <div>
                   <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                    Resident phone no. <span className="text-[#175C46] font-bold">*</span>
+                    Resident phone no. <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
                     type="tel"
@@ -1645,7 +1645,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             {/* Gender */}
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-2">
-                Gender <span className="text-[#175C46] font-bold">*</span>
+                Gender <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="flex items-center gap-5 pt-2">
                 {[

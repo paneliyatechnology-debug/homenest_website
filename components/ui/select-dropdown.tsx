@@ -138,7 +138,7 @@ export const Dropdown = React.forwardRef<HTMLSelectElement, DropdownProps>(
                 htmlFor={buttonId}
                 className="text-xs sm:text-sm font-semibold text-gray-800 block cursor-pointer truncate"
               >
-                {label} {required && <span className="text-[#175C46]">*</span>}
+                {label} {required && <span className="text-red-500 font-bold">*</span>}
               </label>
             )}
             {rightBadge && <div>{rightBadge}</div>}

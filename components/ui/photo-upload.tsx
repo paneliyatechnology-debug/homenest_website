@@ -105,7 +105,7 @@ export const PhotoUpload: React.FC<PhotoUploadProps> = ({
       {label && (
         <label className="text-xs sm:text-sm font-semibold text-gray-700 block">
           {label}{' '}
-          {required && <span className="text-[#175C46] font-bold">*</span>}
+          {required && <span className="text-red-500 font-bold">*</span>}
           {optional && !required && (
             <span className="text-gray-400 font-normal">(Optional)</span>
           )}

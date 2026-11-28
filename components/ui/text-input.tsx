@@ -35,7 +35,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>(
             htmlFor={inputId}
             className="text-xs sm:text-sm font-semibold text-gray-800 block"
           >
-            {label} {required && <span className="text-[#175C46]">*</span>}
+            {label} {required && <span className="text-red-500 font-bold">*</span>}
           </label>
         )}
         <input
