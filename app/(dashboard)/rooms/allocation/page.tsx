@@ -528,19 +528,42 @@ export default function RoomDetailsAllocationPage() {
                 No rooms assigned to this floor yet.
               </div>
             ) : (
-              <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-3">
-                {currentFloorRooms.map((room) => (
-                  <button
-                    key={room.id}
-                    type="button"
-                    onClick={() => setSelectedRoom(room)}
-                    className={`py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold border text-center transition-all cursor-pointer ${getRoomPillStyle(
-                      room
-                    )}`}
-                  >
-                    <span>{room.room_no}</span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3">
+                {currentFloorRooms.map((room) => {
+                  const hasResident = Boolean(room.current_occupant_name && room.current_occupant_name.trim());
+                  const residentDisplayName = hasResident
+                    ? room.current_occupant_name!.split(',')[0].trim()
+                    : null;
+                  const isMultiResident = hasResident && room.current_occupant_name!.includes(',');
+
+                  return (
+                    <button
+                      key={room.id}
+                      type="button"
+                      onClick={() => setSelectedRoom(room)}
+                      className={`py-2 px-2.5 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[58px] ${getRoomPillStyle(
+                        room
+                      )}`}
+                    >
+                      <span className="text-xs sm:text-sm font-bold leading-tight tracking-tight">
+                        {room.room_no}
+                      </span>
+                      {hasResident && residentDisplayName ? (
+                        <span
+                          className="text-[10px] sm:text-[11px] font-medium leading-tight truncate max-w-full mt-0.5 opacity-90"
+                          title={room.current_occupant_name!}
+                        >
+                          {residentDisplayName}
+                          {isMultiResident && ' +'}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-normal leading-tight opacity-75 capitalize mt-0.5">
+                          {String(room.status || 'vacant').replace(/_/g, ' ')}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -591,7 +614,7 @@ export default function RoomDetailsAllocationPage() {
                 </div>
 
                 {/* Room Info */}
-                <div className="space-y-1.5 flex-1 min-w-0 w-full sm:w-auto">
+                <div className="space-y-2 flex-1 min-w-0 w-full sm:w-auto">
                   <h4 className="text-lg font-bold text-gray-900 tracking-tight">
                     Room {activeSelectedRoom.room_no}
                   </h4>
@@ -603,15 +626,63 @@ export default function RoomDetailsAllocationPage() {
                     <span>{activeSelectedRoom.building_name || 'Main Building'}</span>
                   </p>
 
-                  <div className="pt-1.5 grid grid-cols-2 gap-2 text-xs text-gray-700 font-medium">
-                    <p className="bg-white sm:bg-transparent p-2 sm:p-0 rounded-lg border sm:border-0 border-gray-100">
-                      <span className="text-gray-500">Capacity :</span>{' '}
-                      <span className="font-semibold text-gray-900">{activeSelectedRoom.capacity}</span>
+                  <div className="pt-1 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-gray-700 font-medium">
+                    <p className="bg-white p-2 rounded-lg border border-gray-100">
+                      <span className="text-gray-500 block text-[11px]">Capacity</span>
+                      <span className="font-semibold text-gray-900 text-xs sm:text-sm">{activeSelectedRoom.capacity} Beds</span>
                     </p>
-                    <p className="bg-white sm:bg-transparent p-2 sm:p-0 rounded-lg border sm:border-0 border-gray-100">
-                      <span className="text-gray-500">Size :</span>{' '}
-                      <span className="font-semibold text-gray-900">{activeSelectedRoom.size || '14 m*2'}</span>
+                    <p className="bg-white p-2 rounded-lg border border-gray-100">
+                      <span className="text-gray-500 block text-[11px]">Size</span>
+                      <span className="font-semibold text-gray-900 text-xs sm:text-sm">{activeSelectedRoom.size || '14 m²'}</span>
                     </p>
+                    <p className="bg-white p-2 rounded-lg border border-gray-100 col-span-2 sm:col-span-1">
+                      <span className="text-gray-500 block text-[11px]">Occupancy</span>
+                      <span className="font-semibold text-gray-900 text-xs sm:text-sm">
+                        {activeSelectedRoom.current_occupants || 0} / {activeSelectedRoom.capacity}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Current Resident(s) Section */}
+                  <div className="pt-1">
+                    <div className="p-2.5 sm:p-3 rounded-xl bg-white border border-gray-100 shadow-2xs space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-[#175C46]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          Current Resident{activeSelectedRoom.current_occupant_name?.includes(',') ? 's' : ''}:
+                        </span>
+                        {activeSelectedRoom.current_occupants !== undefined && (
+                          <span className="text-[11px] text-gray-400 font-medium">
+                            {activeSelectedRoom.current_occupants} / {activeSelectedRoom.capacity} Allocated
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {activeSelectedRoom.current_occupant_name && activeSelectedRoom.current_occupant_name.trim() ? (
+                          activeSelectedRoom.current_occupant_name
+                            .split(',')
+                            .map((name) => name.trim())
+                            .filter(Boolean)
+                            .map((residentName, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#E8F8F0] text-[#175C46] border border-[#175C46]/10 truncate max-w-[220px]"
+                                title={residentName}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#175C46] shrink-0" />
+                                <span className="truncate">{residentName}</span>
+                              </span>
+                            ))
+                        ) : (
+                          <span className="text-xs text-gray-400 font-medium italic">
+                            No resident assigned (Vacant)
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -227,7 +227,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
       {paymentMethod !== 'upi' && (
         <div>
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            Payment Reference / Transaction Details <span className="text-gray-400 font-normal">(Optional)</span>
+            Payment Reference / Transaction Details
           </label>
           <input
             type="text"
@@ -245,7 +245,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
       {/* Note / Remarks */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Payment Note / Remarks <span className="text-gray-400 font-normal">(Optional)</span>
+          Payment Note / Remarks
         </label>
         <textarea
           rows={2}
@@ -260,7 +260,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
       <div>
         <PhotoUpload
           label="Payment Proof / Receipt Screenshot"
-          optional
+          optional={false}
           shape="rounded"
           previewUrl={imagePreview}
           file={imageFile}

@@ -861,7 +861,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       {/* Row 5: Notes */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Notes / Remarks <span className="text-gray-400 font-normal">(Optional)</span>
+          Notes / Remarks
         </label>
         <textarea
           rows={2}
