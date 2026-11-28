@@ -97,7 +97,7 @@ export const LaundryStatusModal: React.FC<LaundryStatusModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-            Select Status <span className="text-red-500">*</span>
+            Select Status <span className="text-red-500 font-bold">*</span>
           </label>
           <div className="space-y-2">
             {statusOptions.map((opt) => (

@@ -124,7 +124,7 @@ const RoomShiftStatusForm: React.FC<RoomShiftStatusFormProps> = ({
       {/* Status Option */}
       <div>
         <label className="text-xs font-semibold text-gray-700 block mb-2">
-          Decision Status <span className="text-red-500">*</span>
+          Decision Status <span className="text-red-500 font-bold">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           <button

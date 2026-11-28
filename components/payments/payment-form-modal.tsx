@@ -552,7 +552,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
         <div className="space-y-2.5">
           <div className="relative z-20">
             <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-              Resident <span className="text-red-500">*</span>
+              Resident <span className="text-red-500 font-bold">*</span>
             </label>
             <ResidentDropdown
               selectedResidentId={residentId ? Number(residentId) : null}
@@ -622,7 +622,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       {/* Row 1: Invoice Title */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Invoice / Bill Title <span className="text-red-500">*</span>
+          Invoice / Bill Title <span className="text-red-500 font-bold">*</span>
         </label>
         <input
           type="text"
@@ -644,7 +644,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            Payment Type <span className="text-red-500">*</span>
+            Payment Type <span className="text-red-500 font-bold">*</span>
           </label>
           <Dropdown
             value={paymentType}
@@ -661,7 +661,7 @@ const PaymentFormContent: React.FC<PaymentFormContentProps> = ({
 
         <div>
           <label htmlFor="payment-form-due-date" className="block text-xs font-semibold text-gray-800 mb-1.5 cursor-pointer">
-            Due Date <span className="text-red-500">*</span>
+            Due Date <span className="text-red-500 font-bold">*</span>
           </label>
           <AppDatePicker
             id="payment-form-due-date"

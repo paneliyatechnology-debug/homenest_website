@@ -286,7 +286,7 @@ export const BuildingForm: React.FC<BuildingFormProps> = ({ initialData, mode })
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
-                  Floors Configuration <span className="text-[#175C46]">*</span>
+                  Floors Configuration <span className="text-red-500 font-bold">*</span>
                 </label>
                 <p className="text-[11px] text-gray-500">
                   Configure floor numbers and descriptive names for this building.

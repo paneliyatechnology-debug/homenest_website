@@ -892,7 +892,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
             {/* Improved Staff Selector matching Image 2 */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-700">
-                Assigned to
+                Assigned to <span className="text-red-500 font-bold">*</span>
               </label>
               <StaffAssignmentDropdown
                 staffList={staffList}
@@ -1064,7 +1064,7 @@ function ComplaintDetailContent({ params }: { params: Promise<{ id: string }> })
           {/* New Status Choice Cards */}
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-              Select New Status <span className="text-red-500">*</span>
+              Select New Status <span className="text-red-500 font-bold">*</span>
             </label>
             <div className="space-y-2">
               {STATUS_OPTIONS.map((opt) => {

@@ -438,7 +438,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-              Resident name <span className="text-red-500">*</span>
+              Resident name <span className="text-red-500 font-bold">*</span>
             </label>
             <Dropdown
               value={residentId}
@@ -461,7 +461,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
 
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-              Request type <span className="text-red-500">*</span>
+              Request type <span className="text-red-500 font-bold">*</span>
             </label>
             <Dropdown
               value={requestType}
@@ -505,7 +505,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-              Pick up date <span className="text-red-500">*</span>
+              Pick up date <span className="text-red-500 font-bold">*</span>
             </label>
             <AppDatePicker
               value={pickupDate}
@@ -557,7 +557,7 @@ export const LaundryForm: React.FC<LaundryFormProps> = ({
         {/* Row 4: Status * matching Figma radio selector */}
         <div>
           <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
-            Status <span className="text-red-500">*</span>
+            Status <span className="text-red-500 font-bold">*</span>
           </label>
           <div className="flex flex-wrap items-center gap-6 sm:gap-8 pt-1">
             <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900">

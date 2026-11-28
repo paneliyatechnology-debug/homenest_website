@@ -436,7 +436,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
             {/* Resident name * */}
             <div>
               <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
-                Resident name <span className="text-[#175C46]">*</span>
+                Resident name <span className="text-red-500 font-bold">*</span>
               </label>
               <select
                 value={residentId}
@@ -456,7 +456,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
             {/* Shift Reason * */}
             <div>
               <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-2">
-                Shift Reason <span className="text-[#175C46]">*</span>
+                Shift Reason <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -482,7 +482,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               {/* Resident Current Room no. */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Resident Current Room no. <span className="text-[#175C46]">*</span>
+                  Resident Current Room no. <span className="text-red-500 font-bold">*</span>
                 </label>
                 <input
                   type="text"
@@ -553,7 +553,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               {/* Branch */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Target Branch <span className="text-[#175C46]">*</span>
+                  Target Branch <span className="text-red-500 font-bold">*</span>
                 </label>
                 <select
                   value={targetBranchId}
@@ -575,7 +575,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               {/* Building */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Target Building <span className="text-[#175C46]">*</span>
+                  Target Building <span className="text-red-500 font-bold">*</span>
                 </label>
                 <select
                   value={targetBuildingId}
@@ -603,7 +603,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               {/* Floor */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Target Floor <span className="text-[#175C46]">*</span>
+                  Target Floor <span className="text-red-500 font-bold">*</span>
                 </label>
                 <select
                   value={targetFloorId}
@@ -631,7 +631,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
               {/* Requested room no. */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                  Requested room no. <span className="text-[#175C46]">*</span>
+                  Requested room no. <span className="text-red-500 font-bold">*</span>
                 </label>
                 <select
                   value={requestedRoomId}
@@ -712,7 +712,7 @@ export const RoomShiftForm: React.FC<RoomShiftFormProps> = ({
           {/* Status * */}
           <div className="pt-1">
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-3">
-              Status <span className="text-[#175C46]">*</span>
+              Status <span className="text-red-500 font-bold">*</span>
             </label>
             <div className="flex items-center gap-4 sm:gap-6">
               <label className="flex items-center gap-2 cursor-pointer text-xs sm:text-sm font-medium text-gray-800">

@@ -633,7 +633,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
             {/* Resident selection dropdown */}
             <div className="space-y-1.5 w-full">
               <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
-                Resident name <span className="text-[#175C46]">*</span>
+                Resident name <span className="text-red-500 font-bold">*</span>
               </label>
               <ResidentDropdown
                 selectedResidentId={selectedResidentId}
@@ -829,7 +829,7 @@ export const VisitorForm: React.FC<VisitorFormProps> = ({ initialData, mode }) =
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 w-full">
                 <label className="text-xs sm:text-sm font-semibold text-gray-800 block">
-                  Visit Date <span className="text-[#175C46]">*</span>
+                  Visit Date <span className="text-red-500 font-bold">*</span>
                 </label>
                 <AppDatePicker
                   value={visitDate}

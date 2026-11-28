@@ -447,7 +447,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           {/* Notice Title */}
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-              Notice Title <span className="text-red-500">*</span>
+              Notice Title <span className="text-red-500 font-bold">*</span>
             </label>
             <input
               type="text"
@@ -469,7 +469,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-                Category <span className="text-red-500">*</span>
+                Category <span className="text-red-500 font-bold">*</span>
               </label>
               <Dropdown
                 options={categoryOptions}
@@ -488,7 +488,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
 
             <div>
               <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-                Priority <span className="text-red-500">*</span>
+                Priority <span className="text-red-500 font-bold">*</span>
               </label>
               <Dropdown
                 options={priorityOptions}
@@ -509,7 +509,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           {/* Audience Section matching Figma pixel-for-pixel */}
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-3">
-              Audience <span className="text-red-500">*</span>
+              Audience <span className="text-red-500 font-bold">*</span>
             </label>
             <div className="space-y-3.5">
               {/* Row 1: All Residents */}
@@ -573,7 +573,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white shrink-0 group-hover:border-gray-400 transition-colors" />
                   )}
                   <span className="text-xs sm:text-sm font-normal text-gray-700">
-                    Specific Branch
+                    Specific Branch {audienceType === 'branch' && <span className="text-red-500 font-bold">*</span>}
                   </span>
                 </div>
 
@@ -628,7 +628,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
                     <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white shrink-0 group-hover:border-gray-400 transition-colors" />
                   )}
                   <span className="text-xs sm:text-sm font-normal text-gray-700">
-                    Specific Room/Residents
+                    Specific Room/Residents {audienceType === 'resident' && <span className="text-red-500 font-bold">*</span>}
                   </span>
                 </div>
 
@@ -663,7 +663,7 @@ export const NoticeForm: React.FC<NoticeFormProps> = ({ mode, noticeId, initialD
           {/* Content with Rich Text Toolbar */}
           <div>
             <label className="block text-xs sm:text-sm font-semibold text-gray-900 mb-1.5">
-              Content <span className="text-red-500">*</span>
+              Content <span className="text-red-500 font-bold">*</span>
             </label>
             <div
               className={`rounded-xl border transition-all overflow-hidden ${errors.content ? 'border-red-400 bg-red-50/20' : 'border-gray-200'

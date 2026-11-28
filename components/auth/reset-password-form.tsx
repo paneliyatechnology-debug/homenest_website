@@ -229,6 +229,7 @@ export const ResetPasswordForm: React.FC = () => {
               autoComplete="new-password"
               data-lpignore="true"
               disabled={loading}
+              required
             />
 
             <FormPasswordInput
@@ -242,6 +243,7 @@ export const ResetPasswordForm: React.FC = () => {
               autoComplete="new-password"
               data-lpignore="true"
               disabled={loading}
+              required
             />
 
             {/* Submit Button */}

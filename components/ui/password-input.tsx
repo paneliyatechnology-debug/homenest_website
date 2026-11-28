@@ -13,6 +13,7 @@ export interface FormPasswordInputProps
   containerClassName?: string;
   placeholder?: string;
   autoComplete?: string;
+  required?: boolean;
 }
 
 export const FormPasswordInput: React.FC<FormPasswordInputProps> = ({
@@ -26,6 +27,7 @@ export const FormPasswordInput: React.FC<FormPasswordInputProps> = ({
   autoComplete = 'new-password',
   disabled,
   readOnly,
+  required = false,
   ...props
 }) => {
   // Start with readOnly enabled until user interacts to strictly block browser autofill on page load
@@ -49,7 +51,7 @@ export const FormPasswordInput: React.FC<FormPasswordInputProps> = ({
         htmlFor={id}
         className="text-xs sm:text-[13px] font-medium text-[#175c46]"
       >
-        {label}
+        {label} {required && <span className="text-red-500 font-bold">*</span>}
       </label>
       <div className="w-full relative flex">
         <Password

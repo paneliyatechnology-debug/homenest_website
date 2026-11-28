@@ -102,7 +102,7 @@ export const LaundryAssignModal: React.FC<LaundryAssignModalProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-            Select Staff <span className="text-red-500">*</span>
+            Select Staff <span className="text-red-500 font-bold">*</span>
           </label>
           <Dropdown
             options={staffOptions}

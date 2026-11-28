@@ -208,7 +208,7 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
       <div className="space-y-2">
         <div className="relative z-20">
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            Resident <span className="text-red-500">*</span>
+            Resident <span className="text-red-500 font-bold">*</span>
           </label>
           <ResidentDropdown
             selectedResidentId={residentId ? Number(residentId) : null}
@@ -316,7 +316,7 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
           htmlFor="checkout-form-departure-date"
           className="block text-xs font-semibold text-gray-800 mb-1.5 cursor-pointer"
         >
-          Departure Date <span className="text-red-500">*</span>
+          Departure Date <span className="text-red-500 font-bold">*</span>
         </label>
         <AppDatePicker
           id="checkout-form-departure-date"
@@ -341,7 +341,7 @@ const CheckoutFormContent: React.FC<CheckoutFormContentProps> = ({
       {/* Reason for Departure */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Reason for Departure <span className="text-red-500">*</span>
+          Reason for Departure <span className="text-red-500 font-bold">*</span>
         </label>
         <input
           type="text"

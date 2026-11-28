@@ -652,7 +652,7 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5">
-                Invoice Title <span className="text-red-500">*</span>
+                Invoice Title <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -666,7 +666,7 @@ export const LaundryBillingTab: React.FC<LaundryBillingTabProps> = ({ branchId =
 
             <div>
               <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-1.5">
-                Due Date <span className="text-red-500">*</span>
+                Due Date <span className="text-red-500 font-bold">*</span>
               </label>
               <AppDatePicker
                 value={dueDate}

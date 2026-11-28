@@ -341,7 +341,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
       {/* 1. Meal Type at the very top */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Meal Type <span className="text-red-500">*</span>
+          Meal Type <span className="text-red-500 font-bold">*</span>
         </label>
         <div className="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 rounded-xl">
           {(
@@ -442,7 +442,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-                Branch <span className="text-red-500">*</span>
+                Branch <span className="text-red-500 font-bold">*</span>
               </label>
               <Dropdown
                 value={branchId}
@@ -461,7 +461,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
 
             <div>
               <label htmlFor="food-menu-form-menu-date" className="block text-xs font-semibold text-gray-800 mb-1.5">
-                Menu Date <span className="text-red-500">*</span>
+                Menu Date <span className="text-red-500 font-bold">*</span>
               </label>
               <AppDatePicker
                 id="food-menu-form-menu-date"
@@ -482,7 +482,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
           {/* Item Name */}
           <div>
             <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-              Item Name <span className="text-red-500">*</span>
+              Item Name <span className="text-red-500 font-bold">*</span>
             </label>
             <input
               type="text"
@@ -507,7 +507,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            Serving Start Time <span className="text-red-500">*</span>
+            Serving Start Time <span className="text-red-500 font-bold">*</span>
           </label>
           <input
             type="time"
@@ -527,7 +527,7 @@ const FoodMenuFormContent: React.FC<FoodMenuFormContentProps> = ({
 
         <div>
           <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-            Serving End Time <span className="text-red-500">*</span>
+            Serving End Time <span className="text-red-500 font-bold">*</span>
           </label>
           <input
             type="time"

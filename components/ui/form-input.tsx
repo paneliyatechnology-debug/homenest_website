@@ -8,6 +8,7 @@ export interface FormInputProps extends Omit<InputTextProps, 'id'> {
   label: string;
   error?: string;
   containerClassName?: string;
+  required?: boolean;
 }
 
 export const FormInput: React.FC<FormInputProps> = ({
@@ -22,6 +23,7 @@ export const FormInput: React.FC<FormInputProps> = ({
   onMouseDown,
   onTouchStart,
   readOnly,
+  required = false,
   ...props
 }) => {
   // Start with readOnly enabled until user interacts to strictly block browser autofill on page load
@@ -45,7 +47,7 @@ export const FormInput: React.FC<FormInputProps> = ({
         htmlFor={id}
         className="text-xs sm:text-[13px] font-medium text-[#175c46]"
       >
-        {label}
+        {label} {required && <span className="text-red-500 font-bold">*</span>}
       </label>
       <InputText
         id={id}

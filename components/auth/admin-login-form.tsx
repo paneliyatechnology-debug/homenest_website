@@ -293,6 +293,7 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             autoComplete="new-password"
             data-lpignore="true"
             disabled={loading}
+            required
           />
 
           {/* Password Field */}
@@ -307,6 +308,7 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             autoComplete="new-password"
             data-lpignore="true"
             disabled={loading}
+            required
           />
 
           {/* Remember Me & Forgot Password Row */}

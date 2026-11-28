@@ -87,7 +87,7 @@ export const CheckoutStatusModal: React.FC<CheckoutStatusModalProps> = ({
         {/* Status Option Radios */}
         <div>
           <label className="block text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">
-            Approval Status <span className="text-red-500">*</span>
+            Approval Status <span className="text-red-500 font-bold">*</span>
           </label>
           <div className="grid grid-cols-2 gap-2.5">
             {[

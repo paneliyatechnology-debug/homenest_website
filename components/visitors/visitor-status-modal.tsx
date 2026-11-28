@@ -136,7 +136,7 @@ export const VisitorStatusModal: React.FC<VisitorStatusModalProps> = ({
         {/* Status Options */}
         <div className="space-y-2">
           <label className="text-xs font-semibold text-gray-700 block">
-            Select New Status
+            Select New Status <span className="text-red-500 font-bold">*</span>
           </label>
           <div className="space-y-2">
             {STATUS_OPTIONS.map((opt) => {

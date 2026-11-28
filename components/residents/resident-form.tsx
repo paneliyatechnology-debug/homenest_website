@@ -1672,7 +1672,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             {/* Status */}
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-2">
-                Status <span className="text-[#175C46] font-bold">*</span>
+                Status <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="flex items-center gap-5 pt-2">
                 {[
@@ -1737,7 +1737,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             {/* Occupation */}
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Occupation <span className="text-[#175C46] font-bold">*</span>
+                Occupation <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -1756,7 +1756,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             {/* Check in date */}
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Check in date <span className="text-[#175C46] font-bold">*</span>
+                Check in date <span className="text-red-500 font-bold">*</span>
               </label>
               <AppDatePicker
                 name="check_in_date"
@@ -1826,7 +1826,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
             {/* E-mail */}
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                E-mail <span className="text-[#175C46] font-bold">*</span>
+                E-mail <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="email"
@@ -1990,7 +1990,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Bed Number <span className="text-[#175C46] font-bold">*</span>
+                Bed Number <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -2005,7 +2005,7 @@ export const ResidentForm: React.FC<ResidentFormProps> = ({
 
             <div>
               <label className="text-xs sm:text-sm font-semibold text-gray-700 block mb-1.5">
-                Monthly Rent (₹) <span className="text-[#175C46] font-bold">*</span>
+                Monthly Rent (₹) <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="number"

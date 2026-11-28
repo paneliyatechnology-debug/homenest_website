@@ -174,6 +174,7 @@ export const ForgotPasswordForm: React.FC = () => {
             autoComplete="new-password"
             data-lpignore="true"
             disabled={loading}
+            required
           />
 
           {/* Submit Button */}

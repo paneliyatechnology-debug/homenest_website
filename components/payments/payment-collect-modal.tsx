@@ -185,7 +185,7 @@ const PaymentCollectContent: React.FC<PaymentCollectContentProps> = ({
       {/* Payment Method */}
       <div>
         <label className="block text-xs font-semibold text-gray-800 mb-1.5">
-          Payment Method <span className="text-red-500">*</span>
+          Payment Method <span className="text-red-500 font-bold">*</span>
         </label>
         <Dropdown
           value={paymentMethod}
