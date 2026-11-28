@@ -342,7 +342,8 @@ export async function apiClient<T>(
       const isSilentEndpoint =
         endpoint.includes('/auth/refresh') ||
         endpoint.includes('/auth/me') ||
-        endpoint.includes('/auth/logout');
+        endpoint.includes('/auth/logout') ||
+        endpoint.includes('/auth/login');
 
       const shouldShowSuccess =
         showSuccessToast !== undefined ? showSuccessToast : isMutation && !isSilentEndpoint;

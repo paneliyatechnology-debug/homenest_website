@@ -31,6 +31,7 @@ export const authService = {
     const response = await apiClient<AuthResponse>('/auth/login', {
       method: 'POST',
       skipAuth: true,
+      showSuccessToast: false,
       body: JSON.stringify(credentials),
     });
 

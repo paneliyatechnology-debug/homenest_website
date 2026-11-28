@@ -206,6 +206,9 @@ export const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
           return;
         }
 
+        // Show success toast only after role verification passes
+        toast.success(response.message || 'Login successful');
+
         setTimeout(() => {
           if (onSuccess) {
             onSuccess();
